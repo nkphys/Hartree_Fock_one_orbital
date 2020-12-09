@@ -1,0 +1,48 @@
+PBC=true
+Xsite=VALUE_LX
+Ysite=VALUE_LY
+TwistedBoundaryCond_mx=0
+TwistedBoundaryCond_my=0
+TBC_cellsX=2
+TBC_cellsY=2
+Total No. of particles=VALUE_NP
+RandomSeed=VALUE_SEED
+
+Pnictides_Hopping=false
+Nearest_Neigh_Hopping_t2g_basis_row0=0.5 0.0 0.0
+Nearest_Neigh_Hopping_t2g_basis_row1=0.0 0.5 0.0
+Nearest_Neigh_Hopping_t2g_basis_row2=0.0 0.0 0.5
+
+Crystal_Field_t2g=0.0 0.0 0.01
+
+RandomDisorderSeed=VALUESEED_DISORDER
+Disorder_Strength=VALUESTRENGTH_DISORDER
+
+Simple_Mixing=0
+Broyden_Mixing=1
+Broyden_Second_Method_Mixing=0
+alpha_OP=0.7
+
+w_minus1=0.1
+wn=0.6
+BroydenSecondMethodCounter=10
+
+
+J_HUND=VALUE_HUND
+U_Onsite=VALUE_U
+U_prime_Onsite=VALUE_PRIME_U
+
+Lambda_SOC=VALUE_LAMBDA
+
+
+dw_dos=0.005
+eta_dos=0.05
+w_min=-1.0
+w_max=8.0
+
+
+No_of_SelfConsistency_iters=10000
+Convergence_Error=0.001
+Read_initial_OPvalues=0
+Read_initial_OPvalues_file=OrderParams_OUTPUT.txt
+Write_Final_OPvalues_file=OrderParams_OUTPUT.txt
