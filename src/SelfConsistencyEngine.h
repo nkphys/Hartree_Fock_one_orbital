@@ -210,6 +210,8 @@ void SelfConsistencyEngine::RUN_SelfConsistencyEngine(){
       Spin_den_Avg[spin] = Spin_den_Avg[spin]*(1.0/(1.0*lx_*ly_));
       cout<<"Spin "<<spin<<" avg. den = "<<Spin_den_Avg[spin]<<endl;
     }
+    Observables_.Avg_local_Nup = Spin_den_Avg[0];
+    Observables_.Avg_local_Ndn = Spin_den_Avg[1];
 
 
 

@@ -89,6 +89,7 @@ public:
 
     double Omega(int i);
 
+    double Avg_local_Nup, Avg_local_Ndn;
     double BandWidth;
     double nia_t,nib_t,nic_t,n_t;
     Matrix<complex<double>> SiSjQ_, SiSjQ_Mean_, SiSjQ_square_Mean_;
@@ -2449,12 +2450,16 @@ void Observables::Calculate_DenDencorrelations_Smartly(){
                                 + (DOWN_DOWN_Fermi[i][i][orbi][orbi]*UP_UP_Fermi[j][j][orbj][orbj])
                                 );
                     //-<den_i><den_j>
-                    den_i_up=Local_n_orb_resolved[Coordinates_.Nc_dof(i,0)];
+                    /*den_i_up=Local_n_orb_resolved[Coordinates_.Nc_dof(i,0)];
                     den_i_dn=Local_n_orb_resolved[Coordinates_.Nc_dof(i,1)];
                     den_j_up=Local_n_orb_resolved[Coordinates_.Nc_dof(j,0)];
                     den_j_dn=Local_n_orb_resolved[Coordinates_.Nc_dof(j,1)];
                     SS_ri_rj[i][j][orbi][orbj] +=(-1.0*one_complex)*(den_i_up+den_i_dn)*
-                            (den_j_up+den_j_dn);
+                            (den_j_up+den_j_dn)*/;
+
+                    SS_ri_rj[i][j][orbi][orbj] +=(-1.0*one_complex)*(Avg_local_Nup+Avg_local_Ndn)*
+                            (Avg_local_Nup+Avg_local_Ndn);
+
 
                     //cout<<i<<"\t"<<j<<" done"<<endl;
                 }

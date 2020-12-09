@@ -18,7 +18,7 @@ DisorderSeedFile=DisorderFile.txt
 RandomDisorderSeed=40
 Disorder_Strength=0.0
 
-Temperature=0.1
+Temperature=0.001
 Just_Hartree=0
 
 
@@ -32,7 +32,7 @@ wn=0.6
 BroydenSecondMethodCounter=10
 
 
-U_Onsite=0.0
+U_Onsite=10.0
 
 
 dw_dos=0.001
