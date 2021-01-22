@@ -172,7 +172,7 @@ void SelfConsistencyEngine::RUN_SelfConsistencyEngine(){
     file_out_Local_OP<<"#alpha_i alpha_j OParams_[alpha_i][alpha_j]"<<endl;
 
     for(int alpha=0;alpha<Observables_.OParams.value.size();alpha++){
-        file_out_Local_OP<<Observables_.OParams.rows[alpha]<<setw(15)<<Observables_.OParams.columns[alpha]<<setw(15)<<Observables_.OParams.value[alpha]<<endl;
+        file_out_Local_OP<<Observables_.OParams.rows[alpha]<<setw(15)<<Observables_.OParams.columns[alpha]<<setw(15)<<"  "<<Observables_.OParams.value[alpha]<<endl;
     }
 
 

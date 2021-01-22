@@ -802,7 +802,7 @@ void Observables::Calculate_Local_n_orb_resolved(){
        }
 
        for(int spin=0;spin<2;spin++){
-         Spin_den_Avg[spin] = Spin_den_Avg[spin]*(1.0/(1.0*lx_*ly_));
+         Spin_den_Avg[spin] = Spin_den_Avg[spin]*(1.0/(1.0*ns_));
          cout<<"Spin "<<spin<<" avg. den = "<<Spin_den_Avg[spin]<<endl;
        }
        Avg_local_Nup = Spin_den_Avg[0];
@@ -1175,7 +1175,7 @@ void Observables::Calculate_DenDencorrelations_Smartly(){
 
     string SSr_out = "NNr.txt";
     ofstream file_SSr_out(SSr_out.c_str());
-    file_SSr_out<<"#site_i   site_i(x)    site_i(y)    site_j   site_j(x)    site_j(y)  NN[site_i][site_j]"<<endl;
+    file_SSr_out<<"#site_i    site_j   NN[site_i][site_j]"<<endl;
 
     int ci,cj, spin_i,spin_j;
 
