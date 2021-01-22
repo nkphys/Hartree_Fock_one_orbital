@@ -759,7 +759,6 @@ void Observables::Calculate_Local_n_orb_resolved(){
     Local_n_orb_resolved.resize(ns_*2);
 
     int c1;
-
     for(int site=0;site<ns_;site++){
         for(int spin=0;spin<2;spin++){
 
@@ -777,7 +776,6 @@ void Observables::Calculate_Local_n_orb_resolved(){
 
         }
 
-
     }
 
     cout<<"Total number of particles calculated = "<<N_total_temp<<endl;
@@ -785,6 +783,33 @@ void Observables::Calculate_Local_n_orb_resolved(){
 
     if(Parameters_.FixingMu){
         Parameters_.Total_Particles = N_total_temp;}
+
+
+       Mat_1_doub Spin_den_Avg;
+       Spin_den_Avg.resize(2);
+       string File_Out_Local_orb_densities = "Local_spin_resolved_densities.txt";
+       ofstream file_out_Local_orb_densities(File_Out_Local_orb_densities.c_str());
+       file_out_Local_orb_densities<<"#site   up   dn"<<endl;
+       for(int site_i=0;site_i<ns_;site_i++){
+
+               file_out_Local_orb_densities<<site_i;
+                   for(int spin=0;spin<2;spin++){
+                       c1=Coordinates_.Nc_dof(site_i,spin);
+                       file_out_Local_orb_densities<<setw(15)<<Local_n_orb_resolved[c1];
+                       Spin_den_Avg[spin] +=Local_n_orb_resolved[c1];
+                   }
+           file_out_Local_orb_densities<<endl;
+       }
+
+       for(int spin=0;spin<2;spin++){
+         Spin_den_Avg[spin] = Spin_den_Avg[spin]*(1.0/(1.0*lx_*ly_));
+         cout<<"Spin "<<spin<<" avg. den = "<<Spin_den_Avg[spin]<<endl;
+       }
+       Avg_local_Nup = Spin_den_Avg[0];
+       Avg_local_Ndn = Spin_den_Avg[1];
+
+
+
 
 }
 
@@ -1148,8 +1173,6 @@ void Observables::Calculate_SpinSpincorrelations_Smartly(){
 
 void Observables::Calculate_DenDencorrelations_Smartly(){
 
-
-
     string SSr_out = "NNr.txt";
     ofstream file_SSr_out(SSr_out.c_str());
     file_SSr_out<<"#site_i   site_i(x)    site_i(y)    site_j   site_j(x)    site_j(y)  NN[site_i][site_j]"<<endl;
@@ -1294,8 +1317,8 @@ void Observables::Calculate_DenDencorrelations_Smartly(){
                     SS_ri_rj[i][j][orbi][orbj] +=(-1.0*one_complex)*(den_i_up+den_i_dn)*
                             (den_j_up+den_j_dn)*/;
 
-                   // SS_ri_rj[i][j][orbi][orbj] +=(-1.0*one_complex)*(Avg_local_Nup+Avg_local_Ndn)*
-                    //        (Avg_local_Nup+Avg_local_Ndn);
+                    SS_ri_rj[i][j][orbi][orbj] +=(-1.0*one_complex)*(Avg_local_Nup+Avg_local_Ndn)*
+                            (Avg_local_Nup+Avg_local_Ndn);
 
 
                     //cout<<i<<"\t"<<j<<" done"<<endl;

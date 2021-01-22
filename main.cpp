@@ -198,10 +198,11 @@ int main(int argc, char *argv[]) {
         SelfConsistencyEngine SelfConsistencyEngine_(Parameters_,Coordinates_,MFParams_,Hamiltonian_,Observables_);
         SelfConsistencyEngine_.RUN_SelfConsistencyEngine();
 
+        Observables_.Calculate_Local_n_orb_resolved();
         Observables_.Calculate_SpinSpincorrelations_Smartly();
         Observables_.Calculate_DenDencorrelations_Smartly();
         Observables_.Calculate_Nw();
-        //Observables_.Calculate_Local_n_orb_resolved();
+
 
     }
 
