@@ -5,7 +5,7 @@
 class Parameters{
 
 public:
-    int lx, ly, ns, IterMax, RandomSeed;
+    int ns, IterMax, RandomSeed;
     double Convergence_Error;
     int lx_cluster, ly_cluster;
     double mus,Total_Particles,pi, mu_old;
@@ -63,16 +63,13 @@ void Parameters::Initialize(string inputfile_){
     double Just_Hartree_double;
 
     cout << "____________________________________" << endl;
-    cout << "Reading the inputfile: " << inputfile_ << endl;
+    cout << "Reading the inputfile name: " << inputfile_ << endl;
     cout << "____________________________________" << endl;
 
 
 
-    lx = int(matchstring(inputfile_,"Xsite"));
-    ly = int(matchstring(inputfile_,"Ysite"));
+    ns = int(matchstring(inputfile_,"Total_sites"));
     BroydenSecondMethodCounter = int(matchstring(inputfile_,"BroydenSecondMethodCounter"));
-
-    ns = lx*ly;
     cout << "TotalNumberOfSites = "<< ns << endl;
 
     Total_Particles = matchstring(inputfile_,"Total No. of particles");
@@ -91,8 +88,6 @@ void Parameters::Initialize(string inputfile_){
     //dw_dos, eta_dos
     dw_dos = matchstring(inputfile_, "dw_dos");
     eta_dos = matchstring(inputfile_, "eta_dos");
-    w_min = matchstring(inputfile_, "w_min");
-    w_max = matchstring(inputfile_, "w_max");
 
     alpha_OP = matchstring(inputfile_,"alpha_OP");
     w_minus1 = matchstring(inputfile_,"w_minus1");
@@ -106,25 +101,31 @@ void Parameters::Initialize(string inputfile_){
 
 
 
-    Onsite_E.resize(lx);
-    for(int ix=0;ix<lx;ix++){
-        Onsite_E[ix].resize(ly);
+    Onsite_E.resize(ns);
+    for(int i=0;i<ns;i++){
+        Onsite_E[i].resize(2);
     }
 
     file_onsite_energies_=matchstring2(inputfile_,"File_Onsite_Energies");
     ifstream inputfile_Onsite_Energy(file_onsite_energies_.c_str());
     string line_temp;
-    int ix_temp, iy_temp;
+    int i_temp, spin_temp;
     double onsite_temp;
-    getline(inputfile_Onsite_Energy,line_temp); //#ix iy E[site]
-    for(int iy=0;iy<ly;iy++){
-        for(int ix=0;ix<lx;ix++){
-           inputfile_Onsite_Energy >> ix_temp >> iy_temp >>onsite_temp;
-           assert(iy==iy_temp);
-           assert(ix==ix_temp);
-           Onsite_E[ix][iy]=onsite_temp;
+
+    getline(inputfile_Onsite_Energy,line_temp); //#ix iy spin E[site]
+    if(inputfile_Onsite_Energy.is_open())
+    {
+        while(getline(inputfile_Onsite_Energy,line_temp))
+        {
+            stringstream line_temp_ss(line_temp);
+            line_temp_ss >> i_temp >> spin_temp >> onsite_temp;
+            Onsite_E[i_temp][spin_temp]=onsite_temp;
         }
+        inputfile_Onsite_Energy.close();
     }
+    else
+    {cout<<"Unable to open file = '"<<file_onsite_energies_<<"'"<<endl;}
+
 
 
     //mapping b/w site and ix,iy MUST BE CONSISTENT WITH Numbering_lattice() of Coordinate class.
@@ -132,11 +133,11 @@ void Parameters::Initialize(string inputfile_){
     //spin_UP=0, spin_DN=1
     int site_i, site_j, spin_i, spin_j;
     complex<double> Hopp_temp;
-    LongRangeHoppings.resize(lx*ly*2);
-    for(int basis_=0;basis_<lx*ly*2;basis_++){
-        LongRangeHoppings[basis_].resize(lx*ly*2);
-        for(int basis2=0;basis2<lx*ly*2;basis2++ ){
-          LongRangeHoppings[basis_][basis2]=complex<double> (0.0, 0.0);
+    LongRangeHoppings.resize(ns*2);
+    for(int basis_=0;basis_<ns*2;basis_++){
+        LongRangeHoppings[basis_].resize(ns*2);
+        for(int basis2=0;basis2<ns*2;basis2++ ){
+            LongRangeHoppings[basis_][basis2]=complex<double> (0.0, 0.0);
         }
     }
     file_hopping_connections_=matchstring2(inputfile_,"File_Hopping_Connections");
@@ -147,10 +148,10 @@ void Parameters::Initialize(string inputfile_){
     {
         while(getline(inputfile_hopping_connections,line_temp))
         {
-        stringstream line_temp_ss(line_temp);
-        line_temp_ss >> site_i >> spin_i >> site_j >> spin_j >> Hopp_temp;
-//        cout<< site_i <<"  "<< spin_i <<"  "<< site_j <<"  "<< spin_j <<"  "<< Hopp_temp<<endl;
-        LongRangeHoppings[site_i+(lx*ly*spin_i)][site_j+(lx*ly*spin_j)]=Hopp_temp;
+            stringstream line_temp_ss(line_temp);
+            line_temp_ss >> site_i >> spin_i >> site_j >> spin_j >> Hopp_temp;
+            //        cout<< site_i <<"  "<< spin_i <<"  "<< site_j <<"  "<< spin_j <<"  "<< Hopp_temp<<endl;
+            LongRangeHoppings[site_i+(ns*spin_i)][site_j+(ns*spin_j)]=Hopp_temp;
         }
         inputfile_hopping_connections.close();
     }
@@ -164,11 +165,11 @@ void Parameters::Initialize(string inputfile_){
     // basis_ = ix + lx*(iy) + lx*ly*(spin)
     //spin_UP=0, spin_DN=1
     complex<double> Int_temp;
-    LongRangeInteractions.resize(lx*ly);
-    for(int basis_=0;basis_<lx*ly;basis_++){
-        LongRangeInteractions[basis_].resize(lx*ly);
-        for(int basis2=0;basis2<lx*ly;basis2++ ){
-          LongRangeInteractions[basis_][basis2]=complex<double> (0.0, 0.0);
+    LongRangeInteractions.resize(ns);
+    for(int basis_=0;basis_<ns;basis_++){
+        LongRangeInteractions[basis_].resize(ns);
+        for(int basis2=0;basis2<ns;basis2++ ){
+            LongRangeInteractions[basis_][basis2]=complex<double> (0.0, 0.0);
         }
     }
 
@@ -180,9 +181,9 @@ void Parameters::Initialize(string inputfile_){
     {
         while(getline(inputfile_nonlocal_int_connections,line_temp))
         {
-        stringstream line_temp_ss2(line_temp);
-        line_temp_ss2 >> site_i >> site_j >> Int_temp;
-        LongRangeInteractions[site_i][site_j]=Int_temp;
+            stringstream line_temp_ss2(line_temp);
+            line_temp_ss2 >> site_i >> site_j >> Int_temp;
+            LongRangeInteractions[site_i][site_j]=Int_temp;
         }
         inputfile_nonlocal_int_connections.close();
     }
@@ -210,12 +211,12 @@ void Parameters::Initialize(string inputfile_){
     }
 
     if(BroydenSecondMethodMixing_double==1.0){
-         BroydenSecondMethodMixing=true;
+        BroydenSecondMethodMixing=true;
         Broyden_Mixing=false;
         Simple_Mixing=false;
     }
     else{
-         BroydenSecondMethodMixing=false;
+        BroydenSecondMethodMixing=false;
         if(Broyden_Mixing_double==1.0){
             Broyden_Mixing=true;
             Simple_Mixing=false;
@@ -253,7 +254,7 @@ void Parameters::Initialize(string inputfile_){
     if(Create_OPs_double==1.0){
         assert(!Read_OPs);
         Create_OPs=true;
-    Create_OPs_type=matchstring2(inputfile_,"Create_OPType");
+        Create_OPs_type=matchstring2(inputfile_,"Create_OPType");
     }
     else{
         Create_OPs=false;
@@ -268,7 +269,7 @@ void Parameters::Initialize(string inputfile_){
 
 
     //beta=(11605.0/Temperature);
-     beta=(1.0/Temperature);
+    beta=(1.0/Temperature);
 
     mus=0.25;
     mu_old=0.25;

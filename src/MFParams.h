@@ -13,12 +13,12 @@ class MFParams{
 public:
 
     /* Convention
-index = site + spin*Lx*Ly;
+index = site + spin*N_sites;
 */
     //Define Fields
     Matrix_COO_Complex OParams_;
 
-    Matrix<double> Disorder;
+    Mat_1_doub Disorder;
 
     // Constructor
     MFParams(Parameters& Parameters__, Coordinates&  Coordinates__, mt19937_64& Generator1__ , mt19937_64& Generator2__)
@@ -38,7 +38,7 @@ index = site + spin*Lx*Ly;
     Coordinates &Coordinates_;
     mt19937_64 &Generator1_; //for random fields
     mt19937_64 &Generator2_; //for random disorder
-    int lx_,ly_,ns_, no_dof_;
+    int ns_, no_dof_;
     Mat_1_int SI_to_ind;
 
     uniform_real_distribution<double> dis1_;//for random fields
@@ -66,8 +66,7 @@ double MFParams::random2(){
 
 void MFParams::initialize(){
 
-    lx_=Coordinates_.lx_;
-    ly_=Coordinates_.ly_;
+
     no_dof_=Coordinates_.no_dof_;
     ns_=Coordinates_.ns_;
     int UP_, DOWN_;
@@ -76,7 +75,7 @@ void MFParams::initialize(){
     // srand(Parameters_.RandomSeed);
 
     SI_to_ind.resize(2*ns_*2*ns_);
-    Disorder.resize(lx_,ly_);
+    Disorder.resize(ns_);
     OParams_.nrows=2*ns_;
     OParams_.ncols=2*ns_;
     OParams_.value.clear();
@@ -89,7 +88,7 @@ void MFParams::initialize(){
     ofstream Disorder_conf_file("Disorder_conf_used");
     Disorder_conf_file<<"#seed="<<Parameters_.RandomDisorderSeed<<
                         " for mt19937_64 Generator is used"<<endl;
-    Disorder_conf_file<<"#ix   iy    Dis[ix,iy]"<<endl;
+    Disorder_conf_file<<"#site    Dis[site]"<<endl;
 
     ofstream Initial_OrderParams_file("Initial_OrderParams_values_generated.txt");
 
@@ -163,8 +162,6 @@ void MFParams::initialize(){
             Initial_OrderParams_file<<"#seed="<<Parameters_.RandomSeed<<
                                       " for mt19937_64 Generator is used"<<endl;
 
-
-
         }
         else{
 
@@ -189,15 +186,14 @@ void MFParams::initialize(){
 
         if(file_initial_OP_in.is_open())
         {
-            while(!file_initial_OP_in.eof())
+            while(getline(file_initial_OP_in,line_temp))
             {
-                getline(file_initial_OP_in,line_temp);
                 stringstream line_temp_ss(line_temp);
                 line_temp_ss >> alpha_i >> alpha_j >> val_OP;
                 OParams_.value.push_back(val_OP);
                 OParams_.rows.push_back(alpha_i);
                 OParams_.columns.push_back(alpha_j);
-                SI_to_ind[row_temp + (2*ns_*col_temp)] = OParams_.value.size() - 1;
+                SI_to_ind[alpha_i + (2*ns_*alpha_j)] = OParams_.value.size() - 1;
 
             }
             file_initial_OP_in.close();
@@ -213,36 +209,30 @@ void MFParams::initialize(){
 
     Initial_OrderParams_file<<"#alpha_i alpha_j OParams_[alpha_i][alpha_j]"<<endl;
     for(int alpha=0;alpha<OParams_.value.size();alpha++){
-        Initial_OrderParams_file<<OParams_.rows[alpha]<<setw(15)<<OParams_.columns[alpha]<<setw(15)<<OParams_.value[alpha]<<endl;
+        Initial_OrderParams_file<<OParams_.rows[alpha]<<setw(15)<<OParams_.columns[alpha]<<setw(15)<<"  "<<OParams_.value[alpha]<<endl;
     }
 
 
 
-    int temp_i, temp_j;
+    int temp_j;
     if(Parameters_.ReadDisorder==false){
         cout <<"Disorder conf is initialized using random seed given in input file"<< endl;
-        for(int j=0;j<ly_;j++){
-            for(int i=0;i<lx_;i++){
+        for(int j=0;j<ns_;j++){
                 //RANDOM Disorder
-                Disorder(i,j)=Parameters_.Disorder_Strength*((2.0*random2())-1.0);
-                Disorder_conf_file<<i<<"  "<<j<<"  "<<Disorder(i,j)<<endl;
-            }
-            Disorder_conf_file<<endl;
+                Disorder[j]=Parameters_.Disorder_Strength*((2.0*random2())-1.0);
+                Disorder_conf_file<<j<<"  "<<Disorder[j]<<endl;
         }
     }
     else{
         cout<<"Disorder conf is read from file path given in the input file"<<endl;
         ifstream Disorder_in_file(Parameters_.DisorderSeedFile);
-        for(int j=0;j<ly_;j++){
-            for(int i=0;i<lx_;i++){
+        for(int j=0;j<ns_;j++){
                 //RANDOM Disorder
-                Disorder_in_file>>temp_i>>temp_j>>Disorder(i,j);
-                assert(i==temp_i);
+                Disorder_in_file>>temp_j>>Disorder[j];
                 assert(j==temp_j);
-                Disorder(i,j)=Parameters_.Disorder_Strength*(Disorder(i,j));
-                Disorder_conf_file<<i<<"  "<<j<<"  "<<Disorder(i,j)<<endl;
-            }
-            Disorder_conf_file<<endl;
+                Disorder[j]=Parameters_.Disorder_Strength*(Disorder[j]);
+                Disorder_conf_file<<j<<"  "<<Disorder[j]<<endl;
+
         }
     }
 

@@ -46,14 +46,11 @@ public:
     Parameters &Parameters_;
     Coordinates &Coordinates_;
     MFParams &MFParams_;
-    int lx_, ly_, ns_;
+    int ns_;
     Matrix<complex<double>> HTB_;
     Matrix<complex<double>> Ham_;
     Matrix<double> Tx,Ty,Tpxpy,Tpxmy;
     vector<double> eigs_,eigs_saved_,sx_,sy_,sz_;
-    double DeltaXY_PNICTIDES;
-
-    double HS_factor;
 
 };
 
@@ -160,8 +157,6 @@ double Hamiltonian::chemicalpotential(double muin,double Particles){
 
 void Hamiltonian::Initialize(){
 
-    ly_=Parameters_.ly;
-    lx_=Parameters_.lx;
     ns_=Parameters_.ns;
 
     int space=Coordinates_.no_dof_ ;
@@ -335,8 +330,15 @@ double Hamiltonian::GetCLEnergy(){
     }
 
 
-    assert(abs(EClassical.imag())<0.0000001);
+
+    if(abs(EClassical.imag())>=0.0000001){
+        cout<<"EClassical.imag() = "<< EClassical.imag()<<endl;
+        assert(abs(EClassical.imag())<0.0000001);
+    }
     EClassical_doub = EClassical.real();
+
+
+
     return EClassical_doub;
 
 } // ----------
@@ -547,12 +549,21 @@ void Hamiltonian::HTBCreate(){
 
     int UP_, DOWN_;
     UP_=0;DOWN_=1;
+    int ind_temp;
 
     for(int i=0;i<space;i++) {
         for(int j=0;j<space;j++) {
             HTB_(i,j)= Parameters_.LongRangeHoppings[i][j];
         }
     }
+
+    for(int i=0;i<ns_;i++){
+            for(int spin=0;spin<2;spin++){
+                ind_temp = Coordinates_.Nc_dof(i,spin);
+                HTB_(ind_temp,ind_temp) +=Parameters_.Onsite_E[i][spin];
+            }
+    }
+
 
 
 } // ----------

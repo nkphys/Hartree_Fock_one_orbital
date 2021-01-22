@@ -1,0 +1,5 @@
+# TO run for specific model
+1) ./CreateConnections ModelName modelinput.inp # this will create long range files for Self Consistent
+2) ./SelfConsistent input.inp  # with correct long range files
+3) ./observe Modelname input.inp modelinput.inp # This will run model's internal observe
+

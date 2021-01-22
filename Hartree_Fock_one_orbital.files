@@ -10,4 +10,12 @@ src/Observables.h
 src/ParametersEngine.h
 src/SelfConsistencyEngine.h
 src/tensor_type.h
+src/Models/LiebLattice/Connections_LL.h
+src/Models/LiebLattice/Coordinates_LL.h
+src/Models/LiebLattice/Observables_LL.h
+src/Models/LiebLattice/Parameters_LL.h
+src/Models/SquareLattice/Connections_SQL.h
+src/Models/SquareLattice/Coordinates_SQL.h
+src/Models/SquareLattice/Observables_SQL.h
+src/Models/SquareLattice/Parameters_SQL.h
 main.cpp
