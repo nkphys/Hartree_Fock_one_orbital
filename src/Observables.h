@@ -57,6 +57,7 @@ public:
     void Total_Energy_Average(double Curr_QuantE, double CurrE);
 
     void Calculate_Local_n_orb_resolved();
+    void Calculate_Local_spins_resolved();
     void Calculate_Order_Params();
     void Get_OrderParameters_diffs();
     void Update_OrderParameters(int iter);
@@ -99,7 +100,7 @@ public:
     double AVG_Total_Energy, AVG_Total_Energy_sqr;
 
 
-    //Declare Broyden_Mixing vectors
+    //Declare Broyden_Mixing vectors, if Mapped_ro_real==true
     vector<double> F_n; //F_n=x_n_out - x_n_in []
     vector<double> F_nm1;
     vector<double> DeltaF_n; //DeltaF_n=F_n - F-nm1;
@@ -107,6 +108,15 @@ public:
     Mat_2_doub Jinv_n;
     Mat_2_doub Jinv_np1;
 
+
+
+    //Declare Broyden_Mixing vectors, if Mapped_ro_real==false
+    vector<complex<double>> F_n_; //F_n=x_n_out - x_n_in []
+    vector<complex<double>> F_nm1_;
+    vector<complex<double>> DeltaF_n_; //DeltaF_n=F_n - F-nm1;
+    vector<complex<double>> Delta_x_n_; //Delta_x_n= x_n_in - x_nm1_in;
+    Mat_2_Complex_doub Jinv_n_;
+    Mat_2_Complex_doub Jinv_np1_;
 
     //Declarations for Second Broyden Method
     Mat_2_doub _Delta_F;
@@ -240,6 +250,11 @@ void Observables::Hartree_Filter(){
 void Observables::Update_OrderParameters(int iter){
 
 
+    int UP_, DOWN_;
+    UP_=0;DOWN_=1;
+    bool Mapped_to_real=true;
+    bool Good_Broyden=true; //If Good is false it runs Bad broyden
+
     //Simple mixing
     double alpha_OP=Parameters_.alpha_OP;
 
@@ -287,205 +302,512 @@ void Observables::Update_OrderParameters(int iter){
         }
     }
 
+    //    int no_local_ops;
+    //    if(Parameters_.Restricted_HF){
+    //        no_local_ops=Parameters_.CDW_Ansatz_sites.size();
+    //    }
+    //    else{
+    //         no_local_ops=ns_;
+    //    }
+
     assert(NewInd_to_OldInd.size()==MFParams_.OParams_.value.size() + (MFParams_.OParams_.value.size() - 2*ns_));
 
-    Offset_=MFParams_.OParams_.value.size();
-    int size_vecs;
-    size_vecs=NewInd_to_OldInd.size();
-    vector<double> vec_V, vec_U;
-    double Denominator_;
-    vector<double> vec_L;
+
+
 
 
 
     if(Parameters_.Broyden_Mixing==true){
         //assert(false);
 
-        if(iter==0){
+        if(Mapped_to_real){
+            vector<double> vec_V, vec_U;
+            double Denominator_;
+            vector<double> vec_L;
+            Offset_=MFParams_.OParams_.value.size();
+            int size_vecs;
+            size_vecs=NewInd_to_OldInd.size();
+            if(iter==0){
+
+                //Initializing:
+                F_n.resize(size_vecs); //F_n=x_n_out - x_n_in []
+                F_nm1.resize(size_vecs);
+                DeltaF_n.resize(size_vecs); //DeltaF_n=F_n - F-nm1;
+                Delta_x_n.resize(size_vecs); //Delta_x_n= x_n_in - x_nm1_in;
+                Jinv_n.resize(size_vecs);
+                Jinv_np1.resize(size_vecs);
+
+                _Fm.resize((size_vecs));
+                _Delta_OPm.resize(size_vecs);
+                _Fm_minus1.resize(size_vecs);
+                _Delta_OPm_minus1.resize(size_vecs);
+
+                for(int i=0;i<size_vecs;i++){
+                    Jinv_n[i]. resize(size_vecs);
+                    Jinv_np1[i]. resize(size_vecs);
+                }
+                //----------------------------------
+                cout<<"Using Broyden Mixing to gain Self-Consistency"<<endl;
 
 
-            //Initializing:
-            F_n.resize(size_vecs); //F_n=x_n_out - x_n_in []
-            F_nm1.resize(size_vecs);
-            DeltaF_n.resize(size_vecs); //DeltaF_n=F_n - F-nm1;
-            Delta_x_n.resize(size_vecs); //Delta_x_n= x_n_in - x_nm1_in;
-            Jinv_n.resize(size_vecs);
-            Jinv_np1.resize(size_vecs);
+                //Get Jinv_np1
+                for(int i=0;i<size_vecs;i++){
+                    for(int j=0;j<size_vecs;j++){
+                        if(i==j){
+                            Jinv_np1[i][j]=-1.0*alpha_OP;
+                        }
+                        else{
+                            Jinv_np1[i][j]=0.0;
+                        }
+                    }}
 
-            _Fm.resize((size_vecs));
-            _Delta_OPm.resize(size_vecs);
-            _Fm_minus1.resize(size_vecs);
-            _Delta_OPm_minus1.resize(size_vecs);
-
-            for(int i=0;i<size_vecs;i++){
-                Jinv_n[i]. resize(size_vecs);
-                Jinv_np1[i]. resize(size_vecs);
-            }
-            //----------------------------------
-            cout<<"Using Broyden Mixing to gain Self-Consistency"<<endl;
-
-
-            //Get Jinv_np1
-            for(int i=0;i<size_vecs;i++){
-                for(int j=0;j<size_vecs;j++){
-                    if(i==j){
-                        Jinv_np1[i][j]=-1.0*alpha_OP;
+                //Get F_n
+                for(int new_ind=0;new_ind<size_vecs;new_ind++){
+                    old_ind=NewInd_to_OldInd[new_ind];
+                    if(new_ind<OParams.value.size()){
+                        F_n[new_ind]= (OParams.value[old_ind] - MFParams_.OParams_.value[old_ind]).real();
                     }
                     else{
-                        Jinv_np1[i][j]=0.0;
+                        F_n[new_ind] =  (OParams.value[old_ind] - MFParams_.OParams_.value[old_ind]).imag();
                     }
-                }}
+                }
 
-            //Get F_n
-            for(int new_ind=0;new_ind<size_vecs;new_ind++){
-                old_ind=NewInd_to_OldInd[new_ind];
-                if(new_ind<OParams.value.size()){
-                    F_n[new_ind]= (OParams.value[old_ind] - MFParams_.OParams_.value[old_ind]).real();
+
+
+                for(int i=0;i<size_vecs;i++){
+                    Delta_x_n[i] =0.0;
+                    for(int j=0;j<size_vecs;j++){
+                        Delta_x_n[i] +=  -1.0*Jinv_np1[i][j]*F_n[j];
+                    }
                 }
-                else{
-                    F_n[new_ind] =  (OParams.value[old_ind] - MFParams_.OParams_.value[old_ind]).imag();
+
+
+                for(int new_ind=0;new_ind<size_vecs;new_ind++){
+                    old_ind=NewInd_to_OldInd[new_ind];
+                    if(new_ind<OParams.value.size()){
+                        MFParams_.OParams_.value[old_ind].real( MFParams_.OParams_.value[old_ind].real() + Delta_x_n[new_ind]);
+                    }
+                    else{
+                        MFParams_.OParams_.value[old_ind].imag( MFParams_.OParams_.value[old_ind].imag() + Delta_x_n[new_ind]);
+                    }
                 }
+
+                //Copy Jinv_np1 to Jinv_n
+                Jinv_n = Jinv_np1;
+
+                //Copy F_n to F_nm1
+                F_nm1=F_n;
+            }
+            else{
+                //Get F_n
+                for(int new_ind=0;new_ind<size_vecs;new_ind++){
+                    old_ind=NewInd_to_OldInd[new_ind];
+                    if(new_ind<OParams.value.size()){
+                        F_n[new_ind]= (OParams.value[old_ind] - MFParams_.OParams_.value[old_ind]).real();
+                    }
+                    else{
+                        F_n[new_ind] =  (OParams.value[old_ind] - MFParams_.OParams_.value[old_ind]).imag();
+                    }
+                }
+
+                //Get DeltaF_n
+                for (int i=0;i<size_vecs;i++){
+                    DeltaF_n[i] = F_n[i] - F_nm1[i];
+                }
+
+                //Get vec_V = Jinv_n*DeltaF_n
+                vec_V.clear();
+                vec_V.resize(size_vecs);
+
+                for(int i=0;i<size_vecs;i++){
+                    vec_V[i] =0.0;
+                    for(int j=0;j<size_vecs;j++){
+                        vec_V[i] += Jinv_n[i][j]*DeltaF_n[j];
+                    }
+                }
+
+                //Get vec_U = Delta_x_n^dagg*Jinv_n
+                vec_U.clear();
+                vec_U.resize(size_vecs);
+
+                for(int i=0;i<size_vecs;i++){
+                    vec_U[i] =0.0;
+                    for(int j=0;j<size_vecs;j++){
+                        vec_U[i] += Delta_x_n[j]*Jinv_n[j][i];
+                    }
+                }
+
+                // Get Denominator_=<Delta_x_n|vec_V>
+                Denominator_=0.0;
+                for(int i=0;i<size_vecs;i++){
+                    if(Good_Broyden){
+                        Denominator_ +=Delta_x_n[i]*vec_V[i]; //Good
+                    }
+                    else{
+                        Denominator_ +=DeltaF_n[i]*DeltaF_n[i];  //"Bad broyden"}
+                    }
+                }
+
+                //Get vec_L=  Delta_x_n - vec_V;
+                vec_L.clear();
+                vec_L.resize(size_vecs);
+                for(int i=0;i<size_vecs;i++){
+                    vec_L[i] = Delta_x_n[i] - vec_V[i];
+                }
+
+
+                //Get Mat_Temp [Remember to clear later on];
+                Mat_2_doub Mat_Temp;
+                Mat_Temp.resize(size_vecs);
+                for(int i=0;i<size_vecs;i++){
+                    Mat_Temp[i].resize(size_vecs);
+                    for(int j=0;j<size_vecs;j++){
+                        if(Good_Broyden){
+                            Mat_Temp[i][j] = (vec_L[i]*vec_U[j])/(Denominator_); //Good
+                        }
+                        else{
+                            Mat_Temp[i][j] = (vec_L[i]*DeltaF_n[j])/(Denominator_); //Bad
+                        }
+                    }
+                }
+
+
+                //Get Jinv_np1
+                for(int i=0;i<size_vecs;i++){
+                    for(int j=0;j<size_vecs;j++){
+                        Jinv_np1[i][j]  = Jinv_n[i][j]  + Mat_Temp[i][j];
+                    }
+                }
+
+                for(int i=0;i<size_vecs;i++){
+                    Delta_x_n[i] =0.0;
+                    for(int j=0;j<size_vecs;j++){
+                        Delta_x_n[i] +=  -1.0*Jinv_np1[i][j]*F_n[j];
+                    }
+                }
+
+
+                for(int new_ind=0;new_ind<size_vecs;new_ind++){
+                    old_ind=NewInd_to_OldInd[new_ind];
+                    if(new_ind<OParams.value.size()){
+                        MFParams_.OParams_.value[old_ind].real( MFParams_.OParams_.value[old_ind].real() + Delta_x_n[new_ind]);
+                    }
+                    else{
+                        MFParams_.OParams_.value[old_ind].imag( MFParams_.OParams_.value[old_ind].imag() + Delta_x_n[new_ind]);
+                    }
+                }
+
+
+                //Copy Jinv_np1 to Jinv_n
+                Jinv_n = Jinv_np1;
+
+                //Copy F_n to F_nm1
+                F_nm1=F_n;
+
+
+                //Clear Mat_Temp
+                for(int i=0;i<size_vecs;i++){
+                    Mat_Temp[i].clear();
+                }
+                Mat_Temp.clear();
             }
 
-
-
-            for(int i=0;i<size_vecs;i++){
-                Delta_x_n[i] =0.0;
-                for(int j=0;j<size_vecs;j++){
-                    Delta_x_n[i] +=  -1.0*Jinv_np1[i][j]*F_n[j];
-                }
-            }
-
-
-            for(int new_ind=0;new_ind<size_vecs;new_ind++){
-                old_ind=NewInd_to_OldInd[new_ind];
-                if(new_ind<OParams.value.size()){
-                    MFParams_.OParams_.value[old_ind].real( MFParams_.OParams_.value[old_ind].real() + Delta_x_n[new_ind]);
-                }
-                else{
-                    MFParams_.OParams_.value[old_ind].imag( MFParams_.OParams_.value[old_ind].imag() + Delta_x_n[new_ind]);
-                }
-            }
-
-            //Copy Jinv_np1 to Jinv_n
-            Jinv_n = Jinv_np1;
-
-            //Copy F_n to F_nm1
-            F_nm1=F_n;
         }
 
         else{
-            //Get F_n
+            vector<complex<double>> vec_V, vec_U;
+            complex<double> Denominator_;
+            vector<complex<double>> vec_L;
+            int size_vecs;
+            size_vecs=MFParams_.OParams_.value.size();
+            if(iter==0){
+
+                //Initializing:
+                F_n_.resize(size_vecs); //F_n=x_n_out - x_n_in []
+                F_nm1_.resize(size_vecs);
+                DeltaF_n_.resize(size_vecs); //DeltaF_n=F_n - F-nm1;
+                Delta_x_n_.resize(size_vecs); //Delta_x_n= x_n_in - x_nm1_in;
+                Jinv_n_.resize(size_vecs);
+                Jinv_np1_.resize(size_vecs);
+
+                //                _Fm.resize((size_vecs));
+                //                _Delta_OPm.resize(size_vecs);
+                //                _Fm_minus1.resize(size_vecs);
+                //                _Delta_OPm_minus1.resize(size_vecs);
+
+                for(int i=0;i<size_vecs;i++){
+                    Jinv_n_[i]. resize(size_vecs);
+                    Jinv_np1_[i]. resize(size_vecs);
+                }
+                //----------------------------------
+                cout<<"Using Broyden Mixing to gain Self-Consistency"<<endl;
+
+
+                //Get Jinv_np1
+                for(int i=0;i<size_vecs;i++){
+                    for(int j=0;j<size_vecs;j++){
+                        if(i==j){
+                            Jinv_np1_[i][j]=-1.0*alpha_OP;
+                        }
+                        else{
+                            Jinv_np1_[i][j]=0.0;
+                        }
+                    }}
+
+                //Get F_n
+                for(int new_ind=0;new_ind<size_vecs;new_ind++){
+                    F_n_[new_ind]= OParams.value[new_ind] - MFParams_.OParams_.value[new_ind];
+                }
+
+
+
+                for(int i=0;i<size_vecs;i++){
+                    Delta_x_n_[i] =0.0;
+                    for(int j=0;j<size_vecs;j++){
+                        Delta_x_n_[i] +=  -1.0*Jinv_np1_[i][j]*F_n_[j];
+                    }
+                }
+
+
+                for(int new_ind=0;new_ind<size_vecs;new_ind++){
+                    MFParams_.OParams_.value[new_ind] +=  MFParams_.OParams_.value[new_ind] + Delta_x_n_[new_ind];
+                }
+
+                //Copy Jinv_np1 to Jinv_n
+                Jinv_n_ = Jinv_np1_;
+
+                //Copy F_n to F_nm1
+                F_nm1_=F_n_;
+            }
+            else{
+                //Get F_n
+                for(int new_ind=0;new_ind<size_vecs;new_ind++){
+                    F_n_[new_ind]= (OParams.value[new_ind] - MFParams_.OParams_.value[new_ind]);
+                }
+
+                //Get DeltaF_n
+                for (int i=0;i<size_vecs;i++){
+                    DeltaF_n_[i] = F_n_[i] - F_nm1_[i];
+                }
+
+                //Get vec_V = Jinv_n*|DeltaF_n>
+                vec_V.clear();
+                vec_V.resize(size_vecs);
+
+                for(int i=0;i<size_vecs;i++){
+                    vec_V[i] =0.0;
+                    for(int j=0;j<size_vecs;j++){
+                        vec_V[i] += Jinv_n_[i][j]*DeltaF_n_[j];
+                    }
+                }
+
+                //Get |vec_U> = (J_inv_n)^dagger|Delta_x_n>
+                vec_U.clear();
+                vec_U.resize(size_vecs);
+
+                for(int i=0;i<size_vecs;i++){
+                    vec_U[i] =0.0;
+                    for(int j=0;j<size_vecs;j++){
+                        vec_U[i] += (conj(Jinv_n_[j][i]))*Delta_x_n_[j];
+                    }
+                }
+
+                // Get Denominator_=<Delta_x_n|vec_V>
+                Denominator_=0.0;
+                for(int i=0;i<size_vecs;i++){
+                    if(Good_Broyden){
+                        Denominator_ +=conj(Delta_x_n_[i])*vec_V[i]; //Good Broyden
+                    }
+                    else{
+                        Denominator_ +=conj(DeltaF_n_[i])*DeltaF_n_[i];  //"Bad broyden"
+                    }
+                }
+
+
+                //Get vec_L=  Delta_x_n - vec_V;
+                vec_L.clear();
+                vec_L.resize(size_vecs);
+                for(int i=0;i<size_vecs;i++){
+                    vec_L[i] = Delta_x_n_[i] - vec_V[i];
+                }
+
+
+                //Get Mat_Temp [Remember to clear later on];
+                Mat_2_Complex_doub Mat_Temp;
+                Mat_Temp.resize(size_vecs);
+                for(int i=0;i<size_vecs;i++){
+                    Mat_Temp[i].resize(size_vecs);
+                    for(int j=0;j<size_vecs;j++){
+                        if(Good_Broyden){
+                            Mat_Temp[i][j] = (vec_L[i]*conj(vec_U[j]))/(Denominator_); //Good Broyden
+                        }
+                        else{
+                            Mat_Temp[i][j] = (vec_L[i]*conj(DeltaF_n_[j]))/(Denominator_); //Bad Broyden
+                        }
+                    }
+                }
+
+
+                //Get Jinv_np1
+                for(int i=0;i<size_vecs;i++){
+                    for(int j=0;j<size_vecs;j++){
+                        Jinv_np1_[i][j]  = Jinv_n_[i][j]  + Mat_Temp[i][j];
+                    }
+                }
+
+                for(int i=0;i<size_vecs;i++){
+                    Delta_x_n_[i] =0.0;
+                    for(int j=0;j<size_vecs;j++){
+                        Delta_x_n_[i] +=  -1.0*Jinv_np1_[i][j]*F_n_[j];
+                    }
+                }
+
+
+                for(int new_ind=0;new_ind<size_vecs;new_ind++){
+                    MFParams_.OParams_.value[new_ind] +=  MFParams_.OParams_.value[new_ind] + Delta_x_n_[new_ind];
+                }
+
+
+                //Copy Jinv_np1 to Jinv_n
+                Jinv_n_ = Jinv_np1_;
+
+                //Copy F_n to F_nm1
+                F_nm1_=F_n_;
+
+
+                //Clear Mat_Temp
+                for(int i=0;i<size_vecs;i++){
+                    Mat_Temp[i].clear();
+                }
+                Mat_Temp.clear();
+            }
+
             for(int new_ind=0;new_ind<size_vecs;new_ind++){
-                old_ind=NewInd_to_OldInd[new_ind];
-                if(new_ind<OParams.value.size()){
-                    F_n[new_ind]= (OParams.value[old_ind] - MFParams_.OParams_.value[old_ind]).real();
-                }
-                else{
-                    F_n[new_ind] =  (OParams.value[old_ind] - MFParams_.OParams_.value[old_ind]).imag();
+                if(MFParams_.OParams_.rows[new_ind]==MFParams_.OParams_.columns[new_ind]){
+                    MFParams_.OParams_.value[new_ind].imag(0.0);
                 }
             }
 
-            //Get DeltaF_n
-            for (int i=0;i<size_vecs;i++){
-                DeltaF_n[i] = F_n[i] - F_nm1[i];
-            }
-
-            //Get vec_V = Jinv_n*DeltaF_n
-            vec_V.clear();
-            vec_V.resize(size_vecs);
-
-            for(int i=0;i<size_vecs;i++){
-                vec_V[i] =0.0;
-                for(int j=0;j<size_vecs;j++){
-                    vec_V[i] += Jinv_n[i][j]*DeltaF_n[j];
-                }
-            }
-
-            //Get vec_U = Delta_x_n^dagg*Jinv_n
-            vec_U.clear();
-            vec_U.resize(size_vecs);
-
-            for(int i=0;i<size_vecs;i++){
-                vec_U[i] =0.0;
-                for(int j=0;j<size_vecs;j++){
-                    vec_U[i] += Delta_x_n[j]*Jinv_n[j][i];
-                }
-            }
-
-            // Get Denominator_=<Delta_x_n|vec_V>
-            Denominator_=0.0;
-            for(int i=0;i<size_vecs;i++){
-                Denominator_ +=Delta_x_n[i]*vec_V[i];
-            }
-
-
-            //Get vec_L=  Delta_x_n - vec_V;
-            vec_L.clear();
-            vec_L.resize(size_vecs);
-            for(int i=0;i<size_vecs;i++){
-                vec_L[i] = Delta_x_n[i] - vec_V[i];
-            }
-
-
-            //Get Mat_Temp [Remember to clear later on];
-            Mat_2_doub Mat_Temp;
-            Mat_Temp.resize(size_vecs);
-            for(int i=0;i<size_vecs;i++){
-                Mat_Temp[i].resize(size_vecs);
-                for(int j=0;j<size_vecs;j++){
-                    Mat_Temp[i][j] = (vec_L[i]*vec_U[j])/(Denominator_);
-                }
-            }
-
-
-            //Get Jinv_np1
-
-            for(int i=0;i<size_vecs;i++){
-                for(int j=0;j<size_vecs;j++){
-                    Jinv_np1[i][j]  = Jinv_n[i][j]  + Mat_Temp[i][j];
-                }
-            }
-
-            for(int i=0;i<size_vecs;i++){
-                Delta_x_n[i] =0.0;
-                for(int j=0;j<size_vecs;j++){
-                    Delta_x_n[i] +=  -1.0*Jinv_np1[i][j]*F_n[j];
-                }
-            }
-
-
-            for(int new_ind=0;new_ind<size_vecs;new_ind++){
-                old_ind=NewInd_to_OldInd[new_ind];
-                if(new_ind<OParams.value.size()){
-                    MFParams_.OParams_.value[old_ind].real( MFParams_.OParams_.value[old_ind].real() + Delta_x_n[new_ind]);
-                }
-                else{
-                    MFParams_.OParams_.value[old_ind].imag( MFParams_.OParams_.value[old_ind].imag() + Delta_x_n[new_ind]);
-                }
-            }
-
-
-            //Copy Jinv_np1 to Jinv_n
-            Jinv_n = Jinv_np1;
-
-            //Copy F_n to F_nm1
-            F_nm1=F_n;
-
-
-            //Clear Mat_Temp
-            for(int i=0;i<size_vecs;i++){
-                Mat_Temp[i].clear();
-            }
-            Mat_Temp.clear();
         }
 
-
-
-
-
-
     }
+
+
+
+    //-----------------Ansatz_Filter
+
+    if(Parameters_.Restricted_HF && false){
+        int row_temp, col_temp, ind;
+        complex<double> comp_temp, value_temp, ni_up, ni_dn, sz_i;
+
+        if(Parameters_.Ansatz=="Given_CDW"){
+
+            Parameters_.A_charge_modulation = 0.0;
+            for(int site_i=0;site_i<ns_;site_i++){
+
+                value_temp=0.0;
+                for(int spin_i=0;spin_i<2;spin_i++){
+                    row_temp = Coordinates_.Nc_dof(site_i, spin_i);
+                    ind =MFParams_.SI_to_ind[row_temp + (2*ns_*row_temp)];
+                    value_temp +=MFParams_.OParams_.value[ind];
+                }
+                Parameters_.A_charge_modulation += abs((value_temp -0.5)*(1.0/Parameters_.CDW_Ansatz_sites[site_i]));
+            }
+            Parameters_.A_charge_modulation = (1.0/ns_)*Parameters_.A_charge_modulation;
+
+            if(Parameters_.A_charge_modulation > 0.5){
+                //cout <<"Parameters_.A_charge_modulation = "<<Parameters_.A_charge_modulation<<endl;
+                assert(Parameters_.A_charge_modulation <= 0.5);
+                Parameters_.A_charge_modulation=0.5;
+            }
+
+            for(int site_i=0;site_i<ns_;site_i++){
+                for(int site_j=0;site_j<ns_;site_j++){
+
+                    if(site_i!=site_j){
+                        if(abs(Parameters_.LongRangeInteractions[site_i][site_j])>0.0000001){
+
+                            for(int spin_i=0;spin_i<2;spin_i++){
+                                for(int spin_j=spin_i;spin_j<2;spin_j++){
+                                    row_temp = Coordinates_.Nc_dof(site_i, spin_i);
+                                    col_temp = Coordinates_.Nc_dof(site_j, spin_j);
+
+                                    if(spin_i==spin_j){
+                                        if(site_j>site_i){
+                                            comp_temp.real(0.0);
+                                            comp_temp.imag(0.0);
+                                            MFParams_.OParams_.value[MFParams_.SI_to_ind[row_temp + (2*ns_*col_temp)]]=comp_temp;
+                                            assert(MFParams_.OParams_.rows[MFParams_.SI_to_ind[row_temp + (2*ns_*col_temp)]]==row_temp);
+                                            assert(MFParams_.OParams_.columns[MFParams_.SI_to_ind[row_temp + (2*ns_*col_temp)]]==col_temp);
+
+
+                                        }
+                                    }
+                                    else{
+                                        comp_temp.real(0.0);
+                                        comp_temp.imag(0.0);
+                                        MFParams_.OParams_.value[MFParams_.SI_to_ind[row_temp + (2*ns_*col_temp)]]=comp_temp;
+                                        assert(MFParams_.OParams_.rows[MFParams_.SI_to_ind[row_temp + (2*ns_*col_temp)]]==row_temp);
+                                        assert(MFParams_.OParams_.columns[MFParams_.SI_to_ind[row_temp + (2*ns_*col_temp)]]==col_temp);
+
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else{
+                        int spin_i_, spin_j_;
+
+                        //Get ni_up
+                        spin_j_=UP_;
+                        spin_i_=UP_;
+                        row_temp = Coordinates_.Nc_dof(site_i, spin_i_);
+                        col_temp = Coordinates_.Nc_dof(site_j, spin_j_);
+                        ni_up = MFParams_.OParams_.value[MFParams_.SI_to_ind[row_temp + (2*ns_*col_temp)]];
+
+                        //Get ni_dn
+                        spin_j_=DOWN_;
+                        spin_i_=DOWN_;
+                        row_temp = Coordinates_.Nc_dof(site_i, spin_i_);
+                        col_temp = Coordinates_.Nc_dof(site_j, spin_j_);
+                        ni_dn = MFParams_.OParams_.value[MFParams_.SI_to_ind[row_temp + (2*ns_*col_temp)]];
+
+                        //Get sz_i
+                        sz_i = (ni_up -ni_dn)*0.5;
+                        if(abs(sz_i.real()) > 0.5*(0.5 + Parameters_.A_charge_modulation*Parameters_.CDW_Ansatz_sites[site_i])){
+                            //sz_i= sz_i*(0.5/abs(sz_i));
+                            //assert(sz_i.real() <= 0.5*(0.5 + Parameters_.A_charge_modulation*Parameters_.CDW_Ansatz_sites[site_i]));
+                        }
+                        //
+
+                        //UP, UP
+                        value_temp = 0.5*(0.5 + Parameters_.A_charge_modulation*Parameters_.CDW_Ansatz_sites[site_i]) + sz_i;
+                        spin_j_=UP_;
+                        spin_i_=UP_;
+                        row_temp = Coordinates_.Nc_dof(site_i, spin_i_);
+                        col_temp = Coordinates_.Nc_dof(site_j, spin_j_);
+                        MFParams_.OParams_.value[MFParams_.SI_to_ind[row_temp + (2*ns_*col_temp)]]=value_temp;
+                        assert(MFParams_.OParams_.rows[MFParams_.SI_to_ind[row_temp + (2*ns_*col_temp)]]==row_temp);
+                        assert(MFParams_.OParams_.columns[MFParams_.SI_to_ind[row_temp + (2*ns_*col_temp)]]==col_temp);
+
+                        //DOWN, DOWN
+                        value_temp = 0.5*(0.5 + Parameters_.A_charge_modulation*Parameters_.CDW_Ansatz_sites[site_i]) - sz_i;
+                        spin_j_=DOWN_;
+                        spin_i_=DOWN_;
+                        row_temp = Coordinates_.Nc_dof(site_i, spin_i_);
+                        col_temp = Coordinates_.Nc_dof(site_j, spin_j_);
+                        MFParams_.OParams_.value[MFParams_.SI_to_ind[row_temp + (2*ns_*col_temp)]]=value_temp;
+                        assert(MFParams_.OParams_.rows[MFParams_.SI_to_ind[row_temp + (2*ns_*col_temp)]]==row_temp);
+                        assert(MFParams_.OParams_.columns[MFParams_.SI_to_ind[row_temp + (2*ns_*col_temp)]]==col_temp);
+                    }
+                }
+            }
+        }
+    }
+    //--------------Ansatz filter
+
+
+
 
 }
 
@@ -785,34 +1107,88 @@ void Observables::Calculate_Local_n_orb_resolved(){
         Parameters_.Total_Particles = N_total_temp;}
 
 
-       Mat_1_doub Spin_den_Avg;
-       Spin_den_Avg.resize(2);
-       string File_Out_Local_orb_densities = "Local_spin_resolved_densities.txt";
-       ofstream file_out_Local_orb_densities(File_Out_Local_orb_densities.c_str());
-       file_out_Local_orb_densities<<"#site   up   dn"<<endl;
-       for(int site_i=0;site_i<ns_;site_i++){
+    Mat_1_doub Spin_den_Avg;
+    Spin_den_Avg.resize(2);
+    string File_Out_Local_orb_densities = "Local_spin_resolved_densities.txt";
+    ofstream file_out_Local_orb_densities(File_Out_Local_orb_densities.c_str());
+    file_out_Local_orb_densities<<"#site   up   dn"<<endl;
+    for(int site_i=0;site_i<ns_;site_i++){
 
-               file_out_Local_orb_densities<<site_i;
-                   for(int spin=0;spin<2;spin++){
-                       c1=Coordinates_.Nc_dof(site_i,spin);
-                       file_out_Local_orb_densities<<setw(15)<<Local_n_orb_resolved[c1];
-                       Spin_den_Avg[spin] +=Local_n_orb_resolved[c1];
-                   }
-           file_out_Local_orb_densities<<endl;
-       }
+        file_out_Local_orb_densities<<site_i;
+        for(int spin=0;spin<2;spin++){
+            c1=Coordinates_.Nc_dof(site_i,spin);
+            file_out_Local_orb_densities<<setw(15)<<Local_n_orb_resolved[c1];
+            Spin_den_Avg[spin] +=Local_n_orb_resolved[c1];
+        }
+        file_out_Local_orb_densities<<endl;
+    }
 
-       for(int spin=0;spin<2;spin++){
-         Spin_den_Avg[spin] = Spin_den_Avg[spin]*(1.0/(1.0*ns_));
-         cout<<"Spin "<<spin<<" avg. den = "<<Spin_den_Avg[spin]<<endl;
-       }
-       Avg_local_Nup = Spin_den_Avg[0];
-       Avg_local_Ndn = Spin_den_Avg[1];
+    for(int spin=0;spin<2;spin++){
+        Spin_den_Avg[spin] = Spin_den_Avg[spin]*(1.0/(1.0*ns_));
+        cout<<"Spin "<<spin<<" avg. den = "<<Spin_den_Avg[spin]<<endl;
+    }
+    Avg_local_Nup = Spin_den_Avg[0];
+    Avg_local_Ndn = Spin_den_Avg[1];
 
 
 
 
 }
 
+void Observables::Calculate_Local_spins_resolved(){
+
+    string fileoutLocalS="LocalS_HF.txt";
+    ofstream LocalS(fileoutLocalS.c_str());
+    double sz, sx, sy;
+    int UP_=0;
+    int DOWN_=1;
+
+
+    int c1, c2;
+    for(int site=0;site<ns_;site++){
+
+        //sz
+        sz=0.0;
+        c1=Coordinates_.Nc_dof(site,UP_);
+        c2=Coordinates_.Nc_dof(site,DOWN_);
+        for(int n=0;n<Hamiltonian_.eigs_.size();n++){
+            sz += 0.5*(
+                        ( (conj(Hamiltonian_.Ham_(c1,n))*Hamiltonian_.Ham_(c1,n))
+                          - (conj(Hamiltonian_.Ham_(c2,n))*Hamiltonian_.Ham_(c2,n))
+                          )*
+                        (1.0/( exp((Hamiltonian_.eigs_[n]-Parameters_.mus)*Parameters_.beta ) + 1.0))
+                        ).real();
+        }
+
+        //sx
+        sx=0.0;
+        c1=Coordinates_.Nc_dof(site,UP_);
+        c2=Coordinates_.Nc_dof(site,DOWN_);
+        for(int n=0;n<Hamiltonian_.eigs_.size();n++){
+            sx += (( conj(Hamiltonian_.Ham_(c2,n))*Hamiltonian_.Ham_(c1,n)
+                       )*
+                        (1.0/( exp((Hamiltonian_.eigs_[n]-Parameters_.mus)*Parameters_.beta ) + 1.0))
+                        ).real();
+        }
+
+        //sy
+        sy=0.0;
+        c1=Coordinates_.Nc_dof(site,UP_);
+        c2=Coordinates_.Nc_dof(site,DOWN_);
+        for(int n=0;n<Hamiltonian_.eigs_.size();n++){
+            sy += (( conj(Hamiltonian_.Ham_(c2,n))*Hamiltonian_.Ham_(c1,n)
+                       )*
+                        (1.0/( exp((Hamiltonian_.eigs_[n]-Parameters_.mus)*Parameters_.beta ) + 1.0))
+                        ).imag();
+        }
+
+
+       // LocalS<<site<<setw(15)<<sz<<setw(15)<<sx<<setw(15)<<sy<<endl;
+         LocalS<<site<<"  "<<sz<<"  "<<sx<<"   "<<sy<<endl;
+
+    }
+
+}
 void Observables::Calculate_Order_Params(){
 
 
@@ -840,7 +1216,6 @@ void Observables::Calculate_Order_Params(){
         OParams.value[ind]=val_;
 
     }
-
 
     //checking Hermiticity of order parameters
 
@@ -893,7 +1268,6 @@ void Observables::Calculate_Nw()
     }
     spectrum.close();
 }
-
 
 
 

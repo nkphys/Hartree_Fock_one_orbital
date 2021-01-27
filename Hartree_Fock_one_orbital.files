@@ -14,6 +14,10 @@ src/Models/LiebLattice/Connections_LL.h
 src/Models/LiebLattice/Coordinates_LL.h
 src/Models/LiebLattice/Observables_LL.h
 src/Models/LiebLattice/Parameters_LL.h
+src/Models/DiceLattice/Connections_DL.h
+src/Models/DiceLattice/Coordinates_DL.h
+src/Models/DiceLattice/Observables_DL.h
+src/Models/DiceLattice/Parameters_DL.h
 src/Models/SquareLattice/Connections_SQL.h
 src/Models/SquareLattice/Coordinates_SQL.h
 src/Models/SquareLattice/Observables_SQL.h

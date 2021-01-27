@@ -46,6 +46,12 @@ public:
 
     char Dflag;
 
+    bool Restricted_HF;
+    string Ansatz;
+    string Ansatz_file;
+    Mat_1_int CDW_Ansatz_sites;
+    double A_charge_modulation;
+
     void Initialize(string inputfile_);
     double matchstring(string file,string match);
     string matchstring2(string file,string match);
@@ -56,8 +62,9 @@ public:
 void Parameters::Initialize(string inputfile_){
 
 
+    CDW_Ansatz_sites.clear();
 
-    double Simple_Mixing_double, Broyden_Mixing_double, BroydenSecondMethodMixing_double;
+    double Simple_Mixing_double, Broyden_Mixing_double, BroydenSecondMethodMixing_double, Restricted_HF_double;
     double Read_OPs_double;
     double Create_OPs_double;
     double Just_Hartree_double;
@@ -95,10 +102,41 @@ void Parameters::Initialize(string inputfile_){
 
     Dflag = 'N';
 
+
     Simple_Mixing_double=double(matchstring(inputfile_,"Simple_Mixing"));
     Broyden_Mixing_double=double(matchstring(inputfile_,"Broyden_Mixing"));
     BroydenSecondMethodMixing_double=double(matchstring(inputfile_,"Broyden_Second_Method_Mixing"));
+    Restricted_HF_double=double(matchstring(inputfile_, "Restricted_HF"));
+    if(Restricted_HF_double==1.0){
+        Restricted_HF=true;
+        Ansatz=matchstring2(inputfile_,"HF_Ansatz");
 
+        if(!(Ansatz=="Given_CDW")){
+            cout<<"Ansatz can be only in : Given_CDW"<<endl;
+            assert(false);
+        }
+
+        if(Ansatz=="Given_CDW"){
+            CDW_Ansatz_sites.resize(ns);
+            for(int i=0;i<ns;i++){
+                CDW_Ansatz_sites[i]=-1.0; //ideally empty
+            }
+            Ansatz_file=matchstring2(inputfile_,"Given_CDW_file");
+            ifstream inputfile_Ansatz_file(Ansatz_file.c_str());
+            string line_temp_;
+            int i_temp_;
+            //getline(inputfile_Ansatz_file,line_temp_);
+            while(getline(inputfile_Ansatz_file,line_temp_))
+            {
+                stringstream line_temp_ss_(line_temp_);
+                line_temp_ss_ >> i_temp_;
+                CDW_Ansatz_sites[i_temp_]=1.0; //ideally half-filled
+            }
+        }
+    }
+    else{
+        Restricted_HF=false;
+    }
 
 
     Onsite_E.resize(ns);

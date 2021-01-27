@@ -67,6 +67,8 @@ double MFParams::random2(){
 void MFParams::initialize(){
 
 
+
+
     no_dof_=Coordinates_.no_dof_;
     ns_=Coordinates_.ns_;
     int UP_, DOWN_;
@@ -82,6 +84,7 @@ void MFParams::initialize(){
     OParams_.rows.clear();
     OParams_.columns.clear();
     complex<double> comp_temp;
+    complex<double> value_temp;
     int row_temp, col_temp;
 
 
@@ -165,7 +168,91 @@ void MFParams::initialize(){
         }
         else{
 
-            cout<<"NEED TO ADD ANSATZ STATES"<<endl;
+            assert(Parameters_.Restricted_HF);
+
+            if(Parameters_.Ansatz=="Given_CDW"){
+                cout<<"Creating Anstaz in Restricted Space HF"<<endl;
+
+                Parameters_.A_charge_modulation = random1()*0.5;
+                for(int site_i=0;site_i<ns_;site_i++){
+                    for(int site_j=0;site_j<ns_;site_j++){
+
+                        if(site_i!=site_j){
+                            if(abs(Parameters_.LongRangeInteractions[site_i][site_j])>0.0000001){
+
+                                for(int spin_i=0;spin_i<2;spin_i++){
+                                    for(int spin_j=spin_i;spin_j<2;spin_j++){
+                                        row_temp = Coordinates_.Nc_dof(site_i, spin_i);
+                                        col_temp = Coordinates_.Nc_dof(site_j, spin_j);
+
+                                        if(spin_i==spin_j){
+                                            if(site_j>site_i){
+                                                comp_temp.real(0.0);
+                                                comp_temp.imag(0.0);
+                                                OParams_.value.push_back(comp_temp);
+                                                OParams_.rows.push_back(row_temp);
+                                                OParams_.columns.push_back(col_temp);
+                                                SI_to_ind[row_temp + (2*ns_*col_temp)] = OParams_.value.size() - 1;
+
+                                            }
+                                        }
+                                        else{
+                                            comp_temp.real(0.0);
+                                            comp_temp.imag(0.0);
+                                            OParams_.value.push_back(comp_temp);
+                                            OParams_.rows.push_back(row_temp);
+                                            OParams_.columns.push_back(col_temp);
+                                            SI_to_ind[row_temp + (2*ns_*col_temp)] = OParams_.value.size() - 1;
+
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else{
+                            int spin_i_, spin_j_;
+
+                            //DOWN, UP
+                            spin_j_=DOWN_;
+                            spin_i_=UP_;
+                            row_temp = Coordinates_.Nc_dof(site_i, spin_i_);
+                            col_temp = Coordinates_.Nc_dof(site_j, spin_j_);
+                            comp_temp=complex<double>(random1(),random1());
+                            OParams_.value.push_back(comp_temp);
+                            OParams_.rows.push_back(row_temp);
+                            OParams_.columns.push_back(col_temp);
+                            SI_to_ind[row_temp + (2*ns_*col_temp)] = OParams_.value.size() - 1;
+
+                            comp_temp=complex<double>(random1(),0.0);//  sz_i
+                            comp_temp = comp_temp*0.5*(0.5 + Parameters_.A_charge_modulation*Parameters_.CDW_Ansatz_sites[site_i]);  //for |sz_i|<=n_i/2
+                            //UP, UP
+                            value_temp = 0.5*(0.5 + Parameters_.A_charge_modulation*Parameters_.CDW_Ansatz_sites[site_i]) + comp_temp;
+                            spin_j_=UP_;
+                            spin_i_=UP_;
+                            row_temp = Coordinates_.Nc_dof(site_i, spin_i_);
+                            col_temp = Coordinates_.Nc_dof(site_j, spin_j_);
+                            OParams_.value.push_back(value_temp);
+                            OParams_.rows.push_back(row_temp);
+                            OParams_.columns.push_back(col_temp);
+                            SI_to_ind[row_temp + (2*ns_*col_temp)] = OParams_.value.size() - 1;
+
+                            //DOWN, DOWN
+                            value_temp = 0.5*(0.5 + Parameters_.A_charge_modulation*Parameters_.CDW_Ansatz_sites[site_i]) - comp_temp;
+                            spin_j_=DOWN_;
+                            spin_i_=DOWN_;
+                            row_temp = Coordinates_.Nc_dof(site_i, spin_i_);
+                            col_temp = Coordinates_.Nc_dof(site_j, spin_j_);
+                            OParams_.value.push_back(value_temp);
+                            OParams_.rows.push_back(row_temp);
+                            OParams_.columns.push_back(col_temp);
+                            SI_to_ind[row_temp + (2*ns_*col_temp)] = OParams_.value.size() - 1;
+
+                        }
+                    }
+
+                }
+
+            }
 
 
         }
@@ -218,20 +305,20 @@ void MFParams::initialize(){
     if(Parameters_.ReadDisorder==false){
         cout <<"Disorder conf is initialized using random seed given in input file"<< endl;
         for(int j=0;j<ns_;j++){
-                //RANDOM Disorder
-                Disorder[j]=Parameters_.Disorder_Strength*((2.0*random2())-1.0);
-                Disorder_conf_file<<j<<"  "<<Disorder[j]<<endl;
+            //RANDOM Disorder
+            Disorder[j]=Parameters_.Disorder_Strength*((2.0*random2())-1.0);
+            Disorder_conf_file<<j<<"  "<<Disorder[j]<<endl;
         }
     }
     else{
         cout<<"Disorder conf is read from file path given in the input file"<<endl;
         ifstream Disorder_in_file(Parameters_.DisorderSeedFile);
         for(int j=0;j<ns_;j++){
-                //RANDOM Disorder
-                Disorder_in_file>>temp_j>>Disorder[j];
-                assert(j==temp_j);
-                Disorder[j]=Parameters_.Disorder_Strength*(Disorder[j]);
-                Disorder_conf_file<<j<<"  "<<Disorder[j]<<endl;
+            //RANDOM Disorder
+            Disorder_in_file>>temp_j>>Disorder[j];
+            assert(j==temp_j);
+            Disorder[j]=Parameters_.Disorder_Strength*(Disorder[j]);
+            Disorder_conf_file<<j<<"  "<<Disorder[j]<<endl;
 
         }
     }

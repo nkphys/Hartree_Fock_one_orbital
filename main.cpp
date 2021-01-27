@@ -20,6 +20,11 @@ using namespace std;
 #include "SelfConsistencyEngine.h"
 
 //Model files
+#include "src/Models/DiceLattice/Parameters_DL.h"
+#include "src/Models/DiceLattice/Coordinates_DL.h"
+#include "src/Models/DiceLattice/Connections_DL.h"
+#include "src/Models/DiceLattice/Observables_DL.h"
+
 #include "src/Models/LiebLattice/Parameters_LL.h"
 #include "src/Models/LiebLattice/Coordinates_LL.h"
 #include "src/Models/LiebLattice/Connections_LL.h"
@@ -61,6 +66,19 @@ int main(int argc, char *argv[]) {
         Connections_LL_.Print_Hopping();                                       //::DONE
         Connections_LL_.Print_LongRangeInt();
         Connections_LL_.Print_Spin_resolved_OnsiteE();
+
+        }
+        if(ModelType=="DiceLattice"){
+
+        Parameters_DL Parameters_DL_;
+        Parameters_DL_.Initialize(inputfile);
+
+        Coordinates_DL Coordinates_DL_(Parameters_DL_.lx, Parameters_DL_.ly, Parameters_DL_.n_orbs);
+
+        Connections_DL Connections_DL_(Parameters_DL_, Coordinates_DL_);
+        Connections_DL_.Print_Hopping();                                       //::DONE
+        Connections_DL_.Print_LongRangeInt();
+        Connections_DL_.Print_Spin_resolved_OnsiteE();
 
         }
         if(ModelType=="SquareLattice"){
@@ -139,6 +157,35 @@ int main(int argc, char *argv[]) {
 
         }
 
+        if(ModelType=="DiceLattice"){
+
+        Parameters_DL Parameters_DL_;
+        Parameters_DL_.Initialize(model_inputfile);
+
+        Coordinates_DL Coordinates_DL_(Parameters_DL_.lx, Parameters_DL_.ly, Parameters_DL_.n_orbs);
+        Connections_DL Connections_DL_(Parameters_DL_, Coordinates_DL_);
+
+        Observables_DL Observables_DL_(Parameters_DL_, Coordinates_DL_, Connections_DL_ );
+
+        Parameters_DL_.beta=Parameters_.beta;
+        Parameters_DL_.mus=Parameters_.mus;
+        Parameters_DL_.eta=Parameters_.eta_dos;
+        Parameters_DL_.domega=Parameters_.dw_dos;
+        Observables_DL_.Ham_ = Hamiltonian_.Ham_;
+        Observables_DL_.eigs_ = Hamiltonian_.eigs_;
+
+
+        Observables_DL_.Calculate_Akw();
+        Observables_DL_.Calculate_OrbResolved_Nw();
+        Observables_DL_.Calculate_Nw();
+        //Create and call:
+        //quantum spin-spin corrs
+        //<s_i^2>
+        //<n_iup n_idn>
+        //spin resolved local density
+
+        }
+
         if(ModelType=="SquareLattice"){
 
         Parameters_SQL Parameters_SQL_;
@@ -202,6 +249,7 @@ int main(int argc, char *argv[]) {
         Observables_.Calculate_SpinSpincorrelations_Smartly();
         Observables_.Calculate_DenDencorrelations_Smartly();
         Observables_.Calculate_Nw();
+        Observables_.Calculate_Local_spins_resolved();
 
 
     }

@@ -331,7 +331,7 @@ double Hamiltonian::GetCLEnergy(){
 
 
 
-    if(abs(EClassical.imag())>=0.0000001){
+    if(abs(EClassical.imag())>=0.1){
         cout<<"EClassical.imag() = "<< EClassical.imag()<<endl;
         assert(abs(EClassical.imag())<0.0000001);
     }
