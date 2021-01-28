@@ -16,15 +16,15 @@ TBC_cellsX=1
 TBC_cellsY=1
 
 
-lambda_RSOC=0.0
+lambda_RSOC=0.3
 Hopping_intracell=-1.0
 
-OnSiteE_up0=0.0
-OnSiteE_up1=-0.6
-OnSiteE_up2=0.0
-OnSiteE_dn0=0.0
-OnSiteE_dn1=-0.6
-OnSiteE_dn2=0.0
+OnSiteE_up0=0.1
+OnSiteE_up1=-0.5
+OnSiteE_up2=0.1
+OnSiteE_dn0=-0.1
+OnSiteE_dn1=-0.7
+OnSiteE_dn2=-0.1
 
 Nearest_Neigh_Hopping_X_basis_row0=0.0 0.0 0.0
 Nearest_Neigh_Hopping_X_basis_row1=-1.0 0.0 0.0

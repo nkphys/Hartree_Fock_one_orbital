@@ -28,6 +28,8 @@ public:
     double fermi_function(int n);
     void calculate_quantum_SiSj();
     void calculate_local_density();
+    void Create_Current_Oprs();
+    void Hall_conductance();
 
 
     Matrix<complex<double>> Ham_;
@@ -47,6 +49,7 @@ public:
 
     Matrix<complex<double>> quantum_SiSjQ_;
     Matrix<complex<double>> quantum_SiSj_;
+    Matrix<complex<double>> J_KE_e1, J_KE_e2, J_RSOC_e1, J_RSOC_e2;
 
 };
 /*
@@ -55,6 +58,307 @@ public:
  *  ***********
 */
 
+void Observables_DL::Hall_conductance(){
+
+    double hall_cond=0.0;
+    double eps_temp =0.00000001;
+
+
+    for(int m=0;m<6*ncells_;m++){
+        for(int n=0;n<6*ncells_;n++){
+              if(abs(eigs_[m]-eigs_[n])>=eps_temp){
+                hall_cond += ((2.0*PI)/(3.0*ncells_))*(fermi_function(m)-fermi_function(n))*
+                        (1.0/( (Parameters_.eta*Parameters_.eta) + ((eigs_[n]-eigs_[m])*(eigs_[n]-eigs_[m]))   ))*
+                        ((J_KE_e1(m,n) + J_RSOC_e1(m,n))*(J_KE_e2(n,m) + J_RSOC_e2(n,m))).imag();
+              }
+        }
+    }
+
+    cout<<"Hall Conductance = "<<hall_cond<<endl;
+
+}
+
+void Observables_DL::Create_Current_Oprs(){
+
+    J_KE_e1.resize(ncells_*6, ncells_*6);
+    J_RSOC_e1.resize(ncells_*6, ncells_*6);
+    J_KE_e2.resize(ncells_*6, ncells_*6);
+    J_RSOC_e2.resize(ncells_*6, ncells_*6);
+
+
+    double comp_along_ei=1.0;
+
+    //Convention used
+    //orb=0=A
+    //orb=1=B
+    //orb=2=C
+
+
+    Matrix<complex <double>> sigma_x, sigma_y, sigma_z, Value_mat;
+    sigma_x.resize(2, 2);
+    sigma_y.resize(2, 2);
+    sigma_z.resize(2, 2);
+    Value_mat.resize(2,2);
+
+    //X
+    sigma_x(0, 0) = 0.0;
+    sigma_x(0, 1) = 1.0;
+    sigma_x(1, 0) = 1.0;
+    sigma_x(1, 1) = 0.0;
+
+    //y
+    sigma_y(0, 0) = 0.0;
+    sigma_y(0, 1) = -1.0*iota_complex;
+    sigma_y(1, 0) = iota_complex;
+    sigma_y(1, 1) = 0.0;
+
+    //Z
+    sigma_z(0, 0) = 1.0;
+    sigma_z(0, 1) = 0.0;
+    sigma_z(1, 0) = 0.0;
+    sigma_z(1, 1) = -1.0;
+
+
+    int l, m, a, b;
+    int lx_pos, ly_pos;
+    int mx_pos, my_pos;
+
+   // HTB_.fill(0.0);
+
+    for (int p = 0; p < ncells_*6; p++){
+        for (int n = 0; n < ncells_*6; n++){
+
+            J_KE_e1(p,n)=0.0;
+            J_RSOC_e1(p,n)=0.0;
+            J_KE_e2(p,n)=0.0;
+            J_RSOC_e2(p,n)=0.0;
+
+
+            //K.E.
+            for (l = 0; l < ncells_; l++)
+            {
+                lx_pos = Coordinates_.indx_cellwise(l);
+                ly_pos = Coordinates_.indy_cellwise(l);
+
+                // * +x direction Neighbor
+                m = Coordinates_.neigh(l, 0); //+x neighbour cell
+                mx_pos = Coordinates_.indx_cellwise(m);
+                my_pos = Coordinates_.indy_cellwise(m);
+
+                for (int spin = 0; spin < 2; spin++)
+                {
+                    for (int orb1 = 0; orb1 < n_orbs_; orb1++)
+                    {
+                        for (int orb2 = 0; orb2 < n_orbs_; orb2++)
+                        {
+                            if (Parameters_.hopping_NN_X(orb1, orb2) != 0.0)
+                            {
+                                a = Coordinates_.Nbasis(lx_pos, ly_pos, orb1) + ncells_ * n_orbs_ * spin;
+                                b = Coordinates_.Nbasis(mx_pos, my_pos, orb2) + ncells_ * n_orbs_ * spin;
+                                assert(a != b);
+                                if (a != b)
+                                {
+                                    J_KE_e1(p,n) += iota_complex*complex<double>(1.0 * Parameters_.hopping_NN_X(orb1, orb2), 0.0)*Ham_(a,n)*conj(Ham_(b,p));
+                                    J_KE_e1(p,n) -= iota_complex*complex<double>(1.0 * Parameters_.hopping_NN_X(orb1, orb2), 0.0)*Ham_(b,n)*conj(Ham_(a,p));
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // * +y direction Neighbor
+                m = Coordinates_.neigh(l, 2); //+y neighbour cell
+                mx_pos = Coordinates_.indx_cellwise(m);
+                my_pos = Coordinates_.indy_cellwise(m);
+
+                for (int spin = 0; spin < 2; spin++)
+                {
+                    for (int orb1 = 0; orb1 < n_orbs_; orb1++)
+                    {
+                        for (int orb2 = 0; orb2 < n_orbs_; orb2++)
+                        {
+                            if (Parameters_.hopping_NN_Y(orb1, orb2) != 0.0)
+                            {
+
+                                a = Coordinates_.Nbasis(lx_pos, ly_pos, orb1) + ncells_ * n_orbs_ * spin;
+                                b = Coordinates_.Nbasis(mx_pos, my_pos, orb2) + ncells_ * n_orbs_ * spin;
+                                assert(a != b);
+                                if (a != b)
+                                {
+                                    J_KE_e2(p,n) += iota_complex*complex<double>(1.0 * Parameters_.hopping_NN_X(orb1, orb2), 0.0)*Ham_(a,n)*conj(Ham_(b,p));
+                                    J_KE_e2(p,n) -= iota_complex*complex<double>(1.0 * Parameters_.hopping_NN_X(orb1, orb2), 0.0)*Ham_(b,n)*conj(Ham_(a,p));
+                                }
+                            }
+                        }
+                    }
+                }
+
+                //intra unit cell A(0)<-->B(1)
+                for (int spin = 0; spin < 2; spin++)
+                {
+
+                    //A(0)<-->B(1)
+                    a = Coordinates_.Nbasis(lx_pos, ly_pos, 0) + ncells_ * n_orbs_ * spin;
+                    b = Coordinates_.Nbasis(lx_pos, ly_pos, 1) + ncells_ * n_orbs_ * spin;
+                    assert(a != b);
+                    J_KE_e1(p,n) += comp_along_ei*iota_complex*complex<double>(1.0 * Parameters_.hopping_intracell, 0.0)*Ham_(a,n)*conj(Ham_(b,p));
+                    J_KE_e1(p,n) -= comp_along_ei*iota_complex*complex<double>(1.0 * Parameters_.hopping_intracell, 0.0)*Ham_(b,n)*conj(Ham_(a,p));
+                    J_KE_e2(p,n) += comp_along_ei*iota_complex*complex<double>(1.0 * Parameters_.hopping_intracell, 0.0)*Ham_(a,n)*conj(Ham_(b,p));
+                    J_KE_e2(p,n) -= comp_along_ei*iota_complex*complex<double>(1.0 * Parameters_.hopping_intracell, 0.0)*Ham_(b,n)*conj(Ham_(a,p));
+
+                    //A(1)<-->C(2)
+                    a = Coordinates_.Nbasis(lx_pos, ly_pos, 1) + ncells_ * n_orbs_ * spin;
+                    b = Coordinates_.Nbasis(lx_pos, ly_pos, 2) + ncells_ * n_orbs_ * spin;
+                    assert(a != b);
+                    J_KE_e1(p,n) += comp_along_ei*iota_complex*complex<double>(1.0 * Parameters_.hopping_intracell, 0.0)*Ham_(a,n)*conj(Ham_(b,p));
+                    J_KE_e1(p,n) -= comp_along_ei*iota_complex*complex<double>(1.0 * Parameters_.hopping_intracell, 0.0)*Ham_(b,n)*conj(Ham_(a,p));
+                    J_KE_e2(p,n) += comp_along_ei*iota_complex*complex<double>(1.0 * Parameters_.hopping_intracell, 0.0)*Ham_(a,n)*conj(Ham_(b,p));
+                    J_KE_e2(p,n) -= comp_along_ei*iota_complex*complex<double>(1.0 * Parameters_.hopping_intracell, 0.0)*Ham_(b,n)*conj(Ham_(a,p));
+                }
+            }
+
+
+
+
+            //R-SOC
+            // Rashba SOC (Strictly for Dice lattice)
+            int X_,Y_;
+            X_=0;
+            Y_=1;
+            int lx_new, ly_new;
+
+            //6 bond vectors
+            Mat_2_doub D_;
+            D_.resize(6);
+            for(int i=0;i<6;i++){
+                D_[i].resize(2); //z component is never used :)
+            }
+
+
+            D_[0][0]=-0.5; D_[0][1]=(sqrt(3.0)/2.0);
+            D_[3][0]=-0.5; D_[3][1]=(sqrt(3.0)/2.0);
+
+            D_[1][0]=1.0; D_[1][1]=0.0;
+            D_[4][0]=1.0; D_[4][1]=0.0;
+
+            D_[2][0]=-0.5; D_[2][1]=-1.0*(sqrt(3.0)/2.0);
+            D_[5][0]=-0.5; D_[5][1]=-1.0*(sqrt(3.0)/2.0);
+
+
+
+
+            for(int l=0;l<ncells_;l++){
+                //cout<<"n = "<<n<<endl;
+                lx_pos = Coordinates_.indx_cellwise(l);
+                ly_pos = Coordinates_.indy_cellwise(l);
+                for(int spin1=0;spin1<2;spin1++){
+                    a = Coordinates_.Nbasis(lx_pos, ly_pos, 1) + ncells_ * n_orbs_ * spin1;
+
+                    for(int spin2=0;spin2<2;spin2++){
+
+                        //0 : 1,r to 0,r+e1
+                        lx_new= (lx_pos+1+lx_)%lx_;
+                        ly_new= (ly_pos+0+ly_)%ly_;
+                        b = Coordinates_.Nbasis(lx_new, ly_new, 0) + ncells_ * n_orbs_ * spin2;
+                        for(int r=0;r<2;r++){
+                            for(int c=0;c<2;c++){
+                                Value_mat(r,c) = D_[0][X_]*sigma_x(r,c) + D_[0][Y_]*sigma_y(r,c);
+                            }
+                        }
+
+                        assert(a != b);
+                        J_RSOC_e1(p,n) += Parameters_.lambda_RSOC * Value_mat(spin2,spin1)*Ham_(a,n)*conj(Ham_(b,p));
+                        J_RSOC_e1(p,n) += Parameters_.lambda_RSOC * Value_mat(spin1,spin2)*Ham_(b,n)*conj(Ham_(a,p));
+
+                        //1 : 1,r to 2,r
+                        lx_new= (lx_pos+0+lx_)%lx_;
+                        ly_new= (ly_pos+0+ly_)%ly_;
+                        b = Coordinates_.Nbasis(lx_new, ly_new, 2) + ncells_ * n_orbs_ * spin2;
+                        for(int r=0;r<2;r++){
+                            for(int c=0;c<2;c++){
+                                Value_mat(r,c) = D_[1][X_]*sigma_x(r,c) + D_[1][Y_]*sigma_y(r,c);
+                            }
+                        }
+
+                        assert(a != b);
+                        J_RSOC_e1(p,n) += comp_along_ei*Parameters_.lambda_RSOC * Value_mat(spin2,spin1)*Ham_(a,n)*conj(Ham_(b,p));
+                        J_RSOC_e1(p,n) += comp_along_ei*Parameters_.lambda_RSOC * Value_mat(spin1,spin2)*Ham_(b,n)*conj(Ham_(a,p));
+                        J_RSOC_e2(p,n) += comp_along_ei*Parameters_.lambda_RSOC * Value_mat(spin2,spin1)*Ham_(a,n)*conj(Ham_(b,p));
+                        J_RSOC_e2(p,n) += comp_along_ei*Parameters_.lambda_RSOC * Value_mat(spin1,spin2)*Ham_(b,n)*conj(Ham_(a,p));
+
+
+                        //2 : 1,r to 0,r+e2
+                        lx_new= (lx_pos+0+lx_)%lx_;
+                        ly_new= (ly_pos+1+ly_)%ly_;
+                        b = Coordinates_.Nbasis(lx_new, ly_new, 0) + ncells_ * n_orbs_ * spin2;
+                        for(int r=0;r<2;r++){
+                            for(int c=0;c<2;c++){
+                                Value_mat(r,c) = D_[2][X_]*sigma_x(r,c) + D_[2][Y_]*sigma_y(r,c);
+                            }
+                        }
+
+                        assert(a != b);
+                        J_RSOC_e2(p,n) += Parameters_.lambda_RSOC * Value_mat(spin2,spin1)*Ham_(a,n)*conj(Ham_(b,p));
+                        J_RSOC_e2(p,n) += Parameters_.lambda_RSOC * Value_mat(spin1,spin2)*Ham_(b,n)*conj(Ham_(a,p));
+
+
+                        //3 : 1,r to 2,r-e1
+                        lx_new= (lx_pos-1+lx_)%lx_;
+                        ly_new= (ly_pos+0+ly_)%ly_;
+                        b = Coordinates_.Nbasis(lx_new, ly_new, 2) + ncells_ * n_orbs_ * spin2;
+                        for(int r=0;r<2;r++){
+                            for(int c=0;c<2;c++){
+                                Value_mat(r,c) = D_[3][X_]*sigma_x(r,c) + D_[3][Y_]*sigma_y(r,c);
+                            }
+                        }
+                        assert(a != b);
+                        J_RSOC_e1(p,n) -= Parameters_.lambda_RSOC * (Value_mat(spin2,spin1))*Ham_(a,n)*conj(Ham_(b,p));
+                        J_RSOC_e1(p,n) -= Parameters_.lambda_RSOC * (Value_mat(spin1,spin2))*Ham_(b,n)*conj(Ham_(a,p));
+
+
+                        //4 : 1,r to 0,r
+                        lx_new= (lx_pos+0+lx_)%lx_;
+                        ly_new= (ly_pos+0+ly_)%ly_;
+                        b = Coordinates_.Nbasis(lx_new, ly_new, 0) + ncells_ * n_orbs_ * spin2;
+                        for(int r=0;r<2;r++){
+                            for(int c=0;c<2;c++){
+                                Value_mat(r,c) = D_[4][X_]*sigma_x(r,c) + D_[4][Y_]*sigma_y(r,c);
+                            }
+                        }
+
+                        assert(a != b);
+                        J_RSOC_e1(p,n) -= comp_along_ei*Parameters_.lambda_RSOC * (Value_mat(spin2,spin1))*Ham_(a,n)*conj(Ham_(b,p));
+                        J_RSOC_e1(p,n) -= comp_along_ei*Parameters_.lambda_RSOC * (Value_mat(spin1,spin2))*Ham_(b,n)*conj(Ham_(a,p));
+                        J_RSOC_e2(p,n) -= comp_along_ei*Parameters_.lambda_RSOC * (Value_mat(spin2,spin1))*Ham_(a,n)*conj(Ham_(b,p));
+                        J_RSOC_e2(p,n) -= comp_along_ei*Parameters_.lambda_RSOC * (Value_mat(spin1,spin2))*Ham_(b,n)*conj(Ham_(a,p));
+
+
+                        //5 : 1,r to 2,r-e2
+                        lx_new= (lx_pos+0+lx_)%lx_;
+                        ly_new= (ly_pos-1+ly_)%ly_;
+                        b = Coordinates_.Nbasis(lx_new, ly_new, 2) + ncells_ * n_orbs_ * spin2;
+                        for(int r=0;r<2;r++){
+                            for(int c=0;c<2;c++){
+                                Value_mat(r,c) = D_[5][X_]*sigma_x(r,c) + D_[5][Y_]*sigma_y(r,c);
+                            }
+                        }
+
+                        assert(a != b);
+                        J_RSOC_e2(p,n) -= Parameters_.lambda_RSOC * (Value_mat(spin2,spin1))*Ham_(a,n)*conj(Ham_(b,p));
+                        J_RSOC_e2(p,n) -= Parameters_.lambda_RSOC * (Value_mat(spin1,spin2))*Ham_(b,n)*conj(Ham_(a,p));
+
+                    }
+                }
+            }
+
+
+        }
+        cout<<"Cuur opr row p  = "<<p <<" done"<<endl;
+    }
+
+
+
+}
 
 void Observables_DL::RealSpaceLocal_ChernNumber(){
 

@@ -175,9 +175,13 @@ int main(int argc, char *argv[]) {
         Observables_DL_.eigs_ = Hamiltonian_.eigs_;
 
 
-        Observables_DL_.Calculate_Akw();
-        Observables_DL_.Calculate_OrbResolved_Nw();
-        Observables_DL_.Calculate_Nw();
+//        Observables_DL_.Calculate_Akw();
+//        Observables_DL_.Calculate_OrbResolved_Nw();
+//        Observables_DL_.Calculate_Nw();
+
+
+        Observables_DL_.Create_Current_Oprs();
+        Observables_DL_.Hall_conductance();
         //Create and call:
         //quantum spin-spin corrs
         //<s_i^2>
