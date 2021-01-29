@@ -1,0 +1,34 @@
+#false in X because of OBC in X
+#true in Y because just 2-siters in Y, otherwise OBC just overwrites the same connections with zeros 
+
+PBC=1
+Xsite=8
+Ysite=8
+N_Orbs=3
+
+File_Onsite_Energies=LL_Onsite_E_8x8.txt
+File_Hopping_Connections=LL_Hoppings_8x8.txt
+File_NonLocal_Int_Connections=LL_Interactions_8x8.txt
+
+TwistedBoundaryCond_mx=0
+TwistedBoundaryCond_my=0
+TBC_cellsX=1
+TBC_cellsY=1
+
+
+lambda_RSOC=-0.1
+Hopping_intracell=1.0
+
+OnSiteE_up0=0.1
+OnSiteE_up1=0.1
+OnSiteE_up2=0.1
+OnSiteE_dn0=-0.1
+OnSiteE_dn1=-0.1
+OnSiteE_dn2=-0.1
+
+Nearest_Neigh_Hopping_X_basis_row0=0.0 0.0 0.0
+Nearest_Neigh_Hopping_X_basis_row1=1.0 0.0 0.0
+Nearest_Neigh_Hopping_X_basis_row2=0.0 0.0 0.0
+Nearest_Neigh_Hopping_Y_basis_row0=0.0 0.0 0.0
+Nearest_Neigh_Hopping_Y_basis_row1=0.0 0.0 0.0
+Nearest_Neigh_Hopping_Y_basis_row2=1.0 0.0 0.0

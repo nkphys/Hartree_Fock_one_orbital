@@ -30,6 +30,7 @@ public:
     void calculate_local_density();
     void Create_Current_Oprs();
     void Hall_conductance();
+    double fermi_function(int n, double mu_);
 
 
     Matrix<complex<double>> Ham_;
@@ -63,19 +64,38 @@ void Observables_DL::Hall_conductance(){
     double hall_cond=0.0;
     double eps_temp =0.00000001;
 
+    string fileout_="sigmaxy_vs_mu.txt";
+    ofstream fileout(fileout_.c_str());
 
     for(int m=0;m<6*ncells_;m++){
         for(int n=0;n<6*ncells_;n++){
-              if(abs(eigs_[m]-eigs_[n])>=eps_temp){
+            if(abs(eigs_[m]-eigs_[n])>=eps_temp){
                 hall_cond += ((2.0*PI)/(3.0*ncells_))*(fermi_function(m)-fermi_function(n))*
                         (1.0/( (Parameters_.eta*Parameters_.eta) + ((eigs_[n]-eigs_[m])*(eigs_[n]-eigs_[m]))   ))*
-                        ((J_KE_e1(m,n) + J_RSOC_e1(m,n))*(J_KE_e2(n,m) + J_RSOC_e2(n,m))).imag();
-              }
+                        ((1.0*J_KE_e1(m,n) + 1.0*J_RSOC_e1(m,n))*(1.0*J_KE_e2(n,m) + 1.0*J_RSOC_e2(n,m))).imag();
+            }
         }
     }
 
     cout<<"Hall Conductance = "<<hall_cond<<endl;
 
+
+    double mu=eigs_[0]-5.0;
+    while(mu<eigs_[eigs_.size()-1]+5.0){
+        hall_cond=0.0;
+
+        for(int m=0;m<6*ncells_;m++){
+            for(int n=0;n<6*ncells_;n++){
+                if(abs(eigs_[m]-eigs_[n])>=eps_temp){
+                    hall_cond += ((2.0*PI)/(3.0*ncells_))*(fermi_function(m,mu)-fermi_function(n,mu))*
+                            (1.0/( (Parameters_.eta*Parameters_.eta) + ((eigs_[n]-eigs_[m])*(eigs_[n]-eigs_[m]))   ))*
+                            ((1.0*J_KE_e1(m,n) + 1.0*J_RSOC_e1(m,n))*(1.0*J_KE_e2(n,m) + 1.0*J_RSOC_e2(n,m))).imag();
+                }
+            }
+        }
+        fileout<<mu<<"  "<<hall_cond<<endl;
+        mu=mu+0.01;
+    }
 }
 
 void Observables_DL::Create_Current_Oprs(){
@@ -123,7 +143,7 @@ void Observables_DL::Create_Current_Oprs(){
     int lx_pos, ly_pos;
     int mx_pos, my_pos;
 
-   // HTB_.fill(0.0);
+    // HTB_.fill(0.0);
 
     for (int p = 0; p < ncells_*6; p++){
         for (int n = 0; n < ncells_*6; n++){
@@ -185,8 +205,8 @@ void Observables_DL::Create_Current_Oprs(){
                                 assert(a != b);
                                 if (a != b)
                                 {
-                                    J_KE_e2(p,n) += iota_complex*complex<double>(1.0 * Parameters_.hopping_NN_X(orb1, orb2), 0.0)*Ham_(a,n)*conj(Ham_(b,p));
-                                    J_KE_e2(p,n) -= iota_complex*complex<double>(1.0 * Parameters_.hopping_NN_X(orb1, orb2), 0.0)*Ham_(b,n)*conj(Ham_(a,p));
+                                    J_KE_e2(p,n) += iota_complex*complex<double>(1.0 * Parameters_.hopping_NN_Y(orb1, orb2), 0.0)*Ham_(a,n)*conj(Ham_(b,p));
+                                    J_KE_e2(p,n) -= iota_complex*complex<double>(1.0 * Parameters_.hopping_NN_Y(orb1, orb2), 0.0)*Ham_(b,n)*conj(Ham_(a,p));
                                 }
                             }
                         }
@@ -302,7 +322,24 @@ void Observables_DL::Create_Current_Oprs(){
                         J_RSOC_e2(p,n) += Parameters_.lambda_RSOC * Value_mat(spin1,spin2)*Ham_(b,n)*conj(Ham_(a,p));
 
 
-                        //3 : 1,r to 2,r-e1
+                        //                        //3 : 1,r to 2,r-e1
+                        //                        lx_new= (lx_pos-1+lx_)%lx_;
+                        //                        ly_new= (ly_pos+0+ly_)%ly_;
+                        //                        b = Coordinates_.Nbasis(lx_new, ly_new, 2) + ncells_ * n_orbs_ * spin2;
+                        //                        for(int r=0;r<2;r++){
+                        //                            for(int c=0;c<2;c++){
+                        //                                Value_mat(r,c) = D_[3][X_]*sigma_x(r,c) + D_[3][Y_]*sigma_y(r,c);
+                        //                            }
+                        //                        }
+                        //                        assert(a != b);
+                        //                        J_RSOC_e1(p,n) -= Parameters_.lambda_RSOC * (Value_mat(spin2,spin1))*Ham_(a,n)*conj(Ham_(b,p));
+                        //                        J_RSOC_e1(p,n) -= Parameters_.lambda_RSOC * (Value_mat(spin1,spin2))*Ham_(b,n)*conj(Ham_(a,p));
+                        //                        //HTB_(b, a) += -1.0 * Parameters_.lambda_RSOC * Value_mat(spin2,spin1)*iota_complex;
+                        //                        //HTB_(a, b) = conj(HTB_(b, a));
+                        //
+
+
+                        //3 : 2,r-e1 to 1,r  [Or you can use above commented our paragraph, both will give same result.]
                         lx_new= (lx_pos-1+lx_)%lx_;
                         ly_new= (ly_pos+0+ly_)%ly_;
                         b = Coordinates_.Nbasis(lx_new, ly_new, 2) + ncells_ * n_orbs_ * spin2;
@@ -313,7 +350,7 @@ void Observables_DL::Create_Current_Oprs(){
                         }
                         assert(a != b);
                         J_RSOC_e1(p,n) -= Parameters_.lambda_RSOC * (Value_mat(spin2,spin1))*Ham_(a,n)*conj(Ham_(b,p));
-                        J_RSOC_e1(p,n) -= Parameters_.lambda_RSOC * (Value_mat(spin1,spin2))*Ham_(b,n)*conj(Ham_(a,p));
+                        J_RSOC_e1(p,n) -= Parameters_.lambda_RSOC * conj(Value_mat(spin2,spin1))*Ham_(b,n)*conj(Ham_(a,p));
 
 
                         //4 : 1,r to 0,r
@@ -357,6 +394,14 @@ void Observables_DL::Create_Current_Oprs(){
     }
 
 
+
+}
+
+double Observables_DL::fermi_function(int n, double mu_)
+{
+    double value;
+    value = 1.0 / (exp(Parameters_.beta * (eigs_[n] - mu_)) + 1.0);
+    return value;
 
 }
 

@@ -26,8 +26,11 @@ public:
     double Lorentzian(double x, double brd);
     void Calculate_OrbResolved_Nw();
     double fermi_function(int n);
+    double fermi_function(int n, double mu_);
     void calculate_quantum_SiSj();
     void calculate_local_density();
+    void Hall_conductance();
+    void Create_Current_Oprs();
 
 
     Matrix<complex<double>> Ham_;
@@ -47,6 +50,7 @@ public:
 
     Matrix<complex<double>> quantum_SiSjQ_;
     Matrix<complex<double>> quantum_SiSj_;
+    Matrix<complex<double>> J_KE_e1, J_KE_e2, J_RSOC_e1, J_RSOC_e2;
 
 };
 /*
@@ -55,6 +59,372 @@ public:
  *  ***********
 */
 
+
+
+
+void Observables_LL::Hall_conductance(){
+
+    double hall_cond=0.0;
+    double eps_temp =0.00000001;
+
+    string fileout_="sigmaxy_vs_mu.txt";
+    ofstream fileout(fileout_.c_str());
+
+    for(int m=0;m<6*ncells_;m++){
+        for(int n=0;n<6*ncells_;n++){
+              if(abs(eigs_[m]-eigs_[n])>=eps_temp){
+                hall_cond += ((2.0*PI)/(3.0*ncells_))*(fermi_function(m)-fermi_function(n))*
+                        (1.0/( (Parameters_.eta*Parameters_.eta) + ((eigs_[n]-eigs_[m])*(eigs_[n]-eigs_[m]))   ))*
+                        ((1.0*J_KE_e1(m,n) + 1.0*J_RSOC_e1(m,n))*(1.0*J_KE_e2(n,m) + 1.0*J_RSOC_e2(n,m))).imag();
+              }
+        }
+    }
+
+    cout<<"Hall Conductance = "<<hall_cond<<endl;
+
+
+    double mu=eigs_[0]-5.0;
+    while(mu<eigs_[eigs_.size()-1]+5.0){
+    hall_cond=0.0;
+
+    for(int m=0;m<6*ncells_;m++){
+        for(int n=0;n<6*ncells_;n++){
+              if(abs(eigs_[m]-eigs_[n])>=eps_temp){
+                hall_cond += ((2.0*PI)/(3.0*ncells_))*(fermi_function(m,mu)-fermi_function(n,mu))*
+                        (1.0/( (Parameters_.eta*Parameters_.eta) + ((eigs_[n]-eigs_[m])*(eigs_[n]-eigs_[m]))   ))*
+                        ((1.0*J_KE_e1(m,n) + 1.0*J_RSOC_e1(m,n))*(1.0*J_KE_e2(n,m) + 1.0*J_RSOC_e2(n,m))).imag();
+              }
+        }
+    }
+    fileout<<mu<<"  "<<hall_cond<<endl;
+    mu=mu+0.01;
+    }
+
+}
+
+
+void Observables_LL::Create_Current_Oprs(){
+
+    J_KE_e1.resize(ncells_*6, ncells_*6);
+    J_RSOC_e1.resize(ncells_*6, ncells_*6);
+    J_KE_e2.resize(ncells_*6, ncells_*6);
+    J_RSOC_e2.resize(ncells_*6, ncells_*6);
+
+    double Y_conv=1.0;
+
+    //Convention used
+    //orb=0=A
+    //orb=1=B
+    //orb=2=C
+
+
+    Matrix<complex <double>> sigma_x, sigma_y, sigma_z, Value_mat;
+    sigma_x.resize(2, 2);
+    sigma_y.resize(2, 2);
+    sigma_z.resize(2, 2);
+    Value_mat.resize(2,2);
+
+    //X
+    sigma_x(0, 0) = 0.0;
+    sigma_x(0, 1) = 1.0;
+    sigma_x(1, 0) = 1.0;
+    sigma_x(1, 1) = 0.0;
+
+    //y
+    sigma_y(0, 0) = 0.0;
+    sigma_y(0, 1) = -1.0*iota_complex;
+    sigma_y(1, 0) = iota_complex;
+    sigma_y(1, 1) = 0.0;
+
+    //Z
+    sigma_z(0, 0) = 1.0;
+    sigma_z(0, 1) = 0.0;
+    sigma_z(1, 0) = 0.0;
+    sigma_z(1, 1) = -1.0;
+
+
+    int l, m, a, b;
+    int lx_pos, ly_pos;
+    int mx_pos, my_pos;
+
+   // HTB_.fill(0.0);
+
+    for (int p = 0; p < ncells_*6; p++){
+        for (int n = 0; n < ncells_*6; n++){
+
+            J_KE_e1(p,n)=0.0;
+            J_RSOC_e1(p,n)=0.0;
+            J_KE_e2(p,n)=0.0;
+            J_RSOC_e2(p,n)=0.0;
+
+
+            //K.E.
+            for (l = 0; l < ncells_; l++)
+            {
+                lx_pos = Coordinates_.indx_cellwise(l);
+                ly_pos = Coordinates_.indy_cellwise(l);
+
+                // * +x direction Neighbor
+                m = Coordinates_.neigh(l, 0); //+x neighbour cell
+                mx_pos = Coordinates_.indx_cellwise(m);
+                my_pos = Coordinates_.indy_cellwise(m);
+
+                for (int spin = 0; spin < 2; spin++)
+                {
+                    for (int orb1 = 0; orb1 < n_orbs_; orb1++)
+                    {
+                        for (int orb2 = 0; orb2 < n_orbs_; orb2++)
+                        {
+                            if (Parameters_.hopping_NN_X(orb1, orb2) != 0.0)
+                            {
+                                a = Coordinates_.Nbasis(lx_pos, ly_pos, orb1) + ncells_ * n_orbs_ * spin;
+                                b = Coordinates_.Nbasis(mx_pos, my_pos, orb2) + ncells_ * n_orbs_ * spin;
+                                assert(a != b);
+                                if (a != b)
+                                {
+                                    J_KE_e1(p,n) += iota_complex*complex<double>(1.0 * Parameters_.hopping_NN_X(orb1, orb2), 0.0)*Ham_(a,n)*conj(Ham_(b,p));
+                                    J_KE_e1(p,n) -= iota_complex*complex<double>(1.0 * Parameters_.hopping_NN_X(orb1, orb2), 0.0)*Ham_(b,n)*conj(Ham_(a,p));
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // * +y direction Neighbor
+                m = Coordinates_.neigh(l, 2); //+y neighbour cell
+                mx_pos = Coordinates_.indx_cellwise(m);
+                my_pos = Coordinates_.indy_cellwise(m);
+
+                for (int spin = 0; spin < 2; spin++)
+                {
+                    for (int orb1 = 0; orb1 < n_orbs_; orb1++)
+                    {
+                        for (int orb2 = 0; orb2 < n_orbs_; orb2++)
+                        {
+                            if (Parameters_.hopping_NN_Y(orb1, orb2) != 0.0)
+                            {
+
+                                a = Coordinates_.Nbasis(lx_pos, ly_pos, orb1) + ncells_ * n_orbs_ * spin;
+                                b = Coordinates_.Nbasis(mx_pos, my_pos, orb2) + ncells_ * n_orbs_ * spin;
+                                assert(a != b);
+                                if (a != b)
+                                {
+                                    J_KE_e2(p,n) += Y_conv*iota_complex*complex<double>(1.0 * Parameters_.hopping_NN_Y(orb1, orb2), 0.0)*Ham_(a,n)*conj(Ham_(b,p));
+                                    J_KE_e2(p,n) -= Y_conv*iota_complex*complex<double>(1.0 * Parameters_.hopping_NN_Y(orb1, orb2), 0.0)*Ham_(b,n)*conj(Ham_(a,p));
+                                }
+                            }
+                        }
+                    }
+                }
+
+                //intra unit cell A(0)<-->B(1)
+                for (int spin = 0; spin < 2; spin++)
+                {
+
+                    //A(0)<-->B(1)
+                    a = Coordinates_.Nbasis(lx_pos, ly_pos, 0) + ncells_ * n_orbs_ * spin;
+                    b = Coordinates_.Nbasis(lx_pos, ly_pos, 1) + ncells_ * n_orbs_ * spin;
+                    assert(a != b);
+                    J_KE_e1(p,n) += iota_complex*complex<double>(1.0 * Parameters_.hopping_intracell, 0.0)*Ham_(a,n)*conj(Ham_(b,p));
+                    J_KE_e1(p,n) -= iota_complex*complex<double>(1.0 * Parameters_.hopping_intracell, 0.0)*Ham_(b,n)*conj(Ham_(a,p));
+
+
+                    //A(0)<-->C(2)
+                    a = Coordinates_.Nbasis(lx_pos, ly_pos, 0) + ncells_ * n_orbs_ * spin;
+                    b = Coordinates_.Nbasis(lx_pos, ly_pos, 2) + ncells_ * n_orbs_ * spin;
+                    assert(a != b);
+                    J_KE_e2(p,n) += Y_conv*iota_complex*complex<double>(1.0 * Parameters_.hopping_intracell, 0.0)*Ham_(a,n)*conj(Ham_(b,p));
+                    J_KE_e2(p,n) -= Y_conv*iota_complex*complex<double>(1.0 * Parameters_.hopping_intracell, 0.0)*Ham_(b,n)*conj(Ham_(a,p));
+                }
+            }
+
+
+
+
+            //R-SOC
+            // Rashba SOC (Strictly for Lieb lattice)
+            vector<double> bond_vector;
+            bond_vector.resize(3);
+            Matrix<complex <double>> rashba_mat; //CONVENTION OF X,Y is Fig-1(a) of Physics Letters A 381 (2017) 944-948
+            rashba_mat.resize(2, 2);
+            int i, col_index, row_index, ix_new, iy_new, i_new;
+            for (int ix = 0; ix < lx_; ix++)
+            {
+                for (int iy = 0; iy < ly_; iy++)
+                {
+                    i = Coordinates_.Ncell(ix, iy);
+
+                    for (int alpha = 0; alpha < 3; alpha++)
+                    {
+
+                        //intra unit cell
+                        for (int beta = 0; beta < 3; beta++)
+                        {
+                            if (alpha == 0 && beta == 1)
+                            {
+                                bond_vector[0] = 1.0;
+                                bond_vector[1] = 0.0;
+                                bond_vector[2] = 0.0;
+                            }
+                            else if (alpha == 1 && beta == 0)
+                            {
+                                bond_vector[0] = -1.0;
+                                bond_vector[1] = 0.0;
+                                bond_vector[2] = 0.0;
+                            }
+                            else if (alpha == 0 && beta == 2)
+                            {
+                                bond_vector[0] = 0.0;
+                                bond_vector[1] = -1.0;
+                                bond_vector[2] = 0.0;
+                            }
+                            else if (alpha == 2 && beta == 0)
+                            {
+                                bond_vector[0] = 0.0;
+                                bond_vector[1] = 1.0;
+                                bond_vector[2] = 0.0;
+                            }
+                            else
+                            {
+                                bond_vector[0] = 0.0;
+                                bond_vector[1] = 0.0;
+                                bond_vector[2] = 0.0;
+                            }
+
+                            // sigma_x d_y - d_x sigma_y
+                            for (int qp = 0; qp < 2; qp++)
+                            {
+                                for (int q = 0; q < 2; q++)
+                                {
+                                    rashba_mat(qp, q) =
+                                            sigma_x(qp, q) * bond_vector[1] -
+                                            sigma_y(qp, q) * bond_vector[0];
+                                }
+                            }
+
+                            for (int spin_i = 0; spin_i < 2; spin_i++)
+                            {
+                                for (int spin_j = 0; spin_j < 2; spin_j++)
+                                {
+
+                                    col_index = Coordinates_.Nbasis(ix, iy, alpha) + spin_i*lx_*ly_*3;
+                                    row_index = Coordinates_.Nbasis(ix, iy, beta) + spin_j*lx_*ly_*3;
+
+                                    if(alpha==0 && beta==1){
+                                        J_RSOC_e1(p,n) += -one_complex*Parameters_.lambda_RSOC * rashba_mat(spin_j, spin_i)*Ham_(col_index,n)*conj(Ham_(row_index,p));
+                                        J_RSOC_e1(p,n) += -one_complex*Parameters_.lambda_RSOC * (rashba_mat(spin_i, spin_j))*Ham_(row_index,n)*conj(Ham_(col_index,p));
+                                    }
+                                    if(alpha==0 && beta==2){
+                                        J_RSOC_e2(p,n) += +one_complex*Parameters_.lambda_RSOC * rashba_mat(spin_j, spin_i)*Ham_(col_index,n)*conj(Ham_(row_index,p));
+                                        J_RSOC_e2(p,n) += +one_complex*Parameters_.lambda_RSOC * (rashba_mat(spin_i, spin_j))*Ham_(row_index,n)*conj(Ham_(col_index,p));
+                                    }
+                                    //HTB_(row_index, col_index) += iota_complex * Parameters_.lambda_RSOC * rashba_mat(spin_j, spin_i);
+                                    //cout<<col_index<<"  "<<row_index<<"  "<< iota_complex*Parameters_.lambda_RSOC * rashba_mat(spin_j, spin_i)<<endl;
+                                }
+                            }
+                        }
+
+                        // inter +X
+                        ix_new = (ix + 1 + lx_) % lx_;
+                        iy_new = iy;
+                        i_new = iy_new + ly_ * ix_new;
+                        for (int beta = 0; beta < 3; beta++)
+                        {
+
+                            if (alpha == 1 && beta == 0)
+                            {
+                                bond_vector[0] = 1.0;
+                                bond_vector[1] = 0.0;
+                                bond_vector[2] = 0.0;
+                            }
+                            else
+                            {
+                                bond_vector[0] = 0.0;
+                                bond_vector[1] = 0.0;
+                                bond_vector[2] = 0.0;
+                            }
+                            for (int spin_i = 0; spin_i < 2; spin_i++)
+                            {
+                                for (int spin_j = 0; spin_j < 2; spin_j++)
+                                {
+
+                                    // sigma_x d_y - d_x sigma_y
+                                    for (int qp = 0; qp < 2; qp++)
+                                    {
+                                        for (int q = 0; q < 2; q++)
+                                        {
+                                            rashba_mat(qp, q) =
+                                                    sigma_x(qp, q) * bond_vector[1] -
+                                                    sigma_y(qp, q) * bond_vector[0];
+                                        }
+                                    }
+
+                                    col_index = Coordinates_.Nbasis(ix, iy, alpha) + spin_i*lx_*ly_*3;
+                                    row_index = Coordinates_.Nbasis(ix_new, iy_new, beta) + spin_j*lx_*ly_*3;
+
+                                    J_RSOC_e1(p,n) += -one_complex*Parameters_.lambda_RSOC * rashba_mat(spin_j, spin_i)*Ham_(col_index,n)*conj(Ham_(row_index,p));
+                                    J_RSOC_e1(p,n) += -one_complex*Parameters_.lambda_RSOC * rashba_mat(spin_i, spin_j)*Ham_(row_index,n)*conj(Ham_(col_index,p));
+
+                                }
+                            }
+                        }
+
+                        // inter +Y
+                        ix_new = ix;
+                        iy_new = (iy + 1 + ly_) % ly_;
+                        i_new = iy_new + ly_ * ix_new;
+                        for (int beta = 0; beta < 3; beta++)
+                        {
+
+                            if (alpha == 2 && beta == 0)
+                            {
+                                bond_vector[0] = 0.0;
+                                bond_vector[1] = -1.0;
+                                bond_vector[2] = 0.0;
+                            }
+                            else
+                            {
+                                bond_vector[0] = 0.0;
+                                bond_vector[1] = 0.0;
+                                bond_vector[2] = 0.0;
+                            }
+                            for (int spin_i = 0; spin_i < 2; spin_i++)
+                            {
+                                for (int spin_j = 0; spin_j < 2; spin_j++)
+                                {
+
+                                    // sigma_x d_y - d_x sigma_y
+                                    for (int qp = 0; qp < 2; qp++)
+                                    {
+                                        for (int q = 0; q < 2; q++)
+                                        {
+                                            rashba_mat(qp, q) =
+                                                    sigma_x(qp, q) * bond_vector[1] -
+                                                    sigma_y(qp, q) * bond_vector[0];
+                                        }
+                                    }
+
+                                    col_index = Coordinates_.Nbasis(ix, iy, alpha) + spin_i*lx_*ly_*3;
+                                    row_index = Coordinates_.Nbasis(ix_new, iy_new, beta) + spin_j*lx_*ly_*3;
+
+                                    J_RSOC_e2(p,n) += +one_complex*Parameters_.lambda_RSOC * rashba_mat(spin_j, spin_i)*Ham_(col_index,n)*conj(Ham_(row_index,p));
+                                    J_RSOC_e2(p,n) += +one_complex*Parameters_.lambda_RSOC * rashba_mat(spin_i, spin_j)*Ham_(row_index,n)*conj(Ham_(col_index,p));
+
+                                    //cout<<"here 1"<<iota_complex*Parameters_.lambda_RSOC * rashba_mat(spin_j, spin_i)<<endl;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+        }
+        cout<<"Current opr row p  = "<<p <<" done"<<endl;
+    }
+
+
+
+}
 
 void Observables_LL::RealSpaceLocal_ChernNumber(){
 
@@ -482,6 +852,15 @@ double Observables_LL::fermi_function(int n)
     return value;
 
 }
+
+double Observables_LL::fermi_function(int n, double mu_)
+{
+    double value;
+    value = 1.0 / (exp(Parameters_.beta * (eigs_[n] - mu_)) + 1.0);
+    return value;
+
+}
+
 
 void Observables_LL::calculate_quantum_SiSj()
 {

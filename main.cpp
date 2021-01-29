@@ -147,8 +147,12 @@ int main(int argc, char *argv[]) {
 
 
         Observables_LL_.Calculate_Akw();
-        Observables_LL_.Calculate_OrbResolved_Nw();
+//        Observables_LL_.Calculate_OrbResolved_Nw();
         Observables_LL_.Calculate_Nw();
+
+        Observables_LL_.Create_Current_Oprs();
+        Observables_LL_.Hall_conductance();
+
         //Create and call:
         //quantum spin-spin corrs
         //<s_i^2>
@@ -240,9 +244,7 @@ int main(int argc, char *argv[]) {
 
         MFParams MFParams_(Parameters_,Coordinates_,Generator_, Generator2_);
 
-
         Hamiltonian Hamiltonian_(Parameters_,Coordinates_,MFParams_);
-
 
         Observables Observables_(Parameters_,Coordinates_,MFParams_,Hamiltonian_);
         cout<<setprecision(9);
