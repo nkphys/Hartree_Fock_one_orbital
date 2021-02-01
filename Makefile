@@ -34,11 +34,12 @@ $(EXENAME): clean main.o
 	$(STRIP_COMMAND) $(EXENAME)
 	cp SelfConsistent CreateConnections
 	cp SelfConsistent observe
+	cp SelfConsistent k_space_SelfConsistency
 
 all: $(EXENAME)
 
 	 
 clean:
-	rm -f $(EXENAME) CreateConnections observe *.o
+	rm -f $(EXENAME) CreateConnections observe k_space_SelfConsistency *.o
 
 ######## End of Makefile ########

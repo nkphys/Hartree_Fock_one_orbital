@@ -15,6 +15,7 @@ src/Models/LiebLattice/Coordinates_LL.h
 src/Models/LiebLattice/Observables_LL.h
 src/Models/LiebLattice/Parameters_LL.h
 src/Models/DiceLattice/Connections_DL.h
+src/Models/DiceLattice/Kspace_calculation_DL.h
 src/Models/DiceLattice/Coordinates_DL.h
 src/Models/DiceLattice/Observables_DL.h
 src/Models/DiceLattice/Parameters_DL.h

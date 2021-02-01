@@ -24,6 +24,7 @@ using namespace std;
 #include "src/Models/DiceLattice/Coordinates_DL.h"
 #include "src/Models/DiceLattice/Connections_DL.h"
 #include "src/Models/DiceLattice/Observables_DL.h"
+#include "src/Models/DiceLattice/Kspace_calculation_DL.h"
 
 #include "src/Models/LiebLattice/Parameters_LL.h"
 #include "src/Models/LiebLattice/Coordinates_LL.h"
@@ -48,7 +49,32 @@ int main(int argc, char *argv[]) {
 
 
 
-    if(ex_string=="CreateConnections"){
+    if(ex_string=="k_space_SelfConsistency"){
+        string ModelType = argv[1];
+        string model_inputfile = argv[2];
+
+        if (argc<3) { throw std::invalid_argument("USE:: executable inputfile"); }
+
+        if(ModelType=="DiceLattice"){
+
+            Parameters_DL Parameters_DL_;
+            Parameters_DL_.Initialize(model_inputfile);
+
+            Coordinates_DL Coordinates_DL_(Parameters_DL_.lx, Parameters_DL_.ly, Parameters_DL_.n_orbs);
+
+            mt19937_64 Generator_(Parameters_DL_.RandomSeed);
+            Kspace_calculation_DL Kspace_calculation_DL_(Parameters_DL_, Coordinates_DL_,Generator_);
+
+            Kspace_calculation_DL_.SelfConsistency();
+
+        }
+
+    }
+
+
+
+
+    else if(ex_string=="CreateConnections"){
 
         cout <<"Creating connections for the given model"<<endl;
         string ModelType = argv[1];
@@ -57,41 +83,41 @@ int main(int argc, char *argv[]) {
 
         if(ModelType=="LiebLattice"){
 
-        Parameters_LL Parameters_LL_;
-        Parameters_LL_.Initialize(inputfile);
+            Parameters_LL Parameters_LL_;
+            Parameters_LL_.Initialize(inputfile);
 
-        Coordinates_LL Coordinates_LL_(Parameters_LL_.lx, Parameters_LL_.ly, Parameters_LL_.n_orbs);
+            Coordinates_LL Coordinates_LL_(Parameters_LL_.lx, Parameters_LL_.ly, Parameters_LL_.n_orbs);
 
-        Connections_LL Connections_LL_(Parameters_LL_, Coordinates_LL_);
-        Connections_LL_.Print_Hopping();                                       //::DONE
-        Connections_LL_.Print_LongRangeInt();
-        Connections_LL_.Print_Spin_resolved_OnsiteE();
+            Connections_LL Connections_LL_(Parameters_LL_, Coordinates_LL_);
+            Connections_LL_.Print_Hopping();                                       //::DONE
+            Connections_LL_.Print_LongRangeInt();
+            Connections_LL_.Print_Spin_resolved_OnsiteE();
 
         }
         if(ModelType=="DiceLattice"){
 
-        Parameters_DL Parameters_DL_;
-        Parameters_DL_.Initialize(inputfile);
+            Parameters_DL Parameters_DL_;
+            Parameters_DL_.Initialize(inputfile);
 
-        Coordinates_DL Coordinates_DL_(Parameters_DL_.lx, Parameters_DL_.ly, Parameters_DL_.n_orbs);
+            Coordinates_DL Coordinates_DL_(Parameters_DL_.lx, Parameters_DL_.ly, Parameters_DL_.n_orbs);
 
-        Connections_DL Connections_DL_(Parameters_DL_, Coordinates_DL_);
-        Connections_DL_.Print_Hopping();                                       //::DONE
-        Connections_DL_.Print_LongRangeInt();
-        Connections_DL_.Print_Spin_resolved_OnsiteE();
+            Connections_DL Connections_DL_(Parameters_DL_, Coordinates_DL_);
+            Connections_DL_.Print_Hopping();                                       //::DONE
+            Connections_DL_.Print_LongRangeInt();
+            Connections_DL_.Print_Spin_resolved_OnsiteE();
 
         }
         if(ModelType=="SquareLattice"){
 
-        Parameters_SQL Parameters_SQL_;
-        Parameters_SQL_.Initialize(inputfile);
+            Parameters_SQL Parameters_SQL_;
+            Parameters_SQL_.Initialize(inputfile);
 
-        Coordinates_SQL Coordinates_SQL_(Parameters_SQL_.lx, Parameters_SQL_.ly, Parameters_SQL_.n_orbs);
+            Coordinates_SQL Coordinates_SQL_(Parameters_SQL_.lx, Parameters_SQL_.ly, Parameters_SQL_.n_orbs);
 
-        Connections_SQL Connections_SQL_(Parameters_SQL_, Coordinates_SQL_);
-        Connections_SQL_.Print_Hopping();                                       //::DONE
-        Connections_SQL_.Print_LongRangeInt();
-        Connections_SQL_.Print_Spin_resolved_OnsiteE();
+            Connections_SQL Connections_SQL_(Parameters_SQL_, Coordinates_SQL_);
+            Connections_SQL_.Print_Hopping();                                       //::DONE
+            Connections_SQL_.Print_LongRangeInt();
+            Connections_SQL_.Print_Spin_resolved_OnsiteE();
 
         }
     }
@@ -130,96 +156,96 @@ int main(int argc, char *argv[]) {
 
         if(ModelType=="LiebLattice"){
 
-        Parameters_LL Parameters_LL_;
-        Parameters_LL_.Initialize(model_inputfile);
+            Parameters_LL Parameters_LL_;
+            Parameters_LL_.Initialize(model_inputfile);
 
-        Coordinates_LL Coordinates_LL_(Parameters_LL_.lx, Parameters_LL_.ly, Parameters_LL_.n_orbs);
-        Connections_LL Connections_LL_(Parameters_LL_, Coordinates_LL_);
+            Coordinates_LL Coordinates_LL_(Parameters_LL_.lx, Parameters_LL_.ly, Parameters_LL_.n_orbs);
+            Connections_LL Connections_LL_(Parameters_LL_, Coordinates_LL_);
 
-        Observables_LL Observables_LL_(Parameters_LL_, Coordinates_LL_, Connections_LL_ );
+            Observables_LL Observables_LL_(Parameters_LL_, Coordinates_LL_, Connections_LL_ );
 
-        Parameters_LL_.beta=Parameters_.beta;
-        Parameters_LL_.mus=Parameters_.mus;
-        Parameters_LL_.eta=Parameters_.eta_dos;
-        Parameters_LL_.domega=Parameters_.dw_dos;
-        Observables_LL_.Ham_ = Hamiltonian_.Ham_;
-        Observables_LL_.eigs_ = Hamiltonian_.eigs_;
+            Parameters_LL_.beta=Parameters_.beta;
+            Parameters_LL_.mus=Parameters_.mus;
+            Parameters_LL_.eta=Parameters_.eta_dos;
+            Parameters_LL_.domega=Parameters_.dw_dos;
+            Observables_LL_.Ham_ = Hamiltonian_.Ham_;
+            Observables_LL_.eigs_ = Hamiltonian_.eigs_;
 
 
-        Observables_LL_.Calculate_Akw();
-//        Observables_LL_.Calculate_OrbResolved_Nw();
-        Observables_LL_.Calculate_Nw();
+            Observables_LL_.Calculate_Akw();
+            //        Observables_LL_.Calculate_OrbResolved_Nw();
+            Observables_LL_.Calculate_Nw();
 
-        Observables_LL_.Create_Current_Oprs();
-        Observables_LL_.Hall_conductance();
+            Observables_LL_.Create_Current_Oprs();
+            Observables_LL_.Hall_conductance();
 
-        //Create and call:
-        //quantum spin-spin corrs
-        //<s_i^2>
-        //<n_iup n_idn>
-        //spin resolved local density
+            //Create and call:
+            //quantum spin-spin corrs
+            //<s_i^2>
+            //<n_iup n_idn>
+            //spin resolved local density
 
         }
 
         if(ModelType=="DiceLattice"){
 
-        Parameters_DL Parameters_DL_;
-        Parameters_DL_.Initialize(model_inputfile);
+            Parameters_DL Parameters_DL_;
+            Parameters_DL_.Initialize(model_inputfile);
 
-        Coordinates_DL Coordinates_DL_(Parameters_DL_.lx, Parameters_DL_.ly, Parameters_DL_.n_orbs);
-        Connections_DL Connections_DL_(Parameters_DL_, Coordinates_DL_);
+            Coordinates_DL Coordinates_DL_(Parameters_DL_.lx, Parameters_DL_.ly, Parameters_DL_.n_orbs);
+            Connections_DL Connections_DL_(Parameters_DL_, Coordinates_DL_);
 
-        Observables_DL Observables_DL_(Parameters_DL_, Coordinates_DL_, Connections_DL_ );
+            Observables_DL Observables_DL_(Parameters_DL_, Coordinates_DL_, Connections_DL_ );
 
-        Parameters_DL_.beta=Parameters_.beta;
-        Parameters_DL_.mus=Parameters_.mus;
-        Parameters_DL_.eta=Parameters_.eta_dos;
-        Parameters_DL_.domega=Parameters_.dw_dos;
-        Observables_DL_.Ham_ = Hamiltonian_.Ham_;
-        Observables_DL_.eigs_ = Hamiltonian_.eigs_;
-
-
-//        Observables_DL_.Calculate_Akw();
-//        Observables_DL_.Calculate_OrbResolved_Nw();
-//        Observables_DL_.Calculate_Nw();
+            Parameters_DL_.beta=Parameters_.beta;
+            Parameters_DL_.mus=Parameters_.mus;
+            Parameters_DL_.eta=Parameters_.eta_dos;
+            Parameters_DL_.domega=Parameters_.dw_dos;
+            Observables_DL_.Ham_ = Hamiltonian_.Ham_;
+            Observables_DL_.eigs_ = Hamiltonian_.eigs_;
 
 
-        Observables_DL_.Create_Current_Oprs();
-        Observables_DL_.Hall_conductance();
-        //Create and call:
-        //quantum spin-spin corrs
-        //<s_i^2>
-        //<n_iup n_idn>
-        //spin resolved local density
+            //        Observables_DL_.Calculate_Akw();
+            //        Observables_DL_.Calculate_OrbResolved_Nw();
+            //        Observables_DL_.Calculate_Nw();
+
+
+            Observables_DL_.Create_Current_Oprs();
+            Observables_DL_.Hall_conductance();
+            //Create and call:
+            //quantum spin-spin corrs
+            //<s_i^2>
+            //<n_iup n_idn>
+            //spin resolved local density
 
         }
 
         if(ModelType=="SquareLattice"){
 
-        Parameters_SQL Parameters_SQL_;
-        Parameters_SQL_.Initialize(model_inputfile);
+            Parameters_SQL Parameters_SQL_;
+            Parameters_SQL_.Initialize(model_inputfile);
 
-        Coordinates_SQL Coordinates_SQL_(Parameters_SQL_.lx, Parameters_SQL_.ly, Parameters_SQL_.n_orbs);
-        Connections_SQL Connections_SQL_(Parameters_SQL_, Coordinates_SQL_);
+            Coordinates_SQL Coordinates_SQL_(Parameters_SQL_.lx, Parameters_SQL_.ly, Parameters_SQL_.n_orbs);
+            Connections_SQL Connections_SQL_(Parameters_SQL_, Coordinates_SQL_);
 
-        Observables_SQL Observables_SQL_(Parameters_SQL_, Coordinates_SQL_, Connections_SQL_ );
+            Observables_SQL Observables_SQL_(Parameters_SQL_, Coordinates_SQL_, Connections_SQL_ );
 
-        Parameters_SQL_.beta=Parameters_.beta;
-        Parameters_SQL_.mus=Parameters_.mus;
-        Parameters_SQL_.eta=Parameters_.eta_dos;
-        Parameters_SQL_.domega=Parameters_.dw_dos;
-        Observables_SQL_.Ham_ = Hamiltonian_.Ham_;
-        Observables_SQL_.eigs_ = Hamiltonian_.eigs_;
+            Parameters_SQL_.beta=Parameters_.beta;
+            Parameters_SQL_.mus=Parameters_.mus;
+            Parameters_SQL_.eta=Parameters_.eta_dos;
+            Parameters_SQL_.domega=Parameters_.dw_dos;
+            Observables_SQL_.Ham_ = Hamiltonian_.Ham_;
+            Observables_SQL_.eigs_ = Hamiltonian_.eigs_;
 
 
-        Observables_SQL_.Calculate_Akw();
-        Observables_SQL_.Calculate_OrbResolved_Nw();
-        Observables_SQL_.Calculate_Nw();
-        //Create and call:
-        //quantum spin-spin corrs
-        //<s_i^2>
-        //<n_iup n_idn>
-        //spin resolved local density
+            Observables_SQL_.Calculate_Akw();
+            Observables_SQL_.Calculate_OrbResolved_Nw();
+            Observables_SQL_.Calculate_Nw();
+            //Create and call:
+            //quantum spin-spin corrs
+            //<s_i^2>
+            //<n_iup n_idn>
+            //spin resolved local density
 
         }
 

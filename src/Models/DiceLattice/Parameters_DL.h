@@ -12,7 +12,7 @@ public:
     int TBC_mx, TBC_my;
     int TBC_cellsX, TBC_cellsY;
     Mat_2_doub OnSiteE;
-    double lambda_RSOC;
+    double lambda_RSOC, Onsite_U;
     double BoundaryConnection;
 
     string File_Onsite_Energies, File_Hoppings, File_LongRange_Ints;
@@ -23,11 +23,20 @@ public:
     Matrix<double> hopping_NNN_PXMY;
     double hopping_intracell;
 
+    bool Self_consistency_kspace;
+    double Temperature;
 
     //For observse
     double beta, mus;
     double eta, domega;
 
+
+    double Total_Particles;
+    int IterMax;
+    double Convergence_Error;
+    int RandomSeed;
+    double alpha_OP;
+    bool Read_OPs;
     void Initialize(string inputfile_);
     double matchstring(string file, string match);
     string matchstring2(string file, string match);
@@ -67,6 +76,39 @@ void Parameters_DL::Initialize(string inputfile_)
     cout << "TotalNumberOf Unit cells = " << ns << endl;
 
     lambda_RSOC =matchstring(inputfile_, "lambda_RSOC");
+
+
+    double Self_consistency_kspace_double;
+    Self_consistency_kspace_double=double(matchstring(inputfile_,"Self_consistency_kspace"));
+    if(Self_consistency_kspace_double==1){
+        Self_consistency_kspace=true;}
+    else{
+        Self_consistency_kspace=false;
+    }
+
+    //New for self-consistency----------------------------
+
+    if(Self_consistency_kspace){
+        Onsite_U =matchstring(inputfile_, "Onsite_U");
+        Total_Particles = matchstring(inputfile_,"Total_particles");
+        cout << "TotalNumberOfParticles = "<< Total_Particles << endl;
+
+        IterMax = int(matchstring(inputfile_,"No_of_SelfConsistency_iters"));
+        Convergence_Error=matchstring(inputfile_,"Convergence_Error");
+        RandomSeed = matchstring(inputfile_,"RandomSeed");
+        alpha_OP = matchstring(inputfile_,"alpha_OP");
+        Temperature = matchstring(inputfile_,"Temperature");
+        beta=(1.0/Temperature);
+
+       double Read_OPs_double=double(matchstring(inputfile_,"Read_initial_OPvalues"));
+        if(Read_OPs_double==1.0){
+            Read_OPs=true;
+        }
+        else{
+            Read_OPs=false;
+        }
+    }
+    //------------------------------------------------
 
 
     string OnSiteE_up_str = "OnSiteE_up";
@@ -113,6 +155,8 @@ void Parameters_DL::Initialize(string inputfile_)
 
     hopping_intracell=matchstring(inputfile_, "Hopping_intracell");
     assert(n_orbs==3);
+
+
     cout << "____________________________________" << endl;
 }
 

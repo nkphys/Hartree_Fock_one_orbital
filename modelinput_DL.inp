@@ -2,8 +2,8 @@
 #true in Y because just 2-siters in Y, otherwise OBC just overwrites the same connections with zeros 
 
 PBC=1
-Xsite=6
-Ysite=6
+Xsite=60
+Ysite=60
 N_Orbs=3
 
 File_Onsite_Energies=DL_Onsite_E_6x6.txt
@@ -16,15 +16,15 @@ TBC_cellsX=1
 TBC_cellsY=1
 
 
-lambda_RSOC=0.3
+lambda_RSOC=0.8
 Hopping_intracell=-1.0
 
-OnSiteE_up0=0.1
-OnSiteE_up1=-0.5
-OnSiteE_up2=0.1
-OnSiteE_dn0=-0.1
-OnSiteE_dn1=-0.7
-OnSiteE_dn2=-0.1
+OnSiteE_up0=0.0
+OnSiteE_up1=-0.6
+OnSiteE_up2=0.0
+OnSiteE_dn0=-0.0
+OnSiteE_dn1=-0.6
+OnSiteE_dn2=-0.0
 
 Nearest_Neigh_Hopping_X_basis_row0=0.0 0.0 0.0
 Nearest_Neigh_Hopping_X_basis_row1=-1.0 0.0 0.0
@@ -32,3 +32,18 @@ Nearest_Neigh_Hopping_X_basis_row2=0.0 -1.0 0.0
 Nearest_Neigh_Hopping_Y_basis_row0=0.0 0.0 0.0
 Nearest_Neigh_Hopping_Y_basis_row1=-1.0 0.0 0.0
 Nearest_Neigh_Hopping_Y_basis_row2=0.0 -1.0 0.0
+
+
+
+Self_consistency_kspace=1
+Onsite_U=4.0
+Total_particles=10800
+
+No_of_SelfConsistency_iters=100000
+Convergence_Error=0.00001
+RandomSeed=10
+alpha_OP=0.5
+Temperature=0.001
+
+
+Read_initial_OPvalues=0
