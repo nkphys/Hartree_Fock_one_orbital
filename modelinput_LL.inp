@@ -2,13 +2,13 @@
 #true in Y because just 2-siters in Y, otherwise OBC just overwrites the same connections with zeros 
 
 PBC=1
-Xsite=8
-Ysite=8
+Xsite=48
+Ysite=48
 N_Orbs=3
 
-File_Onsite_Energies=LL_Onsite_E_8x8.txt
-File_Hopping_Connections=LL_Hoppings_8x8.txt
-File_NonLocal_Int_Connections=LL_Interactions_8x8.txt
+File_Onsite_Energies=DL_Onsite_E_6x6.txt
+File_Hopping_Connections=DL_Hoppings_6x6.txt
+File_NonLocal_Int_Connections=DL_Interactions_6x6.txt
 
 TwistedBoundaryCond_mx=0
 TwistedBoundaryCond_my=0
@@ -19,16 +19,31 @@ TBC_cellsY=1
 lambda_RSOC=0.3
 Hopping_intracell=1.0
 
-OnSiteE_up0=0.8
-OnSiteE_up1=0.3
+OnSiteE_up0=0.3
+OnSiteE_up1=-0.3
 OnSiteE_up2=0.3
-OnSiteE_dn0=0.2
-OnSiteE_dn1=-0.3
+OnSiteE_dn0=-0.3
+OnSiteE_dn1=-0.9
 OnSiteE_dn2=-0.3
 
 Nearest_Neigh_Hopping_X_basis_row0=0.0 0.0 0.0
-Nearest_Neigh_Hopping_X_basis_row1=1.0 0.0 0.0
-Nearest_Neigh_Hopping_X_basis_row2=0.0 0.0 0.0
+Nearest_Neigh_Hopping_X_basis_row1=-1.0 0.0 0.0
+Nearest_Neigh_Hopping_X_basis_row2=0.0 -1.0 0.0
 Nearest_Neigh_Hopping_Y_basis_row0=0.0 0.0 0.0
-Nearest_Neigh_Hopping_Y_basis_row1=0.0 0.0 0.0
-Nearest_Neigh_Hopping_Y_basis_row2=1.0 0.0 0.0
+Nearest_Neigh_Hopping_Y_basis_row1=-1.0 0.0 0.0
+Nearest_Neigh_Hopping_Y_basis_row2=0.0 -1.0 0.0
+
+
+
+Self_consistency_kspace=1
+Onsite_U=0.0
+Total_particles=6912
+
+No_of_SelfConsistency_iters=100000
+Convergence_Error=0.00001
+RandomSeed=10
+alpha_OP=0.0
+Temperature=0.001
+
+
+Read_initial_OPvalues=0

@@ -30,6 +30,7 @@ using namespace std;
 #include "src/Models/LiebLattice/Coordinates_LL.h"
 #include "src/Models/LiebLattice/Connections_LL.h"
 #include "src/Models/LiebLattice/Observables_LL.h"
+#include "src/Models/LiebLattice/Kspace_calculation_LL.h"
 
 #include "src/Models/SquareLattice/Parameters_SQL.h"
 #include "src/Models/SquareLattice/Coordinates_SQL.h"
@@ -66,6 +67,20 @@ int main(int argc, char *argv[]) {
             Kspace_calculation_DL Kspace_calculation_DL_(Parameters_DL_, Coordinates_DL_,Generator_);
 
             Kspace_calculation_DL_.SelfConsistency();
+
+        }
+
+        if(ModelType=="LiebLattice"){
+
+            Parameters_LL Parameters_LL_;
+            Parameters_LL_.Initialize(model_inputfile);
+
+            Coordinates_LL Coordinates_LL_(Parameters_LL_.lx, Parameters_LL_.ly, Parameters_LL_.n_orbs);
+
+            mt19937_64 Generator_(Parameters_LL_.RandomSeed);
+            Kspace_calculation_LL Kspace_calculation_LL_(Parameters_LL_, Coordinates_LL_,Generator_);
+
+            Kspace_calculation_LL_.SelfConsistency();
 
         }
 
