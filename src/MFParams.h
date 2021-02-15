@@ -67,15 +67,12 @@ double MFParams::random2(){
 void MFParams::initialize(){
 
 
-
-
     no_dof_=Coordinates_.no_dof_;
     ns_=Coordinates_.ns_;
     int UP_, DOWN_;
     UP_=0;DOWN_=1;
 
     // srand(Parameters_.RandomSeed);
-
     SI_to_ind.resize(2*ns_*2*ns_);
     Disorder.resize(ns_);
     OParams_.nrows=2*ns_;

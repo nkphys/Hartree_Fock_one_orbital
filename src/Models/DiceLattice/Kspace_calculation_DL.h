@@ -455,7 +455,7 @@ void Kspace_calculation_DL::Get_Energies(){
 
     E_class= ncells_*Parameters_.Onsite_U*(  (-2.0*OPs_[n1_up_]*OPs_[n1_dn_])  +
                                              (-1.0*OPs_[n2_up_]*OPs_[n2_dn_]) +
-                                             (1.0*OPs_[splus1_]*conj(OPs_[splus1_])) +
+                                             (2.0*OPs_[splus1_]*conj(OPs_[splus1_])) +
                                              (1.0*OPs_[splus2_]*conj(OPs_[splus2_])) +
                                              0.5
                                              ).real();
@@ -524,8 +524,6 @@ void Kspace_calculation_DL::Get_new_OPs_and_error(){
 
 
     }
-
-
 
 
     OP_error_=0.0;

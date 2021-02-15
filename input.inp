@@ -1,12 +1,12 @@
-Total_sites=192
-Total No. of particles=192
+Total_sites=64
+Total No. of particles=32
 FixingMu=false
 MuValueFixed=5.1619459
-RandomSeed=5
+RandomSeed=1
 
-File_Onsite_Energies=LL_Onsite_E_8x8.txt
-File_Hopping_Connections=LL_Hoppings_8x8.txt
-File_NonLocal_Int_Connections=LL_Interactions_8x8.txt
+File_Onsite_Energies=TL_Onsite_E_8x8.txt
+File_Hopping_Connections=TL_Hoppings_8x8.txt
+File_NonLocal_Int_Connections=TL_Interactions_8x8.txt
 
 ReadDisorderConf=false
 DisorderSeedFile=DisorderFile.txt
@@ -25,16 +25,16 @@ w_minus1=0.1
 wn=0.6
 BroydenSecondMethodCounter=10
 
-U_Onsite=0.0
+U_Onsite=1.0
 
 dw_dos=0.001
 eta_dos=0.001
 w_min=-5.0
 w_max=15.0
 
-No_of_SelfConsistency_iters=500
-Convergence_Error=0.00001
-Read_initial_OPvalues=1
+No_of_SelfConsistency_iters=1000
+Convergence_Error=0.000001
+Read_initial_OPvalues=0
 Read_initial_OPvalues_file=OrderParams_OUTPUT.txt
 Write_Final_OPvalues_file=OrderParams_OUTPUT.txt
 

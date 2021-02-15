@@ -285,6 +285,7 @@ void Observables::Update_OrderParameters(int iter){
     Mat_2_doub Jinv_np1;
      */
 
+    //cout<<MFParams_.OParams_.value.size()<<endl;
     int Offset_;
     int row_, col_;
     int old_ind;

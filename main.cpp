@@ -36,6 +36,11 @@ using namespace std;
 #include "src/Models/SquareLattice/Coordinates_SQL.h"
 #include "src/Models/SquareLattice/Connections_SQL.h"
 #include "src/Models/SquareLattice/Observables_SQL.h"
+
+#include "src/Models/TriangularLattice_TBG/Parameters_TL.h"
+#include "src/Models/TriangularLattice_TBG/Coordinates_TL.h"
+#include "src/Models/TriangularLattice_TBG/Connections_TL.h"
+#include "src/Models/TriangularLattice_TBG/Observables_TL.h"
 #include "random"
 
 
@@ -133,6 +138,21 @@ int main(int argc, char *argv[]) {
             Connections_SQL_.Print_Hopping();                                       //::DONE
             Connections_SQL_.Print_LongRangeInt();
             Connections_SQL_.Print_Spin_resolved_OnsiteE();
+
+        }
+        if(ModelType=="TriangularLattice"){
+
+            Parameters_TL Parameters_TL_;
+            Parameters_TL_.Initialize(inputfile);
+
+            Coordinates_TL Coordinates_TL_(Parameters_TL_.lx, Parameters_TL_.ly, Parameters_TL_.n_orbs);
+
+            Connections_TL Connections_TL_(Parameters_TL_, Coordinates_TL_);
+            Connections_TL_.Print_Hopping();                                       //::DONE
+
+            Connections_TL_.InteractionsCreate();
+            Connections_TL_.Print_LongRangeInt();
+            Connections_TL_.Print_Spin_resolved_OnsiteE();
 
         }
     }
