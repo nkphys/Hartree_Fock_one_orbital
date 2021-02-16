@@ -108,9 +108,9 @@ double Hamiltonian::chemicalpotential(double muin,double Particles){
         double mu_temp = muin;
         //cout<<"mu_input = "<<mu_temp<<endl;
         if(1==1){
-            mu1=eigs_[0];
-            mu2=eigs_[nstate-1];
-            for(int i=0;i<40000;i++){
+            mu1=eigs_[0]- (5.0/Parameters_.beta);
+            mu2=eigs_[nstate-1] + (5.0/Parameters_.beta);
+            for(int i=0;i<400000;i++){
                 n1=0.0;
                 for(int j=0;j<nstate;j++){
                     n1+=double(1.0/( exp( (eigs_[j]-mu_temp)*Parameters_.beta ) + 1.0));
@@ -132,7 +132,7 @@ double Hamiltonian::chemicalpotential(double muin,double Particles){
                     }
 
                 }
-                //cout<<"mu_temp = "<<mu_temp<<"   "<<n1<<endl;
+                //cout<<"mu_temp = "<<mu_temp<<"   "<<mu1<<"    "<<mu2<<"   "<<eigs_[nstate-1]<<"  "<<eigs_[0]<<"  "<<n1<<endl;
             }
 
             if(!converged){
@@ -260,6 +260,7 @@ double Hamiltonian::GetCLEnergy(){
         }
         else{ //Fock Terms
 
+            if(!Parameters_.Just_Hartree){
             //Onsite Fock
             if(site_alpha==site_beta){
                 assert(spin_alpha==UP_);
@@ -324,7 +325,7 @@ double Hamiltonian::GetCLEnergy(){
                 }
 
             }
-
+        }
         }
 
     }
@@ -400,6 +401,7 @@ void Hamiltonian::InteractionsCreate(){
         }
         else{ //Fock Terms
 
+            if(!Parameters_.Just_Hartree){
             //Onsite Fock
             if(site_alpha==site_beta){
                 assert(spin_alpha==UP_);
@@ -453,7 +455,7 @@ void Hamiltonian::InteractionsCreate(){
                 }
 
             }
-
+        }
         }
 
     }

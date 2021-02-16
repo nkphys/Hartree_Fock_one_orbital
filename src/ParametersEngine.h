@@ -102,7 +102,6 @@ void Parameters::Initialize(string inputfile_){
 
     Dflag = 'N';
 
-
     Simple_Mixing_double=double(matchstring(inputfile_,"Simple_Mixing"));
     Broyden_Mixing_double=double(matchstring(inputfile_,"Broyden_Mixing"));
     BroydenSecondMethodMixing_double=double(matchstring(inputfile_,"Broyden_Second_Method_Mixing"));
@@ -283,6 +282,7 @@ void Parameters::Initialize(string inputfile_){
     Just_Hartree_double=double(matchstring(inputfile_,"Just_Hartree"));
     if(Just_Hartree_double==1.0){
         Just_Hartree=true;
+        cout<<"PERFORMING JUST HARTREE"<<endl;
     }
     else{
         Just_Hartree=false;

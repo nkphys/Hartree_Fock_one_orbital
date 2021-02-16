@@ -109,22 +109,47 @@ void MFParams::initialize(){
 
                                     if(spin_i==spin_j){
                                         if(site_j>site_i){
+
+                                            if(Parameters_.Just_Hartree){
+                                                if(row_temp==col_temp){
+                                                    comp_temp.real(random1());
+                                                    comp_temp.imag(random1());
+                                                    OParams_.value.push_back(comp_temp);
+                                                    OParams_.rows.push_back(row_temp);
+                                                    OParams_.columns.push_back(col_temp);
+                                                    SI_to_ind[row_temp + (2*ns_*col_temp)] = OParams_.value.size() - 1;
+                                                }
+                                            }
+                                            else{
+                                                comp_temp.real(random1());
+                                                comp_temp.imag(random1());
+                                                OParams_.value.push_back(comp_temp);
+                                                OParams_.rows.push_back(row_temp);
+                                                OParams_.columns.push_back(col_temp);
+                                                SI_to_ind[row_temp + (2*ns_*col_temp)] = OParams_.value.size() - 1;
+                                            }
+
+                                        }
+                                    }
+                                    else{
+                                        if(Parameters_.Just_Hartree){
+                                            if(row_temp==col_temp){
+                                                comp_temp.real(random1());
+                                                comp_temp.imag(random1());
+                                                OParams_.value.push_back(comp_temp);
+                                                OParams_.rows.push_back(row_temp);
+                                                OParams_.columns.push_back(col_temp);
+                                                SI_to_ind[row_temp + (2*ns_*col_temp)] = OParams_.value.size() - 1;
+                                            }
+                                        }
+                                        else{
                                             comp_temp.real(random1());
                                             comp_temp.imag(random1());
                                             OParams_.value.push_back(comp_temp);
                                             OParams_.rows.push_back(row_temp);
                                             OParams_.columns.push_back(col_temp);
                                             SI_to_ind[row_temp + (2*ns_*col_temp)] = OParams_.value.size() - 1;
-
                                         }
-                                    }
-                                    else{
-                                        comp_temp.real(random1());
-                                        comp_temp.imag(random1());
-                                        OParams_.value.push_back(comp_temp);
-                                        OParams_.rows.push_back(row_temp);
-                                        OParams_.columns.push_back(col_temp);
-                                        SI_to_ind[row_temp + (2*ns_*col_temp)] = OParams_.value.size() - 1;
 
                                     }
                                 }
@@ -146,10 +171,19 @@ void MFParams::initialize(){
                                     comp_temp.imag(random1());
                                 }
 
+                                if(Parameters_.Just_Hartree){
+                                    if(row_temp==col_temp){
+                                        OParams_.value.push_back(comp_temp);
+                                        OParams_.rows.push_back(row_temp);
+                                        OParams_.columns.push_back(col_temp);
+                                        SI_to_ind[row_temp + (2*ns_*col_temp)] = OParams_.value.size() - 1;
+                                    }}
+                                else{
                                 OParams_.value.push_back(comp_temp);
                                 OParams_.rows.push_back(row_temp);
                                 OParams_.columns.push_back(col_temp);
                                 SI_to_ind[row_temp + (2*ns_*col_temp)] = OParams_.value.size() - 1;
+                                }
 
                             }
                         }
@@ -274,10 +308,21 @@ void MFParams::initialize(){
             {
                 stringstream line_temp_ss(line_temp);
                 line_temp_ss >> alpha_i >> alpha_j >> val_OP;
+
+                if(Parameters_.Just_Hartree){
+                    if(alpha_i==alpha_j){
+                        OParams_.value.push_back(val_OP);
+                        OParams_.rows.push_back(alpha_i);
+                        OParams_.columns.push_back(alpha_j);
+                        SI_to_ind[alpha_i + (2*ns_*alpha_j)] = OParams_.value.size() - 1;
+                    }
+                }
+                else{
                 OParams_.value.push_back(val_OP);
                 OParams_.rows.push_back(alpha_i);
                 OParams_.columns.push_back(alpha_j);
                 SI_to_ind[alpha_i + (2*ns_*alpha_j)] = OParams_.value.size() - 1;
+                }
 
             }
             file_initial_OP_in.close();
