@@ -1,12 +1,12 @@
-Total_sites=64
-Total No. of particles=32
+Total_sites=81
+Total No. of particles=21
 FixingMu=false
 MuValueFixed=5.0
 RandomSeed=21
 
-File_Onsite_Energies=TL_Onsite_E_8x8.txt
-File_Hopping_Connections=TL_Hoppings_8x8.txt
-File_NonLocal_Int_Connections=TL_Interactions_8x8.txt
+File_Onsite_Energies=TL_Onsite_E_9x9.txt
+File_Hopping_Connections=TL_Hoppings_9x9.txt
+File_NonLocal_Int_Connections=TL_Interactions_9x9.txt
 
 ReadDisorderConf=false
 DisorderSeedFile=DisorderFile.txt
@@ -19,13 +19,13 @@ Just_Hartree=1
 Simple_Mixing=0
 Broyden_Mixing=1
 Broyden_Second_Method_Mixing=0
-alpha_OP=0.9
+alpha_OP=0.6
 
 w_minus1=0.1
 wn=0.6
 BroydenSecondMethodCounter=10
 
-U_Onsite=0.5
+U_Onsite=900
 
 dw_dos=0.001
 eta_dos=0.01

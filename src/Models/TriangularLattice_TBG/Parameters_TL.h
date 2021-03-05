@@ -16,6 +16,11 @@ public:
 
     string File_Onsite_Energies, File_Hoppings, File_LongRange_Ints;
 
+    bool LongRange_interaction;
+    double d_screening;
+    double a_moire;
+    double eps_DE;
+
     double t1, t2, t3;
     double U0, U1, U2, U3;
     double hopping_intracell;
@@ -47,6 +52,11 @@ void Parameters_TL::Initialize(string inputfile_)
     t2 = double(matchstring(inputfile_, "t2"));
     t3 = double(matchstring(inputfile_, "t3"));
 
+
+    LongRange_interaction = int(matchstring(inputfile_, "LongRange_interaction"));
+    a_moire=double(matchstring(inputfile_,"a_moire_in_Angstorm"));
+    d_screening=double(matchstring(inputfile_,"d_screening_in_Angstorm"));
+    eps_DE=double(matchstring(inputfile_,"eps_DE"));
     U0 = double(matchstring(inputfile_, "U0"));
     U1 = double(matchstring(inputfile_, "U1"));
     U2 = double(matchstring(inputfile_, "U2"));

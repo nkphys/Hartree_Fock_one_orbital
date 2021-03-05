@@ -77,22 +77,26 @@ void Connections_TL::InteractionsCreate()
     U_hoppings.push_back(Parameters_.U3);U_hoppings.push_back(Parameters_.U3);U_hoppings.push_back(Parameters_.U3);
 
 
+    double U_val;
+
+
     int l, m, a, b;
-    int lx_pos, ly_pos;
-    int mx_pos, my_pos;
+    int l1_pos, l2_pos;
+    int m1_pos, m2_pos;
 
     Hint_.fill(0.0);
 
+    if(!Parameters_.LongRange_interaction){
     for (l = 0; l < ncells_; l++)
     {
-        lx_pos = Coordinates_.indx_cellwise(l);
-        ly_pos = Coordinates_.indy_cellwise(l);
+        l1_pos = Coordinates_.indx_cellwise(l);
+        l2_pos = Coordinates_.indy_cellwise(l);
 
         //For U1, U2, U3
         for(int neigh=0;neigh<9;neigh++){
             m = Coordinates_.neigh(l, U_neighs[neigh]); //+x neighbour cell
-            mx_pos = Coordinates_.indx_cellwise(m);
-            my_pos = Coordinates_.indy_cellwise(m);
+            m1_pos = Coordinates_.indx_cellwise(m);
+            m2_pos = Coordinates_.indy_cellwise(m);
 
             assert(l != m);
             if (l != m)
@@ -104,8 +108,47 @@ void Connections_TL::InteractionsCreate()
         }
 
     }
+    }
+    else{
+        int r1_, r2_;
+        double rx_, ry_;
+        double dis_;
+        for(l=0; l < ncells_; l++)
+        {
+            l1_pos = Coordinates_.indx_cellwise(l);
+            l2_pos = Coordinates_.indy_cellwise(l);
 
+            //For U[l][m]
+            for(m=0;m<ncells_;m++){
+                m1_pos = Coordinates_.indx_cellwise(m);
+                m2_pos = Coordinates_.indy_cellwise(m);
 
+//                if(m1_pos>l1_pos){
+//                r1_ = min(abs(m1_pos-l1_pos),abs(l1_pos+lx_-m1_pos)) ;
+//                }
+                r1_= min(abs(m1_pos-l1_pos),lx_-abs(m1_pos-l1_pos));
+                r2_= min(abs(m2_pos-l2_pos),ly_-abs(m2_pos-l2_pos));
+
+                rx_ = ((sqrt(3.0)/2.0)*(r1_) +  (sqrt(3.0)/2.0)*(r2_));
+                ry_ =  (-0.5*(r1_) + 0.5*(r2_));
+                dis_= sqrt(rx_*rx_ + ry_*ry_);
+//(14.3952)*( (1.0/(x*62.6434))  - (1.0/(sqrt( (x*x*62.6434*62.6434)  + d*d)))  )
+
+                U_val = ((14.3952*1000)/Parameters_.eps_DE)*( (1.0/(dis_*Parameters_.a_moire))  -
+                                    (1.0/(sqrt( (dis_*dis_*Parameters_.a_moire*Parameters_.a_moire)
+                                    + Parameters_.d_screening*Parameters_.d_screening)))  );
+               // assert(l != m);
+                if (l != m)
+                {
+                    Hint_(l, m) += complex<double>(1.0 * U_val, 0.0);
+                    //Hint_(m, l) += conj(Hint_(l, m));
+                }
+
+            }
+
+        }
+
+    }
 
 
 } // ----------
