@@ -29,6 +29,8 @@ public:
     bool Simple_Mixing;
     bool Broyden_Mixing;
     bool BroydenSecondMethodMixing;
+    bool Anderson_Mixing;
+    int AM_m; //Anderson_Mixing_m;
     double w_minus1,wn;
     int BroydenSecondMethodCounter;
     double alpha_OP;
@@ -64,7 +66,7 @@ void Parameters::Initialize(string inputfile_){
 
     CDW_Ansatz_sites.clear();
 
-    double Simple_Mixing_double, Broyden_Mixing_double, BroydenSecondMethodMixing_double, Restricted_HF_double;
+    double Simple_Mixing_double, Broyden_Mixing_double, Anderson_Mixing_double, BroydenSecondMethodMixing_double, Restricted_HF_double;
     double Read_OPs_double;
     double Create_OPs_double;
     double Just_Hartree_double;
@@ -104,6 +106,7 @@ void Parameters::Initialize(string inputfile_){
 
     Simple_Mixing_double=double(matchstring(inputfile_,"Simple_Mixing"));
     Broyden_Mixing_double=double(matchstring(inputfile_,"Broyden_Mixing"));
+    Anderson_Mixing_double=double(matchstring(inputfile_,"Anderson_Mixing"));
     BroydenSecondMethodMixing_double=double(matchstring(inputfile_,"Broyden_Second_Method_Mixing"));
     Restricted_HF_double=double(matchstring(inputfile_, "Restricted_HF"));
     if(Restricted_HF_double==1.0){
@@ -247,26 +250,25 @@ void Parameters::Initialize(string inputfile_){
         ReadDisorder = false;
     }
 
+
+    BroydenSecondMethodMixing=false;
+    Broyden_Mixing=false;
+    Simple_Mixing=false;
+    Anderson_Mixing=false;
     if(BroydenSecondMethodMixing_double==1.0){
         BroydenSecondMethodMixing=true;
-        Broyden_Mixing=false;
-        Simple_Mixing=false;
     }
-    else{
-        BroydenSecondMethodMixing=false;
-        if(Broyden_Mixing_double==1.0){
-            Broyden_Mixing=true;
-            Simple_Mixing=false;
-
-        }
-        else if(Broyden_Mixing_double==0.0){
-            Broyden_Mixing=false;
-            Simple_Mixing=true;
-            cout<<"Broyden_Mixing and  BroydenSecondMethodMixing, both are 0(false). So Simple mixing is used"<<endl;
-
-        }
-
+    if(Broyden_Mixing_double==1.0){
+        Broyden_Mixing=true;
     }
+    if(Simple_Mixing_double==1.0){
+        Simple_Mixing=true;
+    }
+    if(Anderson_Mixing_double==1.0){
+        Anderson_Mixing=true;
+        AM_m = int(matchstring(inputfile_,"Anderson_Mixing_m"));
+    }
+
 
 
 

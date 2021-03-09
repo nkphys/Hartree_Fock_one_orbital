@@ -302,12 +302,34 @@ int main(int argc, char *argv[]) {
         mt19937_64 Generator_(Parameters_.RandomSeed); //for random fields
         mt19937_64 Generator2_(Parameters_.RandomDisorderSeed); //for random disorder
 
-
         MFParams MFParams_(Parameters_,Coordinates_,Generator_, Generator2_);
-
         Hamiltonian Hamiltonian_(Parameters_,Coordinates_,MFParams_);
-
         Observables Observables_(Parameters_,Coordinates_,MFParams_,Hamiltonian_);
+
+        //SVD TEST START
+//        Matrix<double> A_;
+//        Matrix<double> VT_;
+//        Matrix<double> U_;
+//        vector<double> Sigma_;
+//        A_.resize(4,5);
+//        A_(0,0)=1.0;A_(0,4)=2.0;A_(1,2)=3.0;A_(3,1)=2.0;
+//        A_.print();
+//        Observables_.Perform_SVD(A_,VT_,U_,Sigma_);
+//        A_.print();
+//        VT_.print();
+//        U_.print();
+//        cout<<"Printing Sigma with size ="<<Sigma_.size()<<endl;
+//        for(int i=0;i<Sigma_.size();i++){
+//            cout<<setprecision(10)<<Sigma_[i]<<"  ";
+//        }
+//        cout<<endl;
+//        assert(false);
+        //SVD TEST DONE
+        //IT IS WORKING :)
+
+
+
+
         cout<<setprecision(9);
         SelfConsistencyEngine SelfConsistencyEngine_(Parameters_,Coordinates_,MFParams_,Hamiltonian_,Observables_);
         SelfConsistencyEngine_.RUN_SelfConsistencyEngine();

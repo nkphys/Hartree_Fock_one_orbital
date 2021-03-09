@@ -91,13 +91,15 @@ T& Matrix<T>::operator()(int i,int j){
 
 template<class T>
 void Matrix<T>::print(){
+    std::cout<<"=================================================="<<endl;
     std::cout<<"shape:= ("<<nrow_<<","<<ncol_<<")"<<std::endl;
     for(int i=0; i<nrow_; i++) {
         for(int j=0; j<ncol_; j++) {
-            std::cout << std::setprecision(2)<<data_[i+j*nrow_] << " ";
+            std::cout << std::setprecision(6)<<data_[i+j*nrow_] << " ";
         }
         std::cout << std::endl;
     }
+    std::cout<<"=================================================="<<endl;
     return;
 } // ----------
 

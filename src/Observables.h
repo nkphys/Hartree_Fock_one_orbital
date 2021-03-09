@@ -4,6 +4,7 @@
 #include "Hamiltonian.h"
 #include "tensor_type.h"
 #include "functions.h"
+#include <algorithm>
 
 #ifndef OBSERVABLES_H
 #define OBSERVABLES_H
@@ -34,6 +35,15 @@ extern "C" void dsptrf_(char *, int *, double *, int *, int *);
 //            integer INFO)
 extern "C" void dsptri_(char *, int *, double *, int *, double *, int *);
 
+//dgesdd	(character JOBZ, integer M, integer N, double precision  dimension( lda, * ) A,
+//             integer LDA, double precision dimension( * ) S, double precision dimension( ldu, * ) U,
+//             integer LDU, double precision dimension( ldvt, * ) VT, integer LDVT,
+//             double precision dimension( * ) WORK, integer LWORK, integer dimension( * ) IWORK,
+//             integer INFO)
+extern "C" void dgesdd_ (char *, int *, int *, double *, int *, double *, double *, int *, double *, int*,
+                         double *, int *, int *, int *);
+
+
 
 class Observables{
 public:
@@ -63,11 +73,13 @@ public:
     void Update_OrderParameters(int iter);
     void Hartree_Filter();
     void Update_OrderParameters_Second_Broyden(int iter_count);
+    void Update_OrderParameters_AndersonMixing(int iter);
     void Invert_Beta();
     void Invert_Beta_double();
     void Calculate_Single_Particle_Density_Matrix();
     void Calculate_SpinSpincorrelations_Smartly();
     void Calculate_DenDencorrelations_Smartly();
+    void Perform_SVD(Matrix<double> & A_, Matrix<double> & VT_, Matrix<double> & U_, vector<double> & Sigma_);
 
     complex<double> Two_particle_Den_Mat(int _alpha, int _beta, int _gamma, int _delta);
 
@@ -130,6 +142,11 @@ public:
     Mat_1_doub w;
 
 
+    //Declarations for Anderson Mixing
+    Mat_1_doub x_km1_, x_k_, Del_x_km1;
+    Mat_1_doub f_k_, f_km1_, Del_f_km1;
+    Mat_1_doub xbar_k_, fbar_k_, gamma_k_, x_kp1_;
+    Matrix<double> X_mat, F_mat;
 
 
 };
@@ -139,6 +156,270 @@ public:
  *  ***********
 */
 
+
+
+void Observables::Update_OrderParameters_AndersonMixing(int iter){
+
+    int Offset_;
+    int m_;
+    int row_, col_;
+    int old_ind;
+    int OP_size;
+    Mat_1_int NewInd_to_OldInd;
+    NewInd_to_OldInd.clear();
+    for(int ind=0;ind<MFParams_.OParams_.value.size();ind++){
+        NewInd_to_OldInd.push_back(ind);
+    }
+
+    for(int ind=0;ind<MFParams_.OParams_.value.size();ind++){
+        row_=MFParams_.OParams_.rows[ind];
+        col_=MFParams_.OParams_.columns[ind];
+        if(row_!=col_){
+            NewInd_to_OldInd.push_back(ind);
+        }
+    }
+
+    assert(NewInd_to_OldInd.size()==MFParams_.OParams_.value.size() + (MFParams_.OParams_.value.size() - 2*ns_));
+    OP_size=NewInd_to_OldInd.size();
+
+
+    if(iter==0){
+        //cout<<"Anderson mixing for iter "<<iter<<endl;
+
+        x_k_.clear();x_k_.resize(OP_size);
+        for(int i=0;i<OP_size;i++){
+            if(i<MFParams_.OParams_.value.size()){
+                x_k_[i] = MFParams_.OParams_.value[NewInd_to_OldInd[i]].real();
+            }
+            else{
+                x_k_[i] = MFParams_.OParams_.value[NewInd_to_OldInd[i]].imag();
+            }
+        }
+
+        f_k_.clear();f_k_.resize(OP_size);
+        for(int i=0;i<OP_size;i++){
+            if(i<OParams.value.size()){
+                f_k_[i] = OParams.value[NewInd_to_OldInd[i]].real();
+            }
+            else{
+                f_k_[i] = OParams.value[NewInd_to_OldInd[i]].imag();
+            }
+        }
+        assert(OParams.value.size() == MFParams_.OParams_.value.size());
+
+        //f_k = OParams.value;
+        //x_k = MFParams_.OParams_.value;
+
+        for(int ind=0;ind<MFParams_.OParams_.value.size();ind++){
+            MFParams_.OParams_.value[ind] = (1-Parameters_.alpha_OP)*MFParams_.OParams_.value[ind]
+                    + Parameters_.alpha_OP*OParams.value[ind];
+        }
+
+
+        x_km1_=x_k_;
+        X_mat.resize(0,0);
+
+        f_km1_=f_k_;
+        F_mat.resize(0,0);
+        //f_km1=
+
+    }
+    else{
+        //cout<<"Anderson mixing for iter "<<iter<<endl;
+        x_k_.clear();x_k_.resize(OP_size);
+        for(int i=0;i<OP_size;i++){
+            if(i<MFParams_.OParams_.value.size()){
+                x_k_[i] = MFParams_.OParams_.value[NewInd_to_OldInd[i]].real();
+            }
+            else{
+                x_k_[i] = MFParams_.OParams_.value[NewInd_to_OldInd[i]].imag();
+            }
+        }
+
+        f_k_.clear();f_k_.resize(OP_size);
+        for(int i=0;i<OP_size;i++){
+            if(i<OParams.value.size()){
+                f_k_[i] = OParams.value[NewInd_to_OldInd[i]].real();
+            }
+            else{
+                f_k_[i] = OParams.value[NewInd_to_OldInd[i]].imag();
+            }
+        }
+
+        Del_x_km1.clear();Del_x_km1.resize(OP_size);
+        Del_f_km1.clear();Del_f_km1.resize(OP_size);
+        for(int i=0;i<OP_size;i++){
+            Del_x_km1[i] = x_k_[i] - x_km1_[i];
+            Del_f_km1[i] = f_k_[i] - f_km1_[i];
+        }
+
+
+        m_=min(Parameters_.AM_m,iter);
+        gamma_k_.clear();
+        gamma_k_.resize(m_);
+
+        //updating X_mat_k
+        Matrix <double> Xmat_temp;
+        Xmat_temp.resize(X_mat.n_row(),X_mat.n_col());
+        Xmat_temp=X_mat;
+        X_mat.resize(OP_size,m_);
+
+        if(iter<=Parameters_.AM_m){
+            for(col_=0;col_<Xmat_temp.n_col();col_++){
+                for(row_=0;row_<Xmat_temp.n_row();row_++){
+                    X_mat(row_,col_) = Xmat_temp(row_,col_);
+                }
+            }
+
+            for(col_=m_-1;col_<m_;col_++){
+                for(row_=0;row_<OP_size;row_++){
+                    X_mat(row_,col_) = Del_x_km1[row_];
+                }
+            }
+        }
+        else{
+            for(col_=1;col_<Xmat_temp.n_col();col_++){
+                for(row_=0;row_<Xmat_temp.n_row();row_++){
+                    X_mat(row_,col_-1) = Xmat_temp(row_,col_);
+                }
+            }
+            for(row_=0;row_<OP_size;row_++){
+                X_mat(row_,m_-1) = Del_x_km1[row_];
+            }
+        }
+
+
+
+        //updating F_mat_k
+        Matrix <double> Fmat_temp;
+        Fmat_temp.resize(F_mat.n_row(),F_mat.n_col());
+        Fmat_temp=F_mat;
+        F_mat.resize(OP_size,m_);
+
+        if(iter<=Parameters_.AM_m){
+            for(col_=0;col_<Fmat_temp.n_col();col_++){
+                for(row_=0;row_<Fmat_temp.n_row();row_++){
+                    F_mat(row_,col_) = Fmat_temp(row_,col_);
+                }
+            }
+
+            for(col_=m_-1;col_<m_;col_++){
+                for(row_=0;row_<OP_size;row_++){
+                    F_mat(row_,col_) = Del_f_km1[row_];
+                }
+            }
+        }
+        else{
+            for(col_=1;col_<Fmat_temp.n_col();col_++){
+                for(row_=0;row_<Fmat_temp.n_row();row_++){
+                    F_mat(row_,col_-1) = Fmat_temp(row_,col_);
+                }
+            }
+            for(row_=0;row_<OP_size;row_++){
+                F_mat(row_,m_-1) = Del_f_km1[row_];
+            }
+        }
+
+
+        //Update gamma_k using Total least sqaure minimaztion (using SVD of F_mat)
+        for(int i=0;i<m_;i++){
+            gamma_k_[i] = 1.0/(1.0*m_);
+        }
+
+
+
+        //Mat_1_doub Temp_F_gamma_k, Temp_X_gamma_k;
+        xbar_k_.clear();fbar_k_.clear();
+        xbar_k_.resize(OP_size);
+        fbar_k_.resize(OP_size);
+        double temp_f, temp_x;
+        for(int i=0;i<OP_size;i++){
+            temp_f=0.0;
+            temp_x=0.0;
+            for(int j=0;j<m_;j++){
+                temp_f +=F_mat(i,j)*gamma_k_[j];
+                temp_x +=X_mat(i,j)*gamma_k_[j];
+            }
+            xbar_k_[i] = x_k_[i] - 1.0*temp_x;
+            fbar_k_[i] = f_k_[i] - 1.0*temp_f;
+        }
+
+
+        x_kp1_.clear();
+        x_kp1_.resize(OP_size);
+        for(int i=0;i<OP_size;i++){
+            x_kp1_[i] = (1.0 - Parameters_.alpha_OP)*xbar_k_[i]  +
+                        Parameters_.alpha_OP*fbar_k_[i];
+        }
+
+        for(int i=0;i<OP_size;i++){
+            if(i<MFParams_.OParams_.value.size()){
+                MFParams_.OParams_.value[NewInd_to_OldInd[i]].real( x_kp1_[i]);
+            }
+            else{
+                MFParams_.OParams_.value[NewInd_to_OldInd[i]].imag( x_kp1_[i]);
+            }
+        }
+
+
+        //---saving arrays for next iteration-----
+        x_km1_=x_k_;
+        f_km1_=f_k_;
+
+    }
+
+
+}
+
+
+void Observables::Perform_SVD(Matrix<double> & A_, Matrix<double> & VT_, Matrix<double> & U_, vector<double> & Sigma_){
+
+
+    char jobz='A'; //A,S,O,N
+
+    int m=A_.n_row();
+    int n=A_.n_col();
+    int lda=A_.n_row();
+    int ldu=A_.n_row();
+    int ldvt=n;
+
+    Sigma_.clear();
+    Sigma_.resize(min(m,n));
+
+    U_.resize(ldu,m);
+
+    VT_.resize(ldvt,n);
+
+
+    vector<double> work(3);
+    int info;
+    int lwork= -1;
+    vector<int> iwork(8*min(m,n));
+
+    // query:
+    dgesdd_(&jobz, &m, &n, &(A_(0,0)),&lda, &(Sigma_[0]),&(U_(0,0)), &ldu, &(VT_(0,0)), &ldvt,
+            &(work[0]), &lwork, &(iwork[0]), &info);
+    //lwork = int(real(work[0]))+1;
+    lwork = int((work[0]));
+    work.resize(lwork);
+    // real work:
+    dgesdd_(&jobz, &m, &n, &(A_(0,0)),&lda, &(Sigma_[0]),&(U_(0,0)), &ldu, &(VT_(0,0)), &ldvt,
+            &(work[0]), &lwork, &(iwork[0]), &info);
+    if (info!=0) {
+        if(info>0){
+            std::cerr<<"info="<<info<<"\n";
+            perror("diag: zheev: failed with info>0.\n");}
+        if(info<0){
+            std::cerr<<"info="<<info<<"\n";
+            perror("diag: zheev: failed with info<0.\n");
+        }
+    }
+
+    // Ham_.print();
+
+
+
+}
 
 
 void Observables::Invert_Beta(){
@@ -692,6 +973,9 @@ void Observables::Update_OrderParameters(int iter){
         }
 
     }
+    else if (Parameters_.Anderson_Mixing){
+        Update_OrderParameters_AndersonMixing(iter);
+    }
 
 
 
@@ -1167,9 +1451,9 @@ void Observables::Calculate_Local_spins_resolved(){
         c2=Coordinates_.Nc_dof(site,DOWN_);
         for(int n=0;n<Hamiltonian_.eigs_.size();n++){
             sx += (( conj(Hamiltonian_.Ham_(c2,n))*Hamiltonian_.Ham_(c1,n)
-                       )*
-                        (1.0/( exp((Hamiltonian_.eigs_[n]-Parameters_.mus)*Parameters_.beta ) + 1.0))
-                        ).real();
+                     )*
+                   (1.0/( exp((Hamiltonian_.eigs_[n]-Parameters_.mus)*Parameters_.beta ) + 1.0))
+                   ).real();
         }
 
         //sy
@@ -1178,14 +1462,14 @@ void Observables::Calculate_Local_spins_resolved(){
         c2=Coordinates_.Nc_dof(site,DOWN_);
         for(int n=0;n<Hamiltonian_.eigs_.size();n++){
             sy += (( conj(Hamiltonian_.Ham_(c2,n))*Hamiltonian_.Ham_(c1,n)
-                       )*
-                        (1.0/( exp((Hamiltonian_.eigs_[n]-Parameters_.mus)*Parameters_.beta ) + 1.0))
-                        ).imag();
+                     )*
+                   (1.0/( exp((Hamiltonian_.eigs_[n]-Parameters_.mus)*Parameters_.beta ) + 1.0))
+                   ).imag();
         }
 
 
-       // LocalS<<site<<setw(15)<<sz<<setw(15)<<sx<<setw(15)<<sy<<endl;
-         LocalS<<site<<"  "<<sz<<"  "<<sx<<"   "<<sy<<endl;
+        // LocalS<<site<<setw(15)<<sz<<setw(15)<<sx<<setw(15)<<sy<<endl;
+        LocalS<<site<<"  "<<sz<<"  "<<sx<<"   "<<sy<<endl;
 
     }
 
