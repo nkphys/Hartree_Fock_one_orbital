@@ -1,44 +1,44 @@
-Total_sites=144
-Total No. of particles=96
+Total_sites=576
+Total No. of particles=288
 FixingMu=false
 MuValueFixed=5.0
-RandomSeed=2
+RandomSeed=21
 
-File_Onsite_Energies=TL_Onsite_E.txt
-File_Hopping_Connections=TL_Hoppings.txt
-File_NonLocal_Int_Connections=TL_Interactions.txt
+File_Onsite_Energies=TL_Onsite_E_12x12.txt
+File_Hopping_Connections=TL_Hoppings_12x12.txt
+File_NonLocal_Int_Connections=TL_Interactions_12x12.txt
 
 ReadDisorderConf=false
 DisorderSeedFile=DisorderFile.txt
-RandomDisorderSeed=40
+RandomDisorderSeed=43
 Disorder_Strength=0.0
 
-Temperature=0.001
-Just_Hartree=0
+Temperature=0.01
+Just_Hartree=1
 
 Simple_Mixing=0
 Broyden_Mixing=0
 Broyden_Second_Method_Mixing=0
 Anderson_Mixing=1
-Anderson_Mixing_m=100
-alpha_OP=0.5
+Anderson_Mixing_m=5
+alpha_OP=0.1
 
 w_minus1=0.1
 wn=0.6
 BroydenSecondMethodCounter=10
 
-U_Onsite=960
+U_Onsite=48
 
 dw_dos=0.001
 eta_dos=0.01
 w_min=-5.0
 w_max=15.0
 
-No_of_SelfConsistency_iters=200000
-Convergence_Error=0.000001
+No_of_SelfConsistency_iters=4000
+Convergence_Error=0.00001
 Read_initial_OPvalues=0
-Read_initial_OPvalues_file=OrderParams_OUTPUT.txt
-Write_Final_OPvalues_file=OrderParams_OUTPUT.txt
+Read_initial_OPvalues_file=Hartree_OP_Stripe_CDW_FM.txt
+Write_Final_OPvalues_file=OrderParams_OUT6.txt
 
 Create_OPvalues=0
 Create_OPType=NOT_USED

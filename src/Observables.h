@@ -44,6 +44,9 @@ extern "C" void dgesdd_ (char *, int *, int *, double *, int *, double *, double
                          double *, int *, int *, int *);
 
 
+extern "C" void zgesdd_ (char *, int *, int *, std::complex<double> *, int *, double *, std::complex<double> *, int *, std::complex<double> *, int*,
+                         std::complex<double> *, int *, double * , int *, int *);
+
 
 class Observables{
 public:
@@ -80,6 +83,8 @@ public:
     void Calculate_SpinSpincorrelations_Smartly();
     void Calculate_DenDencorrelations_Smartly();
     void Perform_SVD(Matrix<double> & A_, Matrix<double> & VT_, Matrix<double> & U_, vector<double> & Sigma_);
+    void Perform_SVD_complex(Matrix<complex<double>> & A_, Matrix<complex<double>> & VT_, Matrix<complex<double>> & U_, vector<double> & Sigma_);
+
 
     complex<double> Two_particle_Den_Mat(int _alpha, int _beta, int _gamma, int _delta);
 
@@ -148,7 +153,6 @@ public:
     Mat_1_doub xbar_k_, fbar_k_, gamma_k_, x_kp1_;
     Matrix<double> X_mat, F_mat;
 
-
 };
 /*
  * ***********
@@ -157,9 +161,9 @@ public:
 */
 
 
-
 void Observables::Update_OrderParameters_AndersonMixing(int iter){
 
+    bool with_SVD=false;
     int Offset_;
     int m_;
     int row_, col_;
@@ -184,7 +188,7 @@ void Observables::Update_OrderParameters_AndersonMixing(int iter){
 
 
     if(iter==0){
-        //cout<<"Anderson mixing for iter "<<iter<<endl;
+//        cout<<"Anderson mixing for iter "<<iter<<endl;
 
         x_k_.clear();x_k_.resize(OP_size);
         for(int i=0;i<OP_size;i++){
@@ -199,10 +203,10 @@ void Observables::Update_OrderParameters_AndersonMixing(int iter){
         f_k_.clear();f_k_.resize(OP_size);
         for(int i=0;i<OP_size;i++){
             if(i<OParams.value.size()){
-                f_k_[i] = OParams.value[NewInd_to_OldInd[i]].real();
+                f_k_[i] = OParams.value[NewInd_to_OldInd[i]].real() - MFParams_.OParams_.value[NewInd_to_OldInd[i]].real();
             }
             else{
-                f_k_[i] = OParams.value[NewInd_to_OldInd[i]].imag();
+                f_k_[i] = OParams.value[NewInd_to_OldInd[i]].imag()- MFParams_.OParams_.value[NewInd_to_OldInd[i]].imag();
             }
         }
         assert(OParams.value.size() == MFParams_.OParams_.value.size());
@@ -225,7 +229,7 @@ void Observables::Update_OrderParameters_AndersonMixing(int iter){
 
     }
     else{
-        //cout<<"Anderson mixing for iter "<<iter<<endl;
+  //      cout<<"Anderson mixing for iter "<<iter<<endl;
         x_k_.clear();x_k_.resize(OP_size);
         for(int i=0;i<OP_size;i++){
             if(i<MFParams_.OParams_.value.size()){
@@ -239,10 +243,10 @@ void Observables::Update_OrderParameters_AndersonMixing(int iter){
         f_k_.clear();f_k_.resize(OP_size);
         for(int i=0;i<OP_size;i++){
             if(i<OParams.value.size()){
-                f_k_[i] = OParams.value[NewInd_to_OldInd[i]].real();
+                f_k_[i] = OParams.value[NewInd_to_OldInd[i]].real() - MFParams_.OParams_.value[NewInd_to_OldInd[i]].real();
             }
             else{
-                f_k_[i] = OParams.value[NewInd_to_OldInd[i]].imag();
+                f_k_[i] = OParams.value[NewInd_to_OldInd[i]].imag() - MFParams_.OParams_.value[NewInd_to_OldInd[i]].imag();
             }
         }
 
@@ -320,12 +324,68 @@ void Observables::Update_OrderParameters_AndersonMixing(int iter){
             }
         }
 
+        //cout<<"here 1"<<endl;
 
         //Update gamma_k using Total least sqaure minimaztion (using SVD of F_mat)
+        if(with_SVD==false){
         for(int i=0;i<m_;i++){
             gamma_k_[i] = 1.0/(1.0*m_);
         }
+        }
+        else{
+        int r_;
+        r_=min(OP_size,m_);
+        Matrix<double> A_;  //nxm; n=OP_size
+        Matrix<double> VT_; //mxm
+        Matrix<double> U_;  //nxn
+        vector<double> Sigma_; //atmost non-zero min(n,m) values
+        A_.resize(F_mat.n_row(), F_mat.n_col());
+        A_=F_mat;
 
+        //cout<<"here 2"<<endl;
+        Perform_SVD(A_,VT_,U_,Sigma_);
+        //cout<<"here 2.5"<<endl;
+
+        Matrix<double> UT_f;
+        Matrix<double> Sinv_UT_f;
+
+        UT_f.resize(r_,1);
+        for(int i=0;i<r_;i++){
+            for(int j=0;j<OP_size;j++){
+                UT_f(i,0) += U_(j,i)*f_k_[j];
+            }
+        }
+
+        Sinv_UT_f.resize(r_,1);//S-inv in Pseudoinverse of Sigma_
+        for(int i=0;i<r_;i++){
+            if(abs(Sigma_[i])>=0.001){
+                Sinv_UT_f(i,0) = (1.0/Sigma_[i])*UT_f(i,0);
+            }
+            else{
+                Sinv_UT_f(i,0)=0.0;
+            }
+        }
+
+        double sum_gamma=0.0;
+        for(int i=0;i<m_;i++){
+            gamma_k_[i]=0.0;
+            for(int j=0;j<r_;j++){
+                gamma_k_[i] += VT_(j,i)*Sinv_UT_f(j,0);
+            }
+             sum_gamma += abs(gamma_k_[i]);
+
+        }
+
+        if(sum_gamma>1){
+        for(int i=0;i<m_;i++){
+           gamma_k_[i] = gamma_k_[i]*(1.0/sum_gamma);
+        }
+        }
+
+        }
+
+
+        //cout<<"here 3"<<endl;
 
 
         //Mat_1_doub Temp_F_gamma_k, Temp_X_gamma_k;
@@ -348,8 +408,8 @@ void Observables::Update_OrderParameters_AndersonMixing(int iter){
         x_kp1_.clear();
         x_kp1_.resize(OP_size);
         for(int i=0;i<OP_size;i++){
-            x_kp1_[i] = (1.0 - Parameters_.alpha_OP)*xbar_k_[i]  +
-                        Parameters_.alpha_OP*fbar_k_[i];
+            x_kp1_[i] = (1.0 - 0.0*Parameters_.alpha_OP)*xbar_k_[i]  +
+                    Parameters_.alpha_OP*fbar_k_[i];
         }
 
         for(int i=0;i<OP_size;i++){
@@ -421,6 +481,57 @@ void Observables::Perform_SVD(Matrix<double> & A_, Matrix<double> & VT_, Matrix<
 
 }
 
+
+void Observables::Perform_SVD_complex(Matrix<complex<double>> & A_, Matrix<complex<double>> & VT_, Matrix<complex<double>> & U_, vector<double> & Sigma_){
+
+
+    char jobz='A'; //A,S,O,N
+
+    int m=A_.n_row();
+    int n=A_.n_col();
+    int lda=A_.n_row();
+    int ldu=A_.n_row();
+    int ldvt=n;
+
+    Sigma_.clear();
+    Sigma_.resize(min(m,n));
+
+    U_.resize(ldu,m);
+
+    VT_.resize(ldvt,n);
+
+
+    vector<complex<double>> work(3);
+    int info;
+    int lwork= -1;
+    vector<int> iwork(8*min(m,n));
+    int lrwork = max( (5*min(m,n)*min(m,n)) + 5*min(m,n), (2*max(m,n)*min(m,n)) + (2*min(m,n)*min(m,n)) + min(m,n) );
+    vector<double> rwork(lrwork);
+
+    // query:
+    zgesdd_(&jobz, &m, &n, &(A_(0,0)),&lda, &(Sigma_[0]),&(U_(0,0)), &ldu, &(VT_(0,0)), &ldvt,
+            &(work[0]), &lwork, &(rwork[0]), &(iwork[0]), &info);
+    //lwork = int(real(work[0]))+1;
+    lwork = int((work[0]).real());
+    work.resize(lwork);
+    // real work:
+    zgesdd_(&jobz, &m, &n, &(A_(0,0)),&lda, &(Sigma_[0]),&(U_(0,0)), &ldu, &(VT_(0,0)), &ldvt,
+            &(work[0]), &lwork, &(rwork[0]), &(iwork[0]), &info);
+    if (info!=0) {
+        if(info>0){
+            std::cerr<<"info="<<info<<"\n";
+            perror("diag: zheev: failed with info>0.\n");}
+        if(info<0){
+            std::cerr<<"info="<<info<<"\n";
+            perror("diag: zheev: failed with info<0.\n");
+        }
+    }
+
+    // Ham_.print();
+
+
+
+}
 
 void Observables::Invert_Beta(){
     /*

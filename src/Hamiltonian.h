@@ -418,7 +418,6 @@ void Hamiltonian::InteractionsCreate(){
             }
             else{ //OFFSITE Fock Terms
 
-
                 //up-up or dn-dn
                 if(spin_alpha==spin_beta){
                     assert(site_beta > site_alpha);

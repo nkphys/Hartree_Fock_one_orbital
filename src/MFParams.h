@@ -152,7 +152,7 @@ void MFParams::initialize(){
 
                                 if(Parameters_.Just_Hartree){
                                     if(row_temp==col_temp){
-                                        OParams_.value.push_back(comp_temp*(Parameters_.Total_Particles/2*ns_));
+                                        OParams_.value.push_back(comp_temp*(Parameters_.Total_Particles/(2*ns_)));
                                         OParams_.rows.push_back(row_temp);
                                         OParams_.columns.push_back(col_temp);
                                         SI_to_ind[row_temp + (2*ns_*col_temp)] = OParams_.value.size() - 1;
@@ -272,6 +272,80 @@ void MFParams::initialize(){
     }
     else{
 
+
+        //Adding OPs's to  OPaams_, which in principle can be finite
+        for(int site_i=0;site_i<ns_;site_i++){
+            for(int site_j=0;site_j<ns_;site_j++){
+
+                if(site_i!=site_j){
+                    if(abs(Parameters_.LongRangeInteractions[site_i][site_j])>0.0000001){
+
+                        if(!Parameters_.Just_Hartree){
+
+                            for(int spin_i=0;spin_i<2;spin_i++){
+                                for(int spin_j=spin_i;spin_j<2;spin_j++){
+                                    row_temp = Coordinates_.Nc_dof(site_i, spin_i);
+                                    col_temp = Coordinates_.Nc_dof(site_j, spin_j);
+
+                                    if(spin_i==spin_j){
+                                        if(site_j>site_i){
+
+                                            comp_temp.real(0.0);
+                                            comp_temp.imag(0.0);
+                                            OParams_.value.push_back(comp_temp);
+                                            OParams_.rows.push_back(row_temp);
+                                            OParams_.columns.push_back(col_temp);
+                                            SI_to_ind[row_temp + (2*ns_*col_temp)] = OParams_.value.size() - 1;
+                                        }
+                                    }
+                                    else{
+                                        comp_temp.real(0.0);
+                                        comp_temp.imag(0.0);
+                                        OParams_.value.push_back(comp_temp);
+                                        OParams_.rows.push_back(row_temp);
+                                        OParams_.columns.push_back(col_temp);
+                                        SI_to_ind[row_temp + (2*ns_*col_temp)] = OParams_.value.size() - 1;
+
+                                    }
+                                }
+                            }
+
+                        }
+                    }
+                }
+                else{
+                    for(int spin_i=0;spin_i<2;spin_i++){
+                        for(int spin_j=spin_i;spin_j<2;spin_j++){
+
+                            row_temp = Coordinates_.Nc_dof(site_i, spin_i);
+                            col_temp = Coordinates_.Nc_dof(site_j, spin_j);
+
+                            comp_temp.real(0.0);
+                            comp_temp.imag(0.0);
+
+                            if(Parameters_.Just_Hartree){
+                                if(row_temp==col_temp){
+                                    OParams_.value.push_back(comp_temp);
+                                    OParams_.rows.push_back(row_temp);
+                                    OParams_.columns.push_back(col_temp);
+                                    SI_to_ind[row_temp + (2*ns_*col_temp)] = OParams_.value.size() - 1;
+                                }}
+                            else{
+                                OParams_.value.push_back(comp_temp);
+                                OParams_.rows.push_back(row_temp);
+                                OParams_.columns.push_back(col_temp);
+                                SI_to_ind[row_temp + (2*ns_*col_temp)] = OParams_.value.size() - 1;
+                            }
+
+                        }
+                    }
+                }
+            }
+
+        }
+
+
+
         string fl_initial_OP_in = Parameters_.File_OPs_in;
         ifstream file_initial_OP_in(fl_initial_OP_in.c_str());
         string temp1, line_temp;
@@ -291,17 +365,16 @@ void MFParams::initialize(){
 
                 if(Parameters_.Just_Hartree){
                     if(alpha_i==alpha_j){
-                        OParams_.value.push_back(val_OP);
-                        OParams_.rows.push_back(alpha_i);
-                        OParams_.columns.push_back(alpha_j);
-                        SI_to_ind[alpha_i + (2*ns_*alpha_j)] = OParams_.value.size() - 1;
+                        OParams_.value[SI_to_ind[alpha_i + (2*ns_*alpha_j)]]=val_OP;
+                        assert(OParams_.rows[SI_to_ind[alpha_i + (2*ns_*alpha_j)]]==alpha_i);
+                        assert(OParams_.columns[SI_to_ind[alpha_i + (2*ns_*alpha_j)]]==alpha_j);
+
                     }
                 }
                 else{
-                    OParams_.value.push_back(val_OP);
-                    OParams_.rows.push_back(alpha_i);
-                    OParams_.columns.push_back(alpha_j);
-                    SI_to_ind[alpha_i + (2*ns_*alpha_j)] = OParams_.value.size() - 1;
+                    OParams_.value[SI_to_ind[alpha_i + (2*ns_*alpha_j)]]=val_OP;
+                    assert(OParams_.rows[SI_to_ind[alpha_i + (2*ns_*alpha_j)]]==alpha_i);
+                    assert(OParams_.columns[SI_to_ind[alpha_i + (2*ns_*alpha_j)]]==alpha_j);
                 }
 
             }

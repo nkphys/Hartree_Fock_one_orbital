@@ -154,6 +154,8 @@ int main(int argc, char *argv[]) {
             Connections_TL_.Print_LongRangeInt();
             Connections_TL_.Print_Spin_resolved_OnsiteE();
 
+            Connections_TL_.Print_Ansatz_LocalDen_CDW();
+
         }
     }
     else if(ex_string=="observe"){
@@ -311,12 +313,17 @@ int main(int argc, char *argv[]) {
 //        Matrix<double> VT_;
 //        Matrix<double> U_;
 //        vector<double> Sigma_;
-//        A_.resize(4,5);
+//        A_.resize(6,5);
 //        A_(0,0)=1.0;A_(0,4)=2.0;A_(1,2)=3.0;A_(3,1)=2.0;
+//        A_(4,1)=4.0;A_(5,4)=-5.0;
+//        cout<<"A"<<endl;
 //        A_.print();
 //        Observables_.Perform_SVD(A_,VT_,U_,Sigma_);
+//        cout<<"A"<<endl;
 //        A_.print();
+//        cout<<"VT"<<endl;
 //        VT_.print();
+//        cout<<"U"<<endl;
 //        U_.print();
 //        cout<<"Printing Sigma with size ="<<Sigma_.size()<<endl;
 //        for(int i=0;i<Sigma_.size();i++){

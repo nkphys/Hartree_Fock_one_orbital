@@ -230,7 +230,12 @@ void Parameters::Initialize(string inputfile_){
     else
     {cout<<"Unable to open file = '"<<file_nonlocal_int_connections_<<"'"<<endl;}
 
-
+//        for(int i=0;i<LongRangeInteractions.size();i++){
+//            for(int j=0;j<LongRangeInteractions.size();j++){
+//                cout<<LongRangeInteractions[i][j]<<" ";
+//            }
+//            cout<<endl;
+//        }
 
 
     if(FixingMuString=="true"){

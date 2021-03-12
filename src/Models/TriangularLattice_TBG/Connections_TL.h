@@ -30,6 +30,8 @@ public:
     void Check_Hermiticity();                              //::DONE
     void Check_up_down_symmetry();                         //::DONE
     void HTBCreate();                                      //::DONE
+    void Print_Ansatz_LocalDen_CDW();
+    void Get_minimum_distance_direction(int l,int m,int &r1_, int &r2_);
 
 
 
@@ -42,8 +44,91 @@ public:
     Matrix<double> Tx, Ty, Tpxpy, Tpxmy;
     Matrix<double> IntraCell_Hopp, InterCell_px_Hopp, InterCell_py_Hopp, InterCell_pxmy_Hopp;
 
+    int max_l1_dis, max_l2_dis;
 };
 
+
+void Connections_TL::Get_minimum_distance_direction(int l,int m,int &r1_, int &r2_){
+
+    int r1_a,r1_b, r2_a, r2_b;
+    int l1_pos, l2_pos;
+    int m1_pos, m2_pos;
+    double rx_, ry_;
+
+    l1_pos = Coordinates_.indx_cellwise(l);
+    l2_pos = Coordinates_.indy_cellwise(l);
+    m1_pos = Coordinates_.indx_cellwise(m);
+    m2_pos = Coordinates_.indy_cellwise(m);
+
+    r1_a=m1_pos-l1_pos;
+    if(r1_a>0){
+        r1_b=-1*(lx_-r1_a);
+    }
+    else if (r1_a<0){
+        r1_b=lx_-abs(r1_a);
+    }
+    else{
+        r1_b=0;
+        assert(r1_a==0);
+    }
+
+    r2_a=m2_pos-l2_pos;
+    if(r2_a>0){
+        r2_b=-1*(ly_-r2_a);
+    }
+    else if (r2_a<0){
+        r2_b=ly_-abs(r2_a);
+    }
+    else{
+        r2_b=0;
+        assert(r2_a==0);
+    }
+
+
+    double min_dis=1000000.0;
+    double dis;
+
+    //r1a r2a
+    rx_ = ((1.0)*(r1_a) +  (1.0/2.0)*(r2_a));
+    ry_ =  (0.0*(r1_a) + (sqrt(3.0)/2.0)*(r2_a));
+    dis= sqrt(rx_*rx_ + ry_*ry_);
+    if(dis<=min_dis){
+    r1_=r1_a;
+    r2_=r2_a;
+    min_dis=dis;
+    }
+
+    //r1a r2b
+    rx_ = ((1.0)*(r1_a) +  (1.0/2.0)*(r2_b));
+    ry_ =  (0.0*(r1_a) + (sqrt(3.0)/2.0)*(r2_b));
+    dis= sqrt(rx_*rx_ + ry_*ry_);
+    if(dis<=min_dis){
+    r1_=r1_a;
+    r2_=r2_b;
+    min_dis=dis;
+    }
+
+    //r1b r2a
+    rx_ = ((1.0)*(r1_b) +  (1.0/2.0)*(r2_a));
+    ry_ =  (0.0*(r1_b) + (sqrt(3.0)/2.0)*(r2_a));
+    dis= sqrt(rx_*rx_ + ry_*ry_);
+    if(dis<=min_dis){
+    r1_=r1_b;
+    r2_=r2_a;
+    min_dis=dis;
+    }
+
+    //r1b r2b
+    rx_ = ((1.0)*(r1_b) +  (1.0/2.0)*(r2_b));
+    ry_ =  (0.0*(r1_b) + (sqrt(3.0)/2.0)*(r2_b));
+    dis= sqrt(rx_*rx_ + ry_*ry_);
+    if(dis<=min_dis){
+    r1_=r1_b;
+    r2_=r2_b;
+    min_dis=dis;
+    }
+
+}
 
 void Connections_TL::Initialize()
 {
@@ -59,8 +144,190 @@ void Connections_TL::Initialize()
     Ham_.resize(space, space);
     Hint_.resize(ncells_,ncells_);
 
+    if(lx_%2==0){
+        max_l1_dis = lx_/2;
+    }
+    else{
+        max_l1_dis = (lx_-1)/2;
+    }
+
+    if(ly_%2==0){
+        max_l2_dis = ly_/2;
+    }
+    else{
+        max_l2_dis = (ly_-1)/2;
+    }
+
+
 } // ----------
 
+
+void Connections_TL::Print_Ansatz_LocalDen_CDW(){
+
+
+
+    Mat_1_string Ansatz_all;
+    Ansatz_all.push_back("Stripe_CDW_NM");
+    Ansatz_all.push_back("Stripe_CDW_FM");
+    Ansatz_all.push_back("Stripe_CDW_AFM");
+    Ansatz_all.push_back("Stripe_CDW_FM2");
+    Ansatz_all.push_back("Stripe_CDW_AFM2");
+    Ansatz_all.push_back("DiagonalStripe_CDW_AFM");
+
+
+
+    for(int str_no=0;str_no<Ansatz_all.size();str_no++){
+        string ansatz=Ansatz_all[str_no];
+        string fileout="Hartree_OP_"+ansatz+".txt";
+        ofstream File_Out(fileout.c_str());
+
+        int alpha_i;
+
+        if(ansatz=="Stripe_CDW_NM"){
+            //Stripe_CDW_NM
+            File_Out<<"#alpha_i   alpha_j   OParams_[alpha_i][alpha_j]   // FOR STRIPE CDW"<<endl;
+            for(int ix=0;ix<lx_;ix++){
+                for(int iy=0;iy<ly_;iy++){
+                    for(int spin_i=0;spin_i<2;spin_i++){
+                        alpha_i = Coordinates_.Nbasis(ix,iy,0) + spin_i*(ncells_);
+
+                        if(ix%2==0){
+                            File_Out<< alpha_i<<"   "<<alpha_i<<"   "<<one_complex*0.5<<endl;
+                        }
+
+                    }
+                }
+            }
+        }
+
+        if(ansatz=="Stripe_CDW_FM"){
+            int spin_i;
+            //Stripe_CDW_AFM
+            File_Out<<"#alpha_i   alpha_j   OParams_[alpha_i][alpha_j]   // FOR STRIPE CDW"<<endl;
+            for(int ix=0;ix<lx_;ix++){
+                for(int iy=0;iy<ly_;iy++){
+
+                    spin_i=0;
+
+                    alpha_i = Coordinates_.Nbasis(ix,iy,0) + spin_i*(ncells_);
+                    if(ix%2==0){
+                        File_Out<< alpha_i<<"   "<<alpha_i<<"   "<<one_complex<<endl;
+                    }
+
+                }
+            }
+        }
+
+        if(ansatz=="Stripe_CDW_FM2"){
+            int spin_i;
+
+            File_Out<<"#alpha_i   alpha_j   OParams_[alpha_i][alpha_j]   // FOR STRIPE CDW"<<endl;
+            for(int ix=0;ix<lx_;ix++){
+                for(int iy=0;iy<ly_;iy++){
+
+                    if((ix/2)%2==0){
+                        spin_i=0;
+                    }
+                    else{
+                        spin_i=1;
+                    }
+
+                    alpha_i = Coordinates_.Nbasis(ix,iy,0) + spin_i*(ncells_);
+                    if(ix%2==0){
+                        File_Out<< alpha_i<<"   "<<alpha_i<<"   "<<one_complex<<endl;
+                    }
+
+                }
+            }
+        }
+
+        if(ansatz=="Stripe_CDW_AFM2"){
+            int spin_i;
+            //Stripe_CDW_AFM2
+            File_Out<<"#alpha_i   alpha_j   OParams_[alpha_i][alpha_j]   // FOR STRIPE CDW"<<endl;
+            for(int ix=0;ix<lx_;ix++){
+                for(int iy=0;iy<ly_;iy++){
+
+                    if((ix/2)%2==0){
+                        if(iy%2==0){
+                            spin_i=0;
+                        }
+                        else{
+                            spin_i=1;
+                        }
+                    }
+                    else{
+                        if(iy%2==0){
+                            spin_i=1;
+                        }
+                        else{
+                            spin_i=0;
+                        }
+                    }
+                    alpha_i = Coordinates_.Nbasis(ix,iy,0) + spin_i*(ncells_);
+                    if(ix%2==0){
+                        File_Out<< alpha_i<<"   "<<alpha_i<<"   "<<one_complex<<endl;
+                    }
+
+                }
+            }
+        }
+
+        if(ansatz=="Stripe_CDW_AFM"){
+            int spin_i;
+            //Stripe_CDW_AFM
+            File_Out<<"#alpha_i   alpha_j   OParams_[alpha_i][alpha_j]   // FOR STRIPE CDW"<<endl;
+            for(int ix=0;ix<lx_;ix++){
+                for(int iy=0;iy<ly_;iy++){
+
+                    if(iy%2==0){
+                        spin_i=0;
+                    }
+                    else{
+                        spin_i=1;
+                    }
+                    alpha_i = Coordinates_.Nbasis(ix,iy,0) + spin_i*(ncells_);
+                    if(ix%2==0){
+                        File_Out<< alpha_i<<"   "<<alpha_i<<"   "<<one_complex<<endl;
+                    }
+
+                }
+            }
+        }
+
+        if(ansatz=="DiagonalStripe_CDW_AFM"){
+            int spin_i;
+            //Stripe_CDW_AFM
+            File_Out<<"#alpha_i   alpha_j   OParams_[alpha_i][alpha_j]   // FOR STRIPE CDW"<<endl;
+            for(int ix=0;ix<lx_;ix++){
+                for(int iy=0;iy<ly_;iy++){
+
+
+                    if(ix%2==0){
+                        if(iy%2!=0){
+                            spin_i=0;
+                            alpha_i = Coordinates_.Nbasis(ix,iy,0) + spin_i*(ncells_);
+                            File_Out<< alpha_i<<"   "<<alpha_i<<"   "<<one_complex<<endl;
+                        }
+                    }
+                    else{
+                        if(iy%2==0){
+                            spin_i=1;
+                            alpha_i = Coordinates_.Nbasis(ix,iy,0) + spin_i*(ncells_);
+                            File_Out<< alpha_i<<"   "<<alpha_i<<"   "<<one_complex<<endl;
+                        }
+                    }
+
+
+
+                }
+            }
+        }
+
+
+    }//for str_no
+
+}
 
 void Connections_TL::InteractionsCreate()
 {
@@ -80,6 +347,8 @@ void Connections_TL::InteractionsCreate()
     double U_val;
 
 
+
+
     int l, m, a, b;
     int l1_pos, l2_pos;
     int m1_pos, m2_pos;
@@ -87,27 +356,27 @@ void Connections_TL::InteractionsCreate()
     Hint_.fill(0.0);
 
     if(!Parameters_.LongRange_interaction){
-    for (l = 0; l < ncells_; l++)
-    {
-        l1_pos = Coordinates_.indx_cellwise(l);
-        l2_pos = Coordinates_.indy_cellwise(l);
+        for (l = 0; l < ncells_; l++)
+        {
+            l1_pos = Coordinates_.indx_cellwise(l);
+            l2_pos = Coordinates_.indy_cellwise(l);
 
-        //For U1, U2, U3
-        for(int neigh=0;neigh<9;neigh++){
-            m = Coordinates_.neigh(l, U_neighs[neigh]); //+x neighbour cell
-            m1_pos = Coordinates_.indx_cellwise(m);
-            m2_pos = Coordinates_.indy_cellwise(m);
+            //For U1, U2, U3
+            for(int neigh=0;neigh<9;neigh++){
+                m = Coordinates_.neigh(l, U_neighs[neigh]); //+x neighbour cell
+                m1_pos = Coordinates_.indx_cellwise(m);
+                m2_pos = Coordinates_.indy_cellwise(m);
 
-            assert(l != m);
-            if (l != m)
-            {
-                Hint_(l, m) += complex<double>(1.0 * U_hoppings[neigh], 0.0);
-                Hint_(m, l) += conj(Hint_(l, m));
+                assert(l != m);
+                if (l != m)
+                {
+                    Hint_(l, m) += complex<double>(1.0 * U_hoppings[neigh], 0.0);
+                    Hint_(m, l) += conj(Hint_(l, m));
+                }
+
             }
 
         }
-
-    }
     }
     else{
         int r1_, r2_;
@@ -123,21 +392,21 @@ void Connections_TL::InteractionsCreate()
                 m1_pos = Coordinates_.indx_cellwise(m);
                 m2_pos = Coordinates_.indy_cellwise(m);
 
-//                if(m1_pos>l1_pos){
-//                r1_ = min(abs(m1_pos-l1_pos),abs(l1_pos+lx_-m1_pos)) ;
-//                }
-                r1_= min(abs(m1_pos-l1_pos),lx_-abs(m1_pos-l1_pos));
-                r2_= min(abs(m2_pos-l2_pos),ly_-abs(m2_pos-l2_pos));
+                Get_minimum_distance_direction(l,m,r1_,r2_);
 
-                rx_ = ((sqrt(3.0)/2.0)*(r1_) +  (sqrt(3.0)/2.0)*(r2_));
-                ry_ =  (-0.5*(r1_) + 0.5*(r2_));
+                //a1 = (1,0) in (x,y)
+                //a2 = (1/2, (sqrt(3)/2)/2)
+                rx_ = ((1.0)*(r1_) +  (1.0/2.0)*(r2_));
+                ry_ =  (0.0*(r1_) + (sqrt(3.0)/2.0)*(r2_));
                 dis_= sqrt(rx_*rx_ + ry_*ry_);
-//(14.3952)*( (1.0/(x*62.6434))  - (1.0/(sqrt( (x*x*62.6434*62.6434)  + d*d)))  )
+
+                cout <<l<<"  "<<m<<"  "<<r1_<<"   "<<r2_<<"   "<<dis_<<endl;
+                //(14.3952)*( (1.0/(x*62.6434))  - (1.0/(sqrt( (x*x*62.6434*62.6434)  + d*d)))  )
 
                 U_val = ((14.3952*1000)/Parameters_.eps_DE)*( (1.0/(dis_*Parameters_.a_moire))  -
-                                    (1.0/(sqrt( (dis_*dis_*Parameters_.a_moire*Parameters_.a_moire)
-                                    + Parameters_.d_screening*Parameters_.d_screening)))  );
-               // assert(l != m);
+                                                              (1.0/(sqrt( (dis_*dis_*Parameters_.a_moire*Parameters_.a_moire)
+                                                                          + Parameters_.d_screening*Parameters_.d_screening)))  );
+                // assert(l != m);
                 if (l != m)
                 {
                     Hint_(l, m) += complex<double>(1.0 * U_val, 0.0);
@@ -303,7 +572,7 @@ void Connections_TL::Print_Hopping(){
                     index_j=j+spin_j*ncells_*n_orbs_;
 
                     if(abs(HTB_(index_i,index_j))>0.0000001){
-                    file_Hopping_out<<i<<"  "<<spin_i<<"  "<<j<<"  "<<spin_j<<"  "<<HTB_(index_i,index_j)<<endl;
+                        file_Hopping_out<<i<<"  "<<spin_i<<"  "<<j<<"  "<<spin_j<<"  "<<HTB_(index_i,index_j)<<endl;
                     }
                 }
             }
@@ -322,7 +591,7 @@ void Connections_TL::Print_LongRangeInt(){
         for(int j=0;j<ncells_;j++){
 
             if(abs(Hint_(i,j))>0.0000001){
-            file_out<<i<<"   "<<j<<"   "<<Hint_(i,j)<<endl;
+                file_out<<i<<"   "<<j<<"   "<<Hint_(i,j)<<endl;
             }
 
         }
