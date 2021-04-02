@@ -81,7 +81,7 @@ double Hamiltonian::chemicalpotential(double muin,double Particles){
                     n1+=double(1.0/( exp( (eigs_[j]-mu_out)*Parameters_.beta ) + 1.0));
                 }
                 //cout <<"i  "<< i << "  n1  " << n1 << "  mu  " << mu_out<< endl;
-                if(abs(N-n1)<double(0.0001)){
+                if(abs(N-n1)<double(0.000001)){
                     //cout<<abs(N-n1)<<endl;
                     converged=true;
                     final_i=i;
@@ -116,7 +116,7 @@ double Hamiltonian::chemicalpotential(double muin,double Particles){
                     n1+=double(1.0/( exp( (eigs_[j]-mu_temp)*Parameters_.beta ) + 1.0));
                 }
                 //cout <<"i  "<< i << "  n1  " << n1 << "  mu  " << mu_out<< endl;
-                if(abs(N-n1)<double(0.0001)){
+                if(abs(N-n1)<double(0.000001)){
                     //cout<<abs(N-n1)<<endl;
                     converged=true;
                     break;

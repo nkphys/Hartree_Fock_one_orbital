@@ -93,9 +93,9 @@ void Connections_TL::Get_minimum_distance_direction(int l,int m,int &r1_, int &r
     ry_ =  (0.0*(r1_a) + (sqrt(3.0)/2.0)*(r2_a));
     dis= sqrt(rx_*rx_ + ry_*ry_);
     if(dis<=min_dis){
-    r1_=r1_a;
-    r2_=r2_a;
-    min_dis=dis;
+        r1_=r1_a;
+        r2_=r2_a;
+        min_dis=dis;
     }
 
     //r1a r2b
@@ -103,9 +103,9 @@ void Connections_TL::Get_minimum_distance_direction(int l,int m,int &r1_, int &r
     ry_ =  (0.0*(r1_a) + (sqrt(3.0)/2.0)*(r2_b));
     dis= sqrt(rx_*rx_ + ry_*ry_);
     if(dis<=min_dis){
-    r1_=r1_a;
-    r2_=r2_b;
-    min_dis=dis;
+        r1_=r1_a;
+        r2_=r2_b;
+        min_dis=dis;
     }
 
     //r1b r2a
@@ -113,9 +113,9 @@ void Connections_TL::Get_minimum_distance_direction(int l,int m,int &r1_, int &r
     ry_ =  (0.0*(r1_b) + (sqrt(3.0)/2.0)*(r2_a));
     dis= sqrt(rx_*rx_ + ry_*ry_);
     if(dis<=min_dis){
-    r1_=r1_b;
-    r2_=r2_a;
-    min_dis=dis;
+        r1_=r1_b;
+        r2_=r2_a;
+        min_dis=dis;
     }
 
     //r1b r2b
@@ -123,9 +123,9 @@ void Connections_TL::Get_minimum_distance_direction(int l,int m,int &r1_, int &r
     ry_ =  (0.0*(r1_b) + (sqrt(3.0)/2.0)*(r2_b));
     dis= sqrt(rx_*rx_ + ry_*ry_);
     if(dis<=min_dis){
-    r1_=r1_b;
-    r2_=r2_b;
-    min_dis=dis;
+        r1_=r1_b;
+        r2_=r2_b;
+        min_dis=dis;
     }
 
 }
@@ -173,7 +173,10 @@ void Connections_TL::Print_Ansatz_LocalDen_CDW(){
     Ansatz_all.push_back("Stripe_CDW_FM2");
     Ansatz_all.push_back("Stripe_CDW_AFM2");
     Ansatz_all.push_back("DiagonalStripe_CDW_AFM");
-
+    Ansatz_all.push_back("Honeycomb_CDW_FM");
+    Ansatz_all.push_back("Honeycomb_CDW_AFM");
+    Ansatz_all.push_back("size_two_eq_triangles_CDW_FM");
+    Ansatz_all.push_back("doubled_unitcell_CDW_FM");
 
 
     for(int str_no=0;str_no<Ansatz_all.size();str_no++){
@@ -324,6 +327,156 @@ void Connections_TL::Print_Ansatz_LocalDen_CDW(){
             }
         }
 
+        if(ansatz=="Honeycomb_CDW_FM"){
+            int spin_i;
+            int eff_lx, eff_ly;
+
+            if( lx_%3!=0 || ly_%3!=0){
+                cout<<"lx and ly must be multiple of 3 for Honeycomb CDW"<<endl;
+                assert(lx_%3==0);
+                assert(ly_%3==0);
+            }
+            eff_lx=lx_/3;
+            eff_ly=ly_/3;
+            int ix, iy;
+            File_Out<<"#alpha_i   alpha_j   OParams_[alpha_i][alpha_j]   // FOR STRIPE CDW"<<endl;
+            for(int eff_ix=0;eff_ix<eff_lx;eff_ix++){
+                for(int eff_iy=0;eff_iy<eff_ly;eff_iy++){
+
+                    //9 points
+                    for(int x_=0;x_<3;x_++){
+                        for(int y_=0;y_<3;y_++){
+                            ix = eff_ix*(3) + x_;
+                            iy = eff_iy*(3) + y_;
+                            if( (x_==0 && y_==0) || (x_==1 && y_==1) || (x_==2 && y_==2)  ){
+                                //nothing
+                            }
+                            else{
+                                spin_i=0;
+                                alpha_i = Coordinates_.Nbasis(ix,iy,0) + spin_i*(ncells_);
+                                File_Out<< alpha_i<<"   "<<alpha_i<<"   "<<one_complex<<endl;
+                            }
+
+
+                        }
+                    }
+                }
+            }
+        }
+
+        if(ansatz=="Honeycomb_CDW_AFM"){
+            int spin_i;
+            int eff_lx, eff_ly;
+
+            if( lx_%3!=0 || ly_%3!=0){
+                cout<<"lx and ly must be multiple of 3 for Honeycomb CDW"<<endl;
+                assert(lx_%3==0);
+                assert(ly_%3==0);
+            }
+            eff_lx=lx_/3;
+            eff_ly=ly_/3;
+            int ix, iy;
+            File_Out<<"#alpha_i   alpha_j   OParams_[alpha_i][alpha_j]   // FOR STRIPE CDW"<<endl;
+            for(int eff_ix=0;eff_ix<eff_lx;eff_ix++){
+                for(int eff_iy=0;eff_iy<eff_ly;eff_iy++){
+
+                    //9 points
+                    for(int x_=0;x_<3;x_++){
+                        for(int y_=0;y_<3;y_++){
+                            ix = eff_ix*(3) + x_;
+                            iy = eff_iy*(3) + y_;
+                            if( (x_==0 && y_==0) || (x_==1 && y_==1) || (x_==2 && y_==2)  ){
+                                //nothing
+                            }
+                            else{
+                                if( (x_==1 && y_==0)  || (x_==2 && y_==1) || (x_==0 && y_==2) ){
+                                    spin_i=0;
+                                }
+                                else{
+                                    spin_i=1;
+                                }
+
+                                alpha_i = Coordinates_.Nbasis(ix,iy,0) + spin_i*(ncells_);
+                                File_Out<< alpha_i<<"   "<<alpha_i<<"   "<<one_complex<<endl;
+                            }
+
+
+                        }
+                    }
+                }
+            }
+        }
+
+        if(ansatz=="size_two_eq_triangles_CDW_FM"){
+            int spin_i;
+            int eff_lx, eff_ly;
+
+            if( lx_%3!=0 || ly_%3!=0){
+                cout<<"lx and ly must be multiple of 3 for Honeycomb CDW"<<endl;
+                assert(lx_%3==0);
+                assert(ly_%3==0);
+            }
+            eff_lx=lx_/3;
+            eff_ly=ly_/3;
+            int ix, iy;
+            File_Out<<"#alpha_i   alpha_j   OParams_[alpha_i][alpha_j]   // FOR STRIPE CDW"<<endl;
+            for(int eff_ix=0;eff_ix<eff_lx;eff_ix++){
+                for(int eff_iy=0;eff_iy<eff_ly;eff_iy++){
+
+                    //9 points
+                    for(int x_=0;x_<3;x_++){
+                        for(int y_=0;y_<3;y_++){
+                            ix = eff_ix*(3) + x_;
+                            iy = eff_iy*(3) + y_;
+                            if( (x_==0 && y_==0) || (x_==1 && y_==0) || (x_==0 && y_==1)  ){
+                                //nothing
+                            }
+                            else{
+                                spin_i=0;
+                                alpha_i = Coordinates_.Nbasis(ix,iy,0) + spin_i*(ncells_);
+                                File_Out<< alpha_i<<"   "<<alpha_i<<"   "<<one_complex<<endl;
+                            }
+
+
+                        }
+                    }
+                }
+            }
+        }
+
+        if(ansatz=="doubled_unitcell_CDW_FM"){
+            int spin_i;
+            int eff_lx, eff_ly;
+
+            eff_lx=lx_/2;
+            eff_ly=ly_/2;
+            int ix, iy;
+            File_Out<<"#alpha_i   alpha_j   OParams_[alpha_i][alpha_j]   // FOR STRIPE CDW"<<endl;
+            for(int eff_ix=0;eff_ix<eff_lx;eff_ix++){
+                for(int eff_iy=0;eff_iy<eff_ly;eff_iy++){
+
+                    //4 points
+                    for(int x_=0;x_<2;x_++){
+                        for(int y_=0;y_<2;y_++){
+                            ix = eff_ix*(2) + x_;
+                            iy = eff_iy*(2) + y_;
+                            if( (x_==0 && y_==0) ){
+                                spin_i=0;
+                                alpha_i = Coordinates_.Nbasis(ix,iy,0) + spin_i*(ncells_);
+                                File_Out<< alpha_i<<"   "<<alpha_i<<"   "<<one_complex<<endl;
+                            }
+                            else{
+                                //nothing
+                            }
+
+
+                        }
+                    }
+                }
+            }
+
+        }
+
 
     }//for str_no
 
@@ -400,7 +553,7 @@ void Connections_TL::InteractionsCreate()
                 ry_ =  (0.0*(r1_) + (sqrt(3.0)/2.0)*(r2_));
                 dis_= sqrt(rx_*rx_ + ry_*ry_);
 
-                cout <<l<<"  "<<m<<"  "<<r1_<<"   "<<r2_<<"   "<<dis_<<endl;
+                //cout <<l<<"  "<<m<<"  "<<r1_<<"   "<<r2_<<"   "<<dis_<<endl;
                 //(14.3952)*( (1.0/(x*62.6434))  - (1.0/(sqrt( (x*x*62.6434*62.6434)  + d*d)))  )
 
                 U_val = ((14.3952*1000)/Parameters_.eps_DE)*( (1.0/(dis_*Parameters_.a_moire))  -

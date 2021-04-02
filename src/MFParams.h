@@ -272,8 +272,8 @@ void MFParams::initialize(){
     }
     else{
 
-
-        //Adding OPs's to  OPaams_, which in principle can be finite
+        double small_=0.01;
+        //Adding OPs's to  OPaams_ to be small value, which in principle can be finite
         for(int site_i=0;site_i<ns_;site_i++){
             for(int site_j=0;site_j<ns_;site_j++){
 
@@ -290,8 +290,8 @@ void MFParams::initialize(){
                                     if(spin_i==spin_j){
                                         if(site_j>site_i){
 
-                                            comp_temp.real(0.0);
-                                            comp_temp.imag(0.0);
+                                            comp_temp.real(small_);
+                                            comp_temp.imag(small_);
                                             OParams_.value.push_back(comp_temp);
                                             OParams_.rows.push_back(row_temp);
                                             OParams_.columns.push_back(col_temp);
@@ -299,8 +299,8 @@ void MFParams::initialize(){
                                         }
                                     }
                                     else{
-                                        comp_temp.real(0.0);
-                                        comp_temp.imag(0.0);
+                                        comp_temp.real(small_);
+                                        comp_temp.imag(small_);
                                         OParams_.value.push_back(comp_temp);
                                         OParams_.rows.push_back(row_temp);
                                         OParams_.columns.push_back(col_temp);
@@ -393,6 +393,9 @@ void MFParams::initialize(){
     for(int alpha=0;alpha<OParams_.value.size();alpha++){
         Initial_OrderParams_file<<OParams_.rows[alpha]<<setw(15)<<OParams_.columns[alpha]<<setw(15)<<"  "<<OParams_.value[alpha]<<endl;
     }
+
+
+    cout<<"Total no. of Op's = "<<OParams_.value.size()<<endl;
 
 
 

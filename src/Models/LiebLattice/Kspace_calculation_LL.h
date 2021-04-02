@@ -772,28 +772,28 @@ void Kspace_calculation_LL::Get_new_OPs_and_error(){
 
         //n1_up_
         if(OP_no==n1_up_){
-            spin1=0;orb1=0;
-            spin2=0;orb2=0;
-        }
-        if(OP_no==n1_dn_){
-            spin1=1;orb1=0;
-            spin2=1;orb2=0;
-        }
-        if(OP_no==n2_up_){
             spin1=0;orb1=1;
             spin2=0;orb2=1;
         }
-        if(OP_no==n2_dn_){
+        if(OP_no==n1_dn_){
             spin1=1;orb1=1;
             spin2=1;orb2=1;
         }
-        if(OP_no==splus1_){
+        if(OP_no==n2_up_){
             spin1=0;orb1=0;
+            spin2=0;orb2=0;
+        }
+        if(OP_no==n2_dn_){
+            spin1=1;orb1=0;
             spin2=1;orb2=0;
         }
-        if(OP_no==splus2_){
+        if(OP_no==splus1_){
             spin1=0;orb1=1;
             spin2=1;orb2=1;
+        }
+        if(OP_no==splus2_){
+            spin1=0;orb1=0;
+            spin2=1;orb2=0;
         }
 
 
@@ -1050,16 +1050,16 @@ void Kspace_calculation_LL::Create_Kspace_Spectrum_in_double_brillouin_zone(){
 
 
             //Interaction:Hartree
-            Ham_(0,0) += Parameters_.Onsite_U*OPs_[n1_dn_];
-            Ham_(1,1) += Parameters_.Onsite_U*OPs_[n1_up_];
-            Ham_(2,2) += Parameters_.Onsite_U*OPs_[n2_dn_];
-            Ham_(3,3) += Parameters_.Onsite_U*OPs_[n2_up_];
+            Ham_(0,0) += Parameters_.Onsite_U*OPs_[n2_dn_];
+            Ham_(1,1) += Parameters_.Onsite_U*OPs_[n2_up_];
+            Ham_(2,2) += Parameters_.Onsite_U*OPs_[n1_dn_];
+            Ham_(3,3) += Parameters_.Onsite_U*OPs_[n1_up_];
             Ham_(4,4) += Parameters_.Onsite_U*OPs_[n1_dn_];
             Ham_(5,5) += Parameters_.Onsite_U*OPs_[n1_up_];
 
             //Interaction:Fock
-            Ham_(1,0) += -1.0*Parameters_.Onsite_U*OPs_[splus1_];
-            Ham_(3,2) += -1.0*Parameters_.Onsite_U*OPs_[splus2_];
+            Ham_(1,0) += -1.0*Parameters_.Onsite_U*OPs_[splus2_];
+            Ham_(3,2) += -1.0*Parameters_.Onsite_U*OPs_[splus1_];
             Ham_(5,4) += -1.0*Parameters_.Onsite_U*OPs_[splus1_];
 
 
@@ -1136,16 +1136,16 @@ void Kspace_calculation_LL::Create_Kspace_Spectrum_in_fourtimes_brillouin_zone()
 
 
             //Interaction:Hartree
-            Ham_(0,0) += Parameters_.Onsite_U*OPs_[n1_dn_];
-            Ham_(1,1) += Parameters_.Onsite_U*OPs_[n1_up_];
-            Ham_(2,2) += Parameters_.Onsite_U*OPs_[n2_dn_];
-            Ham_(3,3) += Parameters_.Onsite_U*OPs_[n2_up_];
+            Ham_(0,0) += Parameters_.Onsite_U*OPs_[n2_dn_];
+            Ham_(1,1) += Parameters_.Onsite_U*OPs_[n2_up_];
+            Ham_(2,2) += Parameters_.Onsite_U*OPs_[n1_dn_];
+            Ham_(3,3) += Parameters_.Onsite_U*OPs_[n1_up_];
             Ham_(4,4) += Parameters_.Onsite_U*OPs_[n1_dn_];
             Ham_(5,5) += Parameters_.Onsite_U*OPs_[n1_up_];
 
             //Interaction:Fock
-            Ham_(1,0) += -1.0*Parameters_.Onsite_U*OPs_[splus1_];
-            Ham_(3,2) += -1.0*Parameters_.Onsite_U*OPs_[splus2_];
+            Ham_(1,0) += -1.0*Parameters_.Onsite_U*OPs_[splus2_];
+            Ham_(3,2) += -1.0*Parameters_.Onsite_U*OPs_[splus1_];
             Ham_(5,4) += -1.0*Parameters_.Onsite_U*OPs_[splus1_];
 
 
@@ -1223,16 +1223,16 @@ void Kspace_calculation_LL::Create_Kspace_Spectrum_in_ntimes_brillouin_zone(int 
 
 
             //Interaction:Hartree
-            Ham_(0,0) += Parameters_.Onsite_U*OPs_[n1_dn_];
-            Ham_(1,1) += Parameters_.Onsite_U*OPs_[n1_up_];
-            Ham_(2,2) += Parameters_.Onsite_U*OPs_[n2_dn_];
-            Ham_(3,3) += Parameters_.Onsite_U*OPs_[n2_up_];
+            Ham_(0,0) += Parameters_.Onsite_U*OPs_[n2_dn_];
+            Ham_(1,1) += Parameters_.Onsite_U*OPs_[n2_up_];
+            Ham_(2,2) += Parameters_.Onsite_U*OPs_[n1_dn_];
+            Ham_(3,3) += Parameters_.Onsite_U*OPs_[n1_up_];
             Ham_(4,4) += Parameters_.Onsite_U*OPs_[n1_dn_];
             Ham_(5,5) += Parameters_.Onsite_U*OPs_[n1_up_];
 
             //Interaction:Fock
-            Ham_(1,0) += -1.0*Parameters_.Onsite_U*OPs_[splus1_];
-            Ham_(3,2) += -1.0*Parameters_.Onsite_U*OPs_[splus2_];
+            Ham_(1,0) += -1.0*Parameters_.Onsite_U*OPs_[splus2_];
+            Ham_(3,2) += -1.0*Parameters_.Onsite_U*OPs_[splus1_];
             Ham_(5,4) += -1.0*Parameters_.Onsite_U*OPs_[splus1_];
 
 
@@ -1299,16 +1299,16 @@ void Kspace_calculation_LL::Create_Kspace_Spectrum(){
 
 
             //Interaction:Hartree
-            Ham_(0,0) += Parameters_.Onsite_U*OPs_[n1_dn_];
-            Ham_(1,1) += Parameters_.Onsite_U*OPs_[n1_up_];
-            Ham_(2,2) += Parameters_.Onsite_U*OPs_[n2_dn_];
-            Ham_(3,3) += Parameters_.Onsite_U*OPs_[n2_up_];
+            Ham_(0,0) += Parameters_.Onsite_U*OPs_[n2_dn_];
+            Ham_(1,1) += Parameters_.Onsite_U*OPs_[n2_up_];
+            Ham_(2,2) += Parameters_.Onsite_U*OPs_[n1_dn_];
+            Ham_(3,3) += Parameters_.Onsite_U*OPs_[n1_up_];
             Ham_(4,4) += Parameters_.Onsite_U*OPs_[n1_dn_];
             Ham_(5,5) += Parameters_.Onsite_U*OPs_[n1_up_];
 
             //Interaction:Fock
-            Ham_(1,0) += -1.0*Parameters_.Onsite_U*OPs_[splus1_];
-            Ham_(3,2) += -1.0*Parameters_.Onsite_U*OPs_[splus2_];
+            Ham_(1,0) += -1.0*Parameters_.Onsite_U*OPs_[splus2_];
+            Ham_(3,2) += -1.0*Parameters_.Onsite_U*OPs_[splus1_];
             Ham_(5,4) += -1.0*Parameters_.Onsite_U*OPs_[splus1_];
 
 

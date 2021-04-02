@@ -23,12 +23,32 @@ public:
 
     double t1, t2, t3;
     double U0, U1, U2, U3;
+    double AnisotropyZ;
     double hopping_intracell;
 
+    int UnitCellSize_x, UnitCellSize_y;
+    bool Just_Hartree;
 
     //For observse
     double beta, mus;
     double eta, domega;
+
+    bool Self_consistency_kspace;
+    double Temperature;
+
+    double Total_Particles;
+    int IterMax;
+    double Convergence_Error;
+    int RandomSeed;
+    double alpha_OP;
+    bool Read_OPs;
+
+    bool Anderson_Mixing;
+    int AM_m; //Anderson_Mixing_m;
+
+    string File_OPs_out, File_OPs_in;
+    string FockType;
+
 
     void Initialize(string inputfile_);
     double matchstring(string file, string match);
@@ -61,10 +81,25 @@ void Parameters_TL::Initialize(string inputfile_)
     U1 = double(matchstring(inputfile_, "U1"));
     U2 = double(matchstring(inputfile_, "U2"));
     U3 = double(matchstring(inputfile_, "U3"));
+    AnisotropyZ = double(matchstring(inputfile_, "AnisotropyZ"));
 
 
     lx = int(matchstring(inputfile_, "Xsite"));
     ly = int(matchstring(inputfile_, "Ysite"));
+
+    UnitCellSize_x =int(matchstring(inputfile_, "UnitCellSize_x"));
+    UnitCellSize_y =int(matchstring(inputfile_, "UnitCellSize_y"));
+
+    int Just_Hartree_int;
+    Just_Hartree_int = int(matchstring(inputfile_, "Just_Hartree"));
+    if(Just_Hartree_int==1){
+        Just_Hartree=true;
+    }
+    else{
+        Just_Hartree=false;
+        FockType = matchstring2(inputfile_,"Fock_type");
+    }
+
 
     TBC_mx = int(matchstring(inputfile_, "TwistedBoundaryCond_mx"));
     n_orbs = int(matchstring(inputfile_, "N_Orbs"));
@@ -95,6 +130,48 @@ void Parameters_TL::Initialize(string inputfile_)
     }
 
 
+
+    double Self_consistency_kspace_double;
+    Self_consistency_kspace_double=double(matchstring(inputfile_,"Self_consistency_kspace"));
+    if(Self_consistency_kspace_double==1){
+        Self_consistency_kspace=true;}
+    else{
+        Self_consistency_kspace=false;
+    }
+
+    //New for self-consistency----------------------------
+
+    if(Self_consistency_kspace){
+        Total_Particles = matchstring(inputfile_,"Total_particles");
+        cout << "TotalNumberOfParticles = "<< Total_Particles << endl;
+
+        IterMax = int(matchstring(inputfile_,"No_of_SelfConsistency_iters"));
+        Convergence_Error=matchstring(inputfile_,"Convergence_Error");
+        RandomSeed = matchstring(inputfile_,"RandomSeed");
+        alpha_OP = matchstring(inputfile_,"alpha_OP");
+        Temperature = matchstring(inputfile_,"Temperature");
+        beta=(1.0/Temperature);
+
+       double Read_OPs_double=double(matchstring(inputfile_,"Read_initial_OPvalues"));
+        if(Read_OPs_double==1.0){
+            Read_OPs=true;
+        }
+        else{
+            Read_OPs=false;
+        }
+    }
+    //------------------------------------------------
+
+
+
+    double Anderson_Mixing_double=double(matchstring(inputfile_,"Anderson_Mixing"));
+    if(Anderson_Mixing_double==1.0){
+        Anderson_Mixing=true;
+        AM_m = int(matchstring(inputfile_,"Anderson_Mixing_m"));
+    }
+
+    File_OPs_in=matchstring2(inputfile_,"Read_initial_OPvalues_file");
+    File_OPs_out=matchstring2(inputfile_,"Write_Final_OPvalues_file");
 
     assert(n_orbs==1);
     cout << "____________________________________" << endl;

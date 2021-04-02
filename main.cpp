@@ -41,6 +41,7 @@ using namespace std;
 #include "src/Models/TriangularLattice_TBG/Coordinates_TL.h"
 #include "src/Models/TriangularLattice_TBG/Connections_TL.h"
 #include "src/Models/TriangularLattice_TBG/Observables_TL.h"
+#include "src/Models/TriangularLattice_TBG/Kspace_calculation_TL.h"
 #include "random"
 
 
@@ -48,14 +49,15 @@ int main(int argc, char *argv[]) {
 
     string ex_string_original =argv[0];
 
+    cout<<"'"<<ex_string_original<<"'"<<endl;
     string ex_string;
-    //ex_string.substr(ex_string_original.length()-5);
-    ex_string=ex_string_original.substr (2);
+    ex_string = ex_string_original.substr(ex_string_original.length()-5);
+    //ex_string=ex_string_original.substr (2);
     cout<<"'"<<ex_string<<"'"<<endl;
 
 
 
-    if(ex_string=="k_space_SelfConsistency"){
+    if(ex_string=="tency"){
         string ModelType = argv[1];
         string model_inputfile = argv[2];
 
@@ -89,12 +91,36 @@ int main(int argc, char *argv[]) {
 
         }
 
+
+
+        if(ModelType=="TriangularLattice"){
+
+            Parameters_TL Parameters_TL_;
+            Parameters_TL_.Initialize(model_inputfile);
+
+            Coordinates_TL Coordinates_TL_(Parameters_TL_.lx, Parameters_TL_.ly, Parameters_TL_.n_orbs);
+            Connections_TL Connections_TL_(Parameters_TL_, Coordinates_TL_);
+            //Connections_TL_.Print_Hopping();                                       //::DONE
+            Connections_TL_.InteractionsCreate();
+            //Connections_TL_.Print_LongRangeInt();
+            //Connections_TL_.Print_Spin_resolved_OnsiteE();
+
+            Coordinates_TL Coordinates_TL_UC_(Parameters_TL_.lx/Parameters_TL_.UnitCellSize_x, Parameters_TL_.ly/Parameters_TL_.UnitCellSize_y, 1);
+
+
+            mt19937_64 Generator_(Parameters_TL_.RandomSeed);
+            Kspace_calculation_TL Kspace_calculation_TL_(Parameters_TL_, Coordinates_TL_UC_, Connections_TL_, Generator_);
+
+            Kspace_calculation_TL_.SelfConsistency();
+
+        }
+
     }
 
 
 
 
-    else if(ex_string=="CreateConnections"){
+    else if(ex_string=="tions"){
 
         cout <<"Creating connections for the given model"<<endl;
         string ModelType = argv[1];
@@ -158,7 +184,7 @@ int main(int argc, char *argv[]) {
 
         }
     }
-    else if(ex_string=="observe"){
+    else if(ex_string=="serve"){
 
         string ModelType = argv[1];
         string inputfile = argv[2];
@@ -342,8 +368,8 @@ int main(int argc, char *argv[]) {
         SelfConsistencyEngine_.RUN_SelfConsistencyEngine();
 
         Observables_.Calculate_Local_n_orb_resolved();
-        Observables_.Calculate_SpinSpincorrelations_Smartly();
-        Observables_.Calculate_DenDencorrelations_Smartly();
+        //Observables_.Calculate_SpinSpincorrelations_Smartly();
+        //Observables_.Calculate_DenDencorrelations_Smartly();
         Observables_.Calculate_Nw();
         Observables_.Calculate_Local_spins_resolved();
 

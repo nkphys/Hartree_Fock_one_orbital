@@ -19,7 +19,7 @@ typedef vector< double >  Mat_1_doub;
 typedef vector< int >  Mat_1_int;
 
 
-string decouple(int m, int Ly){
+string decouple(int m, int Lx){
 
 int ix,iy;
 double x,y,a;
@@ -27,8 +27,8 @@ a=0.5;
 
 string xy_,xstr,ystr;
 
-iy= ( m %Ly);
-ix= ( (m-m%Ly)/(Ly) );
+ix= ( m %Lx);
+iy= ( (m-ix)/(Lx) );
 
 x=1.0*ix*a+0.5*iy*a;
 y=sqrt(3)*0.5*iy*a;
@@ -78,7 +78,7 @@ stringstream line_ss;
 line_ss << line;
 line_ss>>site_temp>>temp_up>>temp_dn;
 //cout<<site_temp<<"  "<<temp_up<<"   "<<temp_dn<<endl;
-temp_xp=site_temp%Lx;
+temp_xp=site_temp%Lx;  //site = ix + iy*lx;
 temp_yp=(site_temp - temp_xp)/Lx;
 //cout<<site_temp<<"  "<<temp_xp<<"  "<<temp_yp<<"  "<<temp_up<<"   "<<temp_dn<<endl;
 xp_val.push_back(temp_xp);
@@ -152,15 +152,15 @@ for(int x=0;x<Lx;x++){
 int site_ref;
 for(int x=0;x<Lx;x++){
         for(int y=0;y<Ly;y++){
-                site=y+Ly*x;
+                site=x+Lx*y;
 		site_ref=x+Lx*y;
 
                 if(S_val[site_ref]>0){
-                        file_out<<"\\filldraw[fill=blue,draw=blue,opacity="<<Sp_val[site_ref]<<"]" <<decouple(m_val[site],Ly)<<" circle (0.7mm);"<<endl;
+                        file_out<<"\\filldraw[fill=blue,draw=blue,opacity="<<Sp_val[site_ref]*Sp_val[site_ref]*sqrt(Sp_val[site_ref])<<"]" <<decouple(m_val[site],Lx)<<" circle (0.7mm);"<<endl;
                 }
 
                 if(S_val[site_ref]<0){
-                        file_out<<"\\filldraw[fill=red,draw=red,opacity="<<Sp_val[site_ref]<<"]" <<decouple(m_val[site],Ly)<<" circle (0.7mm);"<<endl;
+                        file_out<<"\\filldraw[fill=red,draw=red,opacity="<<Sp_val[site_ref]<<"]" <<decouple(m_val[site],Lx)<<" circle (0.7mm);"<<endl;
                 }
 
 //		cout<<site<<"	"<<decouple(m_val[site],Ly)<<endl;

@@ -25,6 +25,7 @@ src/Models/SquareLattice/Coordinates_SQL.h
 src/Models/SquareLattice/Observables_SQL.h
 src/Models/SquareLattice/Parameters_SQL.h
 src/Models/TriangularLattice_TBG/Connections_TL.h
+src/Models/TriangularLattice_TBG/Kspace_calculation_TL.h
 src/Models/TriangularLattice_TBG/Coordinates_TL.h
 src/Models/TriangularLattice_TBG/Observables_TL.h
 src/Models/TriangularLattice_TBG/Parameters_TL.h

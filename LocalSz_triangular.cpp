@@ -19,7 +19,7 @@ typedef vector< double >  Mat_1_doub;
 typedef vector< int >  Mat_1_int;
 
 
-string decouple(int m, int Ly){
+string decouple(int m, int Lx){
 
 int ix,iy;
 double x,y,a;
@@ -27,8 +27,8 @@ a=0.5;
 
 string xy_,xstr,ystr;
 
-iy= ( m %Ly);
-ix= ( (m-m%Ly)/(Ly) );
+ix= ( m %Lx);
+iy= ( (m-ix)/(Lx) );
 
 x=1.0*ix*a+0.5*iy*a;
 y=sqrt(3)*0.5*iy*a;
@@ -56,7 +56,7 @@ ss<<argv[3];
 ss>> file_input;
 
 double eps=atof(argv[4]);
-double Factor_=1.0;
+double Factor_=5.0;
 
 Mat_1_int m_val,xp_val,yp_val;
 Mat_1_doub S_val,Sp_val,P_val,N_val;
@@ -103,11 +103,12 @@ for(int x=0;x<S_val.size();x++){
 		P_val[0] = abs(P_val[x]);
 	}
 }
-max_S_val=P_val[0];
+max_S_val=abs(P_val[0]);
 
 Sp_val.resize(m_val.size());
 for(int x=0;x<m_val.size();x++){
-        Sp_val[x]=Factor_*abs(S_val[x])/max_S_val;
+        Sp_val[x]=Factor_*abs(S_val[x]); // /max_S_val;
+	//cout<<Sp_val[x]<<endl;
 }
 
 //------------------------------------------//
@@ -134,7 +135,7 @@ a=0.5;
 
 for(int x=0;x<Lx;x++){
 	for(int y=0;y<Ly;y++){
-		x_val=1.0*x*a+0.5*y*a;
+		x_val=1.0*x*a + 0.5*y*a;
                 y_val=sqrt(3)*0.5*y*a;
 
 		if(x!=Lx-1){
@@ -152,18 +153,18 @@ for(int x=0;x<Lx;x++){
 int site_ref;
 for(int x=0;x<Lx;x++){
         for(int y=0;y<Ly;y++){
-                site=y+Ly*x;
+                site=x+Lx*y;
 		site_ref=x+Lx*y;
 
                 if(S_val[site_ref]>0){
-                        file_out<<"\\filldraw[fill=blue,draw=blue,opacity="<<Sp_val[site_ref]<<"]" <<decouple(m_val[site],Ly)<<" circle (0.7mm);"<<endl;
+                        file_out<<"\\filldraw[fill=blue,draw=blue,opacity="<<Sp_val[site_ref]<<"]" <<decouple(m_val[site_ref],Lx)<<" circle (0.7mm);"<<endl;
                 }
 
                 if(S_val[site_ref]<0){
-                        file_out<<"\\filldraw[fill=red,draw=red,opacity="<<Sp_val[site_ref]<<"]" <<decouple(m_val[site],Ly)<<" circle (0.7mm);"<<endl;
+                        file_out<<"\\filldraw[fill=red,draw=red,opacity="<<Sp_val[site_ref]<<"]" <<decouple(m_val[site_ref],Lx)<<" circle (0.7mm);"<<endl;
                 }
 
-//		cout<<site<<"	"<<decouple(m_val[site],Ly)<<endl;
+//		cout<<site<<"	"<<decouple(m_val[site_ref],Ly)<<endl;
 /*		if(S_val[site]=P_val[0]){
 			file_out<<"\\filldraw[fill=green,draw=blue]" <<"("<<x_val<<","<<y_val<<") "<<" circle ("<<0.8<<"mm);"<<endl;
 		}
