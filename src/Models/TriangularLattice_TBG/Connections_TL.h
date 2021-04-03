@@ -626,7 +626,7 @@ void Connections_TL::HTBCreate()
     //orb=2=C
 
     Mat_1_int t_neighs;
-    Mat_1_doub t_hoppings;
+    Mat_1_Complex_doub t_hoppings;
     //t1 hoppings
     t_neighs.push_back(0);t_neighs.push_back(2);t_neighs.push_back(7);
     t_hoppings.push_back(Parameters_.t1);t_hoppings.push_back(Parameters_.t1);t_hoppings.push_back(Parameters_.t1);
@@ -676,8 +676,8 @@ void Connections_TL::HTBCreate()
         ly_pos = Coordinates_.indy_cellwise(l);
 
         //For t1,t2,t3 hoppings
-        for(int neigh=0;neigh<9;neigh++){
-            m = Coordinates_.neigh(l, t_neighs[neigh]); //+x neighbour cell
+        for(int neigh=0;neigh<t_neighs.size();neigh++){
+            m = Coordinates_.neigh(l, t_neighs[neigh]);
             mx_pos = Coordinates_.indx_cellwise(m);
             my_pos = Coordinates_.indy_cellwise(m);
 
@@ -692,7 +692,7 @@ void Connections_TL::HTBCreate()
                         assert(a != b);
                         if (a != b)
                         {
-                            HTB_(b, a) = complex<double>(1.0 * t_hoppings[neigh], 0.0);
+                            HTB_(b, a) = t_hoppings[neigh];
                             HTB_(a, b) = conj(HTB_(b, a));
                         }
 

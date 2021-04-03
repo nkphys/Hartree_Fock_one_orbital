@@ -21,7 +21,7 @@ public:
     double a_moire;
     double eps_DE;
 
-    double t1, t2, t3;
+    complex<double> t1, t2, t3;
     double U0, U1, U2, U3;
     double AnisotropyZ;
     double hopping_intracell;
@@ -68,10 +68,16 @@ void Parameters_TL::Initialize(string inputfile_)
     File_Onsite_Energies=matchstring2(inputfile_,"File_Onsite_Energies");
     File_LongRange_Ints=matchstring2(inputfile_,"File_NonLocal_Int_Connections");
 
-    t1 = double(matchstring(inputfile_, "t1"));
-    t2 = double(matchstring(inputfile_, "t2"));
-    t3 = double(matchstring(inputfile_, "t3"));
+    string string_t1 = matchstring2(inputfile_, "t1");
+    string string_t2 = matchstring2(inputfile_, "t2");
+    string string_t3 = matchstring2(inputfile_, "t3");
+    stringstream t1_ss(string_t1);t1_ss >> t1;
+    stringstream t2_ss(string_t2);t2_ss >> t2;
+    stringstream t3_ss(string_t3);t3_ss >> t3;
 
+    cout<<"t1 = "<<t1<<endl;
+    cout<<"t2 = "<<t2<<endl;
+    cout<<"t3 = "<<t3<<endl;
 
     LongRange_interaction = int(matchstring(inputfile_, "LongRange_interaction"));
     a_moire=double(matchstring(inputfile_,"a_moire_in_Angstorm"));
