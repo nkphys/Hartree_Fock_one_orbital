@@ -487,13 +487,13 @@ void Connections_TL::InteractionsCreate()
 
     Mat_1_int U_neighs;
     Mat_1_doub U_hoppings;
-    U_neighs.push_back(0);U_neighs.push_back(2);U_neighs.push_back(7);
+    U_neighs.push_back(0);U_neighs.push_back(3);U_neighs.push_back(5);
     U_hoppings.push_back(Parameters_.U1);U_hoppings.push_back(Parameters_.U1);U_hoppings.push_back(Parameters_.U1);
 
-    U_neighs.push_back(4);U_neighs.push_back(8);U_neighs.push_back(9);
+    U_neighs.push_back(4);U_neighs.push_back(13);U_neighs.push_back(14);
     U_hoppings.push_back(Parameters_.U2);U_hoppings.push_back(Parameters_.U2);U_hoppings.push_back(Parameters_.U2);
 
-    U_neighs.push_back(10);U_neighs.push_back(11);U_neighs.push_back(12);
+    U_neighs.push_back(10);U_neighs.push_back(15);U_neighs.push_back(16);
     U_hoppings.push_back(Parameters_.U3);U_hoppings.push_back(Parameters_.U3);U_hoppings.push_back(Parameters_.U3);
 
 
@@ -628,13 +628,13 @@ void Connections_TL::HTBCreate()
     Mat_1_int t_neighs;
     Mat_1_Complex_doub t_hoppings;
     //t1 hoppings
-    t_neighs.push_back(0);t_neighs.push_back(2);t_neighs.push_back(7);
+    t_neighs.push_back(0);t_neighs.push_back(3);t_neighs.push_back(5);
     t_hoppings.push_back(Parameters_.t1);t_hoppings.push_back(Parameters_.t1);t_hoppings.push_back(Parameters_.t1);
 
-    t_neighs.push_back(4);t_neighs.push_back(8);t_neighs.push_back(9);
+    t_neighs.push_back(4);t_neighs.push_back(13);t_neighs.push_back(14);
     t_hoppings.push_back(Parameters_.t2);t_hoppings.push_back(Parameters_.t2);t_hoppings.push_back(Parameters_.t2);
 
-    t_neighs.push_back(10);t_neighs.push_back(11);t_neighs.push_back(12);
+    t_neighs.push_back(10);t_neighs.push_back(15);t_neighs.push_back(16);
     t_hoppings.push_back(Parameters_.t3);t_hoppings.push_back(Parameters_.t3);t_hoppings.push_back(Parameters_.t3);
 
 

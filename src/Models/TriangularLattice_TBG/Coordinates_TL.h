@@ -80,7 +80,7 @@ int Coordinates_TL::Ncell(int x, int y){
 
 
 int Coordinates_TL::neigh(int cell, int wneigh){
-    if(cell> (lx_*ly_)-1 || wneigh>=13){
+    if(cell> (lx_*ly_)-1 || wneigh>=17){
         cout<<cell<<"  "<<wneigh<<endl;
         perror("Coordinates_TL.h:getneigh -> ifstatement-10");}
     return neigh_(cell,wneigh);
@@ -107,7 +107,7 @@ void Coordinates_TL::Numbering(){
         }
     }
 
-    neigh_.resize(ncells_,13);
+    neigh_.resize(ncells_,17);
 
 
     //basis labeling
@@ -140,7 +140,7 @@ void Coordinates_TL::Numbering(){
 
     // Neighbors for each unit cell
     for(int i=0;i<ncells_;i++){ 	// ith site
-        for(int j=0;j<13;j++) {		// jth neighbor
+        for(int j=0;j<17;j++) {		// jth neighbor
             neigh_(i,j)=getneigh(i,j);
         }
     }
@@ -150,7 +150,7 @@ void Coordinates_TL::Numbering(){
 
 
 int Coordinates_TL::getneigh(int site,int wneigh){
-    if(site>ncells_-1 || wneigh>13){perror("Coordinates_TL.h:getneigh -> ifstatement-1");}
+    if(site>ncells_-1 || wneigh>17){perror("Coordinates_TL.h:getneigh -> ifstatement-1");}
     int nx=indx_cellwise(site);
     int ny=indy_cellwise(site);
     int mx=0;
@@ -214,6 +214,41 @@ int Coordinates_TL::getneigh(int site,int wneigh){
         mx=(nx+lx_+2)%(lx_);
         my=(ny+ly_-2)%(ly_);
     }
+
+    if(wneigh==13){ //2MX PY
+        mx=(nx+lx_-2)%(lx_);
+        my=(ny+ly_+1)%(ly_);
+    }
+
+    if(wneigh==14){ //2MY PX
+        mx=(nx+lx_+1)%(lx_);
+        my=(ny+ly_-2)%(ly_);
+    }
+
+    if(wneigh==15){ //2PY 2MX
+        mx=(nx+lx_-2)%(lx_);
+        my=(ny+ly_+2)%(ly_);
+    }
+
+    if(wneigh==16){ //2MY
+        mx=(nx+lx_)%(lx_);
+        my=(ny+ly_-2)%(ly_);
+    }
+
+
+//    //t4
+//    if(wneigh==13){ //2PX+PY
+//        mx=(nx+lx_+2)%(lx_);
+//        my=(ny+ly_+1)%(ly_);
+//    }
+//    if(wneigh==14){ //2PY-MX
+//        mx=(nx+lx_-1)%(lx_);
+//        my=(ny+ly_+2)%(ly_);
+//    }
+//    if(wneigh==15){ //2PX 2MY
+//        mx=(nx+lx_+2)%(lx_);
+//        my=(ny+ly_-2)%(ly_);
+//    }
 
 
 
