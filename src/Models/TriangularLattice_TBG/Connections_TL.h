@@ -692,8 +692,14 @@ void Connections_TL::HTBCreate()
                         assert(a != b);
                         if (a != b)
                         {
-                            HTB_(b, a) = t_hoppings[neigh];
-                            HTB_(a, b) = conj(HTB_(b, a));
+                            if(spin==0){
+                                HTB_(b, a) = t_hoppings[neigh];
+                                HTB_(a, b) = conj(HTB_(b, a));
+                            }
+                            else{
+                                HTB_(b, a) = conj(t_hoppings[neigh]);
+                                HTB_(a, b) = conj(HTB_(b, a));
+                            }
                         }
 
                     }
