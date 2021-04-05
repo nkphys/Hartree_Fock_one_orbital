@@ -693,11 +693,11 @@ void Connections_TL::HTBCreate()
                         if (a != b)
                         {
                             if(spin==0){
-                                HTB_(b, a) = t_hoppings[neigh];
+                                HTB_(b, a) = -1.0*t_hoppings[neigh];
                                 HTB_(a, b) = conj(HTB_(b, a));
                             }
                             else{
-                                HTB_(b, a) = conj(t_hoppings[neigh]);
+                                HTB_(b, a) = -1.0*conj(t_hoppings[neigh]);
                                 HTB_(a, b) = conj(HTB_(b, a));
                             }
                         }
