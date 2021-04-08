@@ -49,6 +49,8 @@ public:
     string File_OPs_out, File_OPs_in;
     string FockType;
 
+    bool Cooling;
+    Mat_1_doub Temperature_points;
 
     void Initialize(string inputfile_);
     double matchstring(string file, string match);
@@ -155,8 +157,7 @@ void Parameters_TL::Initialize(string inputfile_)
         Convergence_Error=matchstring(inputfile_,"Convergence_Error");
         RandomSeed = matchstring(inputfile_,"RandomSeed");
         alpha_OP = matchstring(inputfile_,"alpha_OP");
-        Temperature = matchstring(inputfile_,"Temperature");
-        beta=(1.0/Temperature);
+
 
        double Read_OPs_double=double(matchstring(inputfile_,"Read_initial_OPvalues"));
         if(Read_OPs_double==1.0){
@@ -174,6 +175,26 @@ void Parameters_TL::Initialize(string inputfile_)
     if(Anderson_Mixing_double==1.0){
         Anderson_Mixing=true;
         AM_m = int(matchstring(inputfile_,"Anderson_Mixing_m"));
+    }
+
+    double Cooling_double=double(matchstring(inputfile_,"Cooling"));
+    if(Cooling_double==1.0){
+        Cooling=true;
+        string temp_string =  matchstring2(inputfile_,"Temperature");
+        stringstream temp_ss(temp_string);
+        int T_nos;
+        temp_ss>>T_nos;
+        Temperature_points.resize(T_nos);
+        for(int n=0;n<T_nos;n++){
+            temp_ss>>Temperature_points[n];
+        }
+    }
+    else{
+        Cooling=false;
+        Temperature = matchstring(inputfile_,"Temperature");
+        Temperature_points.resize(1);
+        Temperature_points[0]=Temperature;
+        beta=(1.0/Temperature);
     }
 
     File_OPs_in=matchstring2(inputfile_,"Read_initial_OPvalues_file");

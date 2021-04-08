@@ -1,0 +1,13 @@
+#row col OParams_[row][col]
+0              0               n_up_0
+4              4               n_dn_0
+1              1               n_up_1
+5              5               n_dn_1
+2              2               n_up_2
+6              6               n_dn_2
+3              3               n_up_3
+7              7               n_dn_3
+0              4               cupD_cdn_0
+1              5               cupD_cdn_1
+2              6               cupD_cdn_2
+3              7               cupD_cdn_3

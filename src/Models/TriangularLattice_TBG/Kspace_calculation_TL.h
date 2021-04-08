@@ -46,6 +46,7 @@ public:
     complex<double> h_KE(int alpha, int sigma, int alpha_p, int sigma_p, int k1, int k2);
     complex<double> IntraCell_U(int alpha, int alpha_p);
     complex<double> U_Bar(int alpha, int alpha_p);
+    complex<double> V_fock(int alpha, int sigma, int alpha_p, int sigma_p, int k1, int k2);
 
     void Perform_SVD(Matrix<double> & A_, Matrix<double> & VT_, Matrix<double> & U_, vector<double> & Sigma_);
     void Perform_SVD_complex(Matrix<complex<double>> & A_, Matrix<complex<double>> & VT_, Matrix<complex<double>> & U_, vector<double> & Sigma_);
@@ -71,6 +72,7 @@ public:
     Mat_2_Complex_doub Eigvectors_saved;
     Mat_1_doub Eigenvalues_saved;
     Mat_1_doub Kx_values, Ky_values;
+    //Mat_1_Complex_doub V_mat;
 
     Matrix<double> Tx, Ty, Tpxpy, Tpxmy;
     Matrix<double> IntraCell_Hopp, InterCell_px_Hopp, InterCell_py_Hopp, InterCell_pxmy_Hopp;
@@ -108,11 +110,14 @@ double Kspace_calculation_TL::Lorentzian(double x, double brd)
 void Kspace_calculation_TL::Calculate_Nw()
 {
 
+    char temp_char[50];
+    sprintf(temp_char, "%.10f", Parameters_.Temperature);
+
     int ind_max;
     ind_max=Eigenvalues_.size();
 
     //---------Read from input file-----------------------//
-    string fileout = "Nw.txt";
+    string fileout = "Nw" + string(temp_char)+ ".txt";
     double omega_min, omega_max, d_omega;
     double eta = 0.2;
     omega_min = Eigenvalues_[0]-10.0;
@@ -243,12 +248,15 @@ void Kspace_calculation_TL::Get_minimum_distance_direction(int l,int m,int &r1_,
 
 void Kspace_calculation_TL::Get_Bands(){
 
+    char temp_char[50];
+    sprintf(temp_char, "%.10f", Parameters_.Temperature);
+
     string File_Out_Bands;
-    File_Out_Bands = "Bands.txt";
+    File_Out_Bands = "Bands" + string(temp_char)+ ".txt";
     ofstream file_out_bands(File_Out_Bands.c_str());
 
     string File_Out_Bands2;
-    File_Out_Bands2 = "Bands_Path2.txt";
+    File_Out_Bands2 = "Bands_Path2" + string(temp_char) +".txt";
     ofstream file_out_bands2(File_Out_Bands2.c_str());
 
     int k_index;
@@ -537,21 +545,66 @@ void Kspace_calculation_TL::Get_Energies(){
                 //Intra-Fock
                 if( Parameters_.FockType=="Onsite_Intra" || Parameters_.FockType=="Onsite_Intra_Inter" ){
 
+                     //----
                     for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
                         for(int spin=0;spin<2;spin++){
                             for(int alpha_p=0;alpha_p<UnitCellSize_x*UnitCellSize_y;alpha_p++){
                                 if(alpha != alpha_p){
                                     for(int spin_p=0;spin_p<2;spin_p++){
 
-                                        row_ = alpha + spin*(UnitCellSize_x*UnitCellSize_y);
-                                        col_= alpha_p + spin_p*(UnitCellSize_x*UnitCellSize_y);
-                                        index = SI_to_ind[col_ + row_*(2*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                        row_ = alpha_p + spin_p*(UnitCellSize_x*UnitCellSize_y);
+                                        col_= alpha + spin*(UnitCellSize_x*UnitCellSize_y);
+                                        if(col_>=row_){
+                                            index = SI_to_ind[col_ + row_*(2*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                            OP_value2=OPs_.value[index];
+                                        }
+                                        else{
+                                            index = SI_to_ind[row_ + col_*(2*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                            OP_value2= conj(OPs_.value[index]);
+                                        }
 
-                                        row_OP = 0*(2*UnitCellSize_x*UnitCellSize_y) + alpha_p + spin_p*(UnitCellSize_x*UnitCellSize_y);
-                                        col_OP = 0*(2*UnitCellSize_x*UnitCellSize_y) + alpha + spin*(UnitCellSize_x*UnitCellSize_y);
-                                        index_OP = SI_to_ind[col_OP + row_OP*(2*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                                        E_class_temp += -1.0*IntraCell_U(alpha, alpha_p)*OPs_.value[index_OP]*(-0.5*OPs_.value[index]);
+
+                                        col_OP = 0*(2*UnitCellSize_x*UnitCellSize_y) + alpha_p + spin_p*(UnitCellSize_x*UnitCellSize_y);
+                                        row_OP = 0*(2*UnitCellSize_x*UnitCellSize_y) + alpha + spin*(UnitCellSize_x*UnitCellSize_y);
+
+                                        if(col_OP>=row_OP){
+                                            index_OP = SI_to_ind[col_OP + row_OP*(2*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                            OP_value=OPs_.value[index_OP];
+                                        }
+                                        else{
+                                            index_OP = SI_to_ind[row_OP + col_OP*(2*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                            OP_value= conj(OPs_.value[index_OP]);
+                                        }
+
+                                        E_class_temp += -1.0*IntraCell_U(alpha, alpha_p)*OP_value*(-0.5*OP_value2);
                                     }
+                                }
+                            }
+                        }
+                    }
+                    //-----
+                }
+
+                //Inter UnitCell-Fock
+                if(Parameters_.FockType=="Onsite_Intra_Inter" ){
+
+                    for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+                        for(int spin=0;spin<2;spin++){
+                            for(int alpha_p=0;alpha_p<UnitCellSize_x*UnitCellSize_y;alpha_p++){
+                                for(int spin_p=0;spin_p<2;spin_p++){
+
+                                    row_ = alpha_p + spin_p*(UnitCellSize_x*UnitCellSize_y);
+                                    col_= alpha + spin*(UnitCellSize_x*UnitCellSize_y);
+                                    if(col_>=row_){
+                                        index = SI_to_ind[col_ + row_*(2*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                        OP_value2=OPs_.value[index];
+                                    }
+                                    else{
+                                        index = SI_to_ind[row_ + col_*(2*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                        OP_value2= conj(OPs_.value[index]);
+                                    }
+
+                                    E_class_temp += -1.0*V_fock(alpha,spin,alpha_p,spin_p,k1,k2)*(-0.5*OP_value2);
                                 }
                             }
                         }
@@ -657,7 +710,10 @@ void Kspace_calculation_TL::Get_spin_resolved_local_densities(){
 
     double Total_den_up, Total_den_dn;
 
-    string File_Out_Local_orb_densities = "Local_spin_resolved_densities.txt";
+    char temp_char[50];
+    sprintf(temp_char, "%.10f", Parameters_.Temperature);
+
+    string File_Out_Local_orb_densities = "Local_spin_resolved_densities" + string(temp_char)+ ".txt";
     ofstream file_out_Local_orb_densities(File_Out_Local_orb_densities.c_str());
     file_out_Local_orb_densities<<"#alpha(site in real lattice)   up   dn"<<endl;
 
@@ -738,7 +794,10 @@ void Kspace_calculation_TL::Get_local_spins(){
     int UP_, DOWN_;
     UP_=0;DOWN_=1;
 
-    string File_Out_Local_orb_densities = "Local_spins.txt";
+    char temp_char[50];
+    sprintf(temp_char, "%.10f", Parameters_.Temperature);
+
+    string File_Out_Local_orb_densities = "Local_spins"  + string(temp_char) +  ".txt";
     ofstream file_out_Local_orb_densities(File_Out_Local_orb_densities.c_str());
     file_out_Local_orb_densities<<"#site (in real lattice) site_1 site_2  rx     ry   Sz   Sx  Sy"<<endl;
 
@@ -962,7 +1021,6 @@ void Kspace_calculation_TL::Initialize()
 
     Kx_values.resize(ncells_);
     Ky_values.resize(ncells_);
-
 
     //Order Parameters :
     /*
@@ -1362,6 +1420,60 @@ complex<double> Kspace_calculation_TL::U_Bar(int alpha, int alpha_p){
 }
 
 
+complex<double> Kspace_calculation_TL::V_fock(int alpha, int sigma, int alpha_p, int sigma_p, int k1, int k2){
+
+    complex<double> temp_val;
+    int d1_org, d2_org, d1_new, d2_new;
+    int d1_, d2_;
+    int row_, col_;
+    int row_OP, col_OP, index_OP;
+    int row_new, col_new, cell_new;
+    int alpha_1, alpha_2, alpha_p_1, alpha_p_2;
+    complex<double> OP_value;
+
+    alpha_1 = alpha % UnitCellSize_x;
+    alpha_p_1 = alpha_p % UnitCellSize_x;
+
+    alpha_2 = (alpha - alpha_1)/UnitCellSize_x;
+    alpha_p_2 = (alpha_p - alpha_p_1)/UnitCellSize_x;
+
+    temp_val=0.0;
+
+    for(int cell_no=1;cell_no<ncells_;cell_no++){
+        d1_org = Coordinates_.indx_cellwise(cell_no);
+        d2_org = Coordinates_.indy_cellwise(cell_no);
+        Get_minimum_distance_direction(0, cell_no, d1_, d2_);
+
+        row_ = (0 + alpha_1) + (0 + alpha_2)*lx_;
+        col_ = ((d1_org*UnitCellSize_x) + alpha_p_1) + ((d2_org*UnitCellSize_y) + alpha_p_2)*lx_;
+
+        row_OP = 0*(2*UnitCellSize_x*UnitCellSize_y) + alpha + sigma*(UnitCellSize_x*UnitCellSize_y);
+        col_OP = cell_no*(2*UnitCellSize_x*UnitCellSize_y) + alpha_p + sigma_p*(UnitCellSize_x*UnitCellSize_y);
+
+        if( (alpha_p + sigma_p*(UnitCellSize_x*UnitCellSize_y)) >= (alpha + sigma*(UnitCellSize_x*UnitCellSize_y))){
+            index_OP = SI_to_ind[col_OP + row_OP*(2*ncells_*UnitCellSize_x*UnitCellSize_y)];
+            OP_value=OPs_.value[index_OP];
+        }
+        else{
+            d1_new = (lx_cells - d1_org)%lx_cells;
+            d2_new = (ly_cells - d2_org)%ly_cells;
+            cell_new = Coordinates_.Ncell(d1_new, d2_new);
+            row_new = 0*(2*UnitCellSize_x*UnitCellSize_y) + alpha_p + sigma_p*(UnitCellSize_x*UnitCellSize_y);
+            col_new = cell_new*(2*UnitCellSize_x*UnitCellSize_y) + alpha + sigma*(UnitCellSize_x*UnitCellSize_y);
+            index_OP = SI_to_ind[col_new + row_new*(2*ncells_*UnitCellSize_x*UnitCellSize_y)];
+            OP_value= conj(OPs_.value[index_OP]);
+        }
+
+        index_OP = SI_to_ind[col_OP + row_OP*(2*ncells_*UnitCellSize_x*UnitCellSize_y)];
+
+        temp_val += Connections_.Hint_(row_, col_)*OPs_.value[index_OP]*
+                exp(iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_   ));
+
+    }
+
+    return temp_val;
+}
+
 void Kspace_calculation_TL::Create_Kspace_Spectrum(){
 
     int row_, col_;
@@ -1518,16 +1630,40 @@ void Kspace_calculation_TL::Create_Kspace_Spectrum(){
                                 if(alpha != alpha_p){
                                     for(int spin_p=0;spin_p<2;spin_p++){
 
-                                        row_ = alpha + spin*(UnitCellSize_x*UnitCellSize_y);
-                                        col_= alpha_p + spin_p*(UnitCellSize_x*UnitCellSize_y);
+                                        row_ = alpha_p + spin_p*(UnitCellSize_x*UnitCellSize_y);
+                                        col_= alpha + spin*(UnitCellSize_x*UnitCellSize_y);
 
-                                        row_OP = 0*(2*UnitCellSize_x*UnitCellSize_y) + alpha_p + spin_p*(UnitCellSize_x*UnitCellSize_y);
-                                        col_OP = 0*(2*UnitCellSize_x*UnitCellSize_y) + alpha + spin*(UnitCellSize_x*UnitCellSize_y);
-                                        index_OP = SI_to_ind[col_OP + row_OP*(2*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                        col_OP = 0*(2*UnitCellSize_x*UnitCellSize_y) + alpha_p + spin_p*(UnitCellSize_x*UnitCellSize_y);
+                                        row_OP = 0*(2*UnitCellSize_x*UnitCellSize_y) + alpha + spin*(UnitCellSize_x*UnitCellSize_y);
 
-                                        //Correction needed
-                                        Ham_(row_,col_) += -1.0*IntraCell_U(alpha, alpha_p)*OPs_.value[index_OP];
+                                        if(col_OP>=row_OP){
+                                            index_OP = SI_to_ind[col_OP + row_OP*(2*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                            OP_value=OPs_.value[index_OP];
+                                        }
+                                        else{
+                                            index_OP = SI_to_ind[row_OP + col_OP*(2*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                            OP_value= conj(OPs_.value[index_OP]);
+                                        }
+
+                                        Ham_(row_,col_) += -1.0*IntraCell_U(alpha, alpha_p)*OP_value;
                                     }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if(Parameters_.FockType=="Onsite_Intra_Inter" ){
+
+                    for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+                        for(int spin=0;spin<2;spin++){
+                            for(int alpha_p=0;alpha_p<UnitCellSize_x*UnitCellSize_y;alpha_p++){
+                                for(int spin_p=0;spin_p<2;spin_p++){
+
+                                    row_ = alpha_p + spin_p*(UnitCellSize_x*UnitCellSize_y);
+                                    col_= alpha + spin*(UnitCellSize_x*UnitCellSize_y);
+
+                                    Ham_(row_,col_) += -1.0*V_fock(alpha,spin,alpha_p,spin_p,k1,k2);
                                 }
                             }
                         }
@@ -1559,69 +1695,90 @@ void Kspace_calculation_TL::Create_Kspace_Spectrum(){
 void Kspace_calculation_TL::SelfConsistency(){
 
 
-    string File_Out_progress;
-    File_Out_progress = "output_Kspace_SelfConsistency.txt";
-    ofstream file_out_progress(File_Out_progress.c_str());
+    for(int Temp_no=0;Temp_no<Parameters_.Temperature_points.size();Temp_no++){
 
-    cout<<"error targetted = "<<Parameters_.Convergence_Error<<endl;
-    cout<<"Max iterations = "<<Parameters_.IterMax<<endl;
+        Parameters_.Temperature = Parameters_.Temperature_points[Temp_no];
+        Parameters_.beta = 1.0/Parameters_.Temperature;
+
+        cout<<"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"<<endl;
+        cout<<"Temperature = "<<Parameters_.Temperature<<endl;
+
+        char temp_char[50];
+        sprintf(temp_char, "%.10f", Parameters_.Temperature);
 
 
-    OP_error_=10.0;
-    int iter=0;
-    while( (OP_error_>=Parameters_.Convergence_Error) && (iter<Parameters_.IterMax)){
+        string File_Out_progress;
+        File_Out_progress = "output_Kspace_SelfConsistency_Temp" + string(temp_char) + ".txt";
+        ofstream file_out_progress(File_Out_progress.c_str());
+
+        cout<<"error targetted = "<<Parameters_.Convergence_Error<<endl;
+        cout<<"Max iterations = "<<Parameters_.IterMax<<endl;
+
+        OP_error_=10.0;
+        int iter=0;
+        while( (OP_error_>=Parameters_.Convergence_Error) && (iter<Parameters_.IterMax)){
+
+            Create_Kspace_Spectrum();
+            Arranging_spectrum();
+            mu_=chemicalpotential(Parameters_.Total_Particles);
+            Get_new_OPs_and_error();
+            Get_Energies();
+
+
+            file_out_progress<<setprecision(15)<<iter<<"   "<<OP_error_<<"   "<<E_class<<"   "<<E_quant<<"    "<<endl;
+            //        for(int OP_no=0;OP_no<6;OP_no++){
+            //            file_out_progress<<OPs_[OP_no].real()<<"    "<<OPs_[OP_no].imag()<<"    ";
+            //        }
+            //        file_out_progress<<endl;
+
+            if(Parameters_.Anderson_Mixing){
+                Update_OrderParameters_AndersonMixing(iter);
+            }
+            else{ //SimpleMixing
+                for(int i=0;i<OPs_.value.size();i++){
+                    OPs_.value[i]=Parameters_.alpha_OP*OPs_.value[i] + (1.0-Parameters_.alpha_OP)*OPs_new_.value[i];
+                }
+            }
+
+
+            iter++;
+
+        }
+
+
 
         Create_Kspace_Spectrum();
+        Get_Bands();
         Arranging_spectrum();
         mu_=chemicalpotential(Parameters_.Total_Particles);
+        cout<<"mu = "<<mu_<<endl;
+        cout<<"energies shown below , Eclass and Equant:"<<endl;
         Get_new_OPs_and_error();
         Get_Energies();
+        cout<<E_class<<"   "<<E_quant<<"    "<<endl;
+
+        Get_spin_resolved_local_densities();
+        Get_local_spins();
+        Calculate_Nw();
 
 
-        file_out_progress<<setprecision(15)<<iter<<"   "<<OP_error_<<"   "<<E_class<<"   "<<E_quant<<"    "<<endl;
-        //        for(int OP_no=0;OP_no<6;OP_no++){
-        //            file_out_progress<<OPs_[OP_no].real()<<"    "<<OPs_[OP_no].imag()<<"    ";
-        //        }
-        //        file_out_progress<<endl;
 
-        if(Parameters_.Anderson_Mixing){
-            Update_OrderParameters_AndersonMixing(iter);
+        string File_Out_Local_OP = Parameters_.File_OPs_out + "_Temp"+string(temp_char) + ".txt";
+        ofstream file_out_Local_OP(File_Out_Local_OP.c_str());
+        file_out_Local_OP<<"#row col OParams_[row][col]"<<endl;
+
+        for(int alpha=0;alpha<OPs_.value.size();alpha++){
+            file_out_Local_OP<<OPs_new_.rows[alpha]<<setw(15)<<OPs_new_.columns[alpha]<<setw(15)<<"  "<<OPs_new_.value[alpha]<<endl;
         }
-        else{ //SimpleMixing
-            for(int i=0;i<OPs_.value.size();i++){
-                OPs_.value[i]=Parameters_.alpha_OP*OPs_.value[i] + (1.0-Parameters_.alpha_OP)*OPs_new_.value[i];
-            }
-        }
 
 
-        iter++;
 
+        //Getting ready for next Temperature
+        Parameters_.Read_OPs=true;
+        Parameters_.File_OPs_in = Parameters_.File_OPs_out + "_Temp"+string(temp_char) + ".txt";
+        Initialize();
     }
 
-
-
-    Create_Kspace_Spectrum();
-    Get_Bands();
-    Arranging_spectrum();
-    mu_=chemicalpotential(Parameters_.Total_Particles);
-    cout<<"mu = "<<mu_<<endl;
-    cout<<"energies shown below , Eclass and Equant:"<<endl;
-    Get_new_OPs_and_error();
-    Get_Energies();
-    cout<<E_class<<"   "<<E_quant<<"    "<<endl;
-
-    Get_spin_resolved_local_densities();
-    Get_local_spins();
-    Calculate_Nw();
-
-
-    string File_Out_Local_OP = Parameters_.File_OPs_out;
-    ofstream file_out_Local_OP(File_Out_Local_OP.c_str());
-    file_out_Local_OP<<"#row col OParams_[row][col]"<<endl;
-
-    for(int alpha=0;alpha<OPs_.value.size();alpha++){
-        file_out_Local_OP<<OPs_new_.rows[alpha]<<setw(15)<<OPs_new_.columns[alpha]<<setw(15)<<"  "<<OPs_new_.value[alpha]<<endl;
-    }
 
 }
 
@@ -1666,7 +1823,7 @@ void Kspace_calculation_TL::Diagonalize(char option){
 
 void Kspace_calculation_TL::Update_OrderParameters_AndersonMixing(int iter){
 
-    bool with_SVD=false;
+    bool with_SVD=true;
     int m_;
     int row_, col_;
     int OP_size;
