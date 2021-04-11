@@ -100,10 +100,10 @@ int main(int argc, char *argv[]) {
 
             Coordinates_TL Coordinates_TL_(Parameters_TL_.lx, Parameters_TL_.ly, Parameters_TL_.n_orbs);
             Connections_TL Connections_TL_(Parameters_TL_, Coordinates_TL_);
-            //Connections_TL_.Print_Hopping();                                       //::DONE
+            Connections_TL_.Print_Hopping();                                       //::DONE
             Connections_TL_.InteractionsCreate();
-            //Connections_TL_.Print_LongRangeInt();
-            //Connections_TL_.Print_Spin_resolved_OnsiteE();
+            Connections_TL_.Print_LongRangeInt();
+            Connections_TL_.Print_Spin_resolved_OnsiteE();
 
             Coordinates_TL Coordinates_TL_UC_(Parameters_TL_.lx/Parameters_TL_.UnitCellSize_x, Parameters_TL_.ly/Parameters_TL_.UnitCellSize_y, 1);
 

@@ -256,7 +256,7 @@ void Kspace_calculation_TL::Get_Bands(){
     ofstream file_out_bands(File_Out_Bands.c_str());
 
     string File_Out_Bands2;
-    File_Out_Bands2 = "Bands_Path2" + string(temp_char) +".txt";
+    File_Out_Bands2 = "Bands_Path2_" + string(temp_char) +".txt";
     ofstream file_out_bands2(File_Out_Bands2.c_str());
 
     int k_index;
@@ -1748,7 +1748,7 @@ void Kspace_calculation_TL::SelfConsistency(){
 
 
         Create_Kspace_Spectrum();
-        Get_Bands();
+        //Get_Bands();
         Arranging_spectrum();
         mu_=chemicalpotential(Parameters_.Total_Particles);
         cout<<"mu = "<<mu_<<endl;

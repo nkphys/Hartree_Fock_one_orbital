@@ -2,11 +2,11 @@
 #true in Y because just 2-siters in Y, otherwise OBC just overwrites the same connections with zeros 
 
 PBC=1
-Xsite=12
-Ysite=12
+Xsite=24
+Ysite=4
 N_Orbs=1
-UnitCellSize_x=12
-UnitCellSize_y=12
+UnitCellSize_x=2
+UnitCellSize_y=2
 
 File_Onsite_Energies=TL_Onsite_E_12x12.txt
 File_Hopping_Connections=TL_Hoppings_12x12.txt
@@ -17,52 +17,73 @@ TwistedBoundaryCond_my=0
 TBC_cellsX=1
 TBC_cellsY=1
 
-t1=(-1.0,0.0)
+
+t1=(-6.09911,0)
 #3.69042
 #6.46495
-t2=(0.0,0)
+t2=(-0.226546,0.0)
 #0.263744
 #0.300791
-t3=(0,0)
-#0.5005281
+t3=(-0.927747,0.0)
+#0.505281
 #1.07801
 
-LongRange_interaction=0
-a_moire_in_Angstorm=46.9825
+LongRange_interaction=1
+a_moire_in_Angstorm=37.58606310817134000700
 #46.98257888521417500876
 #37.5860
 d_screening_in_Angstorm=600
-eps_DE=5.0
 
-U0=4.0
-U1=0.0
-U2=0.0
-U3=0.0
+
+eps_DE=40.0
+U0=33
+U1=0
+U2=0
+U3=0
+
+
+#eps_DE=60.0
+#U0=22.00000
+#U1=5.98413
+#U2=2.79484
+#U3=1.73475
+
+#eps_DE=50.0
+#U0=26.40000
+#U1=7.18096
+#U2=3.35381
+#U3=2.08170
+
+#eps_DE=40.0
+#U0=33.00000
+#U1=8.97620
+#U2=4.19227
+#U3=2.60213
 
 AnisotropyZ=0.0
 OnSiteE_up0=0.0
 OnSiteE_dn0=0.0
 
 Self_consistency_kspace=1
-Total_particles=72
+Total_particles=48
 
-No_of_SelfConsistency_iters=2000
-Convergence_Error=0.00001
-RandomSeed=23
+No_of_SelfConsistency_iters=8000
+Convergence_Error=0.000001
+RandomSeed=531
 alpha_OP=0.1
 
 Cooling=1
-Temperature=1 0.001
-#5 1000.0 500.0 100.0 50.0 40.0 30.0 20.0 10.0 5.0 4.5 4.0 3.0 2.0 1.0 0.05
+Temperature=1 0.0001
+#17 0.001 1.0 0.001 1.0 0.001 1.0 0.001 1.0 0.001 1.0 0.001 1.0 0.001 1.0 2.0 1.0 0.001
 
 Anderson_Mixing=1
-Anderson_Mixing_m=5
+Anderson_Mixing_m=6
 
 Just_Hartree=0
-Fock_type=Onsite
+Fock_type=Onsite_Intra_Inter
 #Onsite, Onsite_Intra, Onsite_Intra_Inter
-Read_initial_OPvalues=1
-Read_initial_OPvalues_file=OUTPUT_OP_Temp0.0010000000.txt
+Read_initial_OPvalues=0
+Read_initial_OPvalues_file=Inputs/OUTPUT_OP_TetraHedron_example.txt
 #OUTPUT_OP_PiPi_alongZ.txt
 #OUTPUT_OP_0Pi_alongZ.txt
 #OUTPUT_OP_ZigZag_alongZ.txt

@@ -333,8 +333,12 @@ void Connections_TL::Print_Ansatz_LocalDen_CDW(){
 
             if( lx_%3!=0 || ly_%3!=0){
                 cout<<"lx and ly must be multiple of 3 for Honeycomb CDW"<<endl;
-                assert(lx_%3==0);
-                assert(ly_%3==0);
+
+                //assert(lx_%3==0);
+                //assert(ly_%3==0);
+                if(lx_%3!=0  || ly_%3!=0 ){
+                    cout<<"WARNING: lx or ly is not multiple of 3"<<endl;
+                }
             }
             eff_lx=lx_/3;
             eff_ly=ly_/3;
@@ -370,8 +374,9 @@ void Connections_TL::Print_Ansatz_LocalDen_CDW(){
 
             if( lx_%3!=0 || ly_%3!=0){
                 cout<<"lx and ly must be multiple of 3 for Honeycomb CDW"<<endl;
-                assert(lx_%3==0);
-                assert(ly_%3==0);
+                if(lx_%3!=0  || ly_%3!=0 ){
+                    cout<<"WARNING: lx or ly is not multiple of 3"<<endl;
+                }
             }
             eff_lx=lx_/3;
             eff_ly=ly_/3;
@@ -413,8 +418,9 @@ void Connections_TL::Print_Ansatz_LocalDen_CDW(){
 
             if( lx_%3!=0 || ly_%3!=0){
                 cout<<"lx and ly must be multiple of 3 for Honeycomb CDW"<<endl;
-                assert(lx_%3==0);
-                assert(ly_%3==0);
+                if(lx_%3!=0  || ly_%3!=0 ){
+                    cout<<"WARNING: lx or ly is not multiple of 3"<<endl;
+                }
             }
             eff_lx=lx_/3;
             eff_ly=ly_/3;
@@ -523,8 +529,8 @@ void Connections_TL::InteractionsCreate()
                 assert(l != m);
                 if (l != m)
                 {
-                    Hint_(l, m) += complex<double>(1.0 * U_hoppings[neigh], 0.0);
-                    Hint_(m, l) += conj(Hint_(l, m));
+                    Hint_(l, m) = complex<double>(1.0 * U_hoppings[neigh], 0.0);
+                    Hint_(m, l) = conj(Hint_(l, m));
                 }
 
             }
@@ -562,7 +568,7 @@ void Connections_TL::InteractionsCreate()
                 // assert(l != m);
                 if (l != m)
                 {
-                    Hint_(l, m) += complex<double>(1.0 * U_val, 0.0);
+                    Hint_(l, m) = complex<double>(1.0 * U_val, 0.0);
                     //Hint_(m, l) += conj(Hint_(l, m));
                 }
 
