@@ -12,7 +12,8 @@ public:
     int TBC_mx, TBC_my;
     int TBC_cellsX, TBC_cellsY;
     Mat_2_doub OnSiteE;
-    double BoundaryConnection;
+    double BoundaryConnection_X, BoundaryConnection_Y;
+    bool PBC_X, PBC_Y;
 
     string File_Onsite_Energies, File_Hoppings, File_LongRange_Ints;
 
@@ -121,7 +122,21 @@ void Parameters_TL::Initialize(string inputfile_)
     TBC_cellsX = int(matchstring(inputfile_, "TBC_cellsX"));
     TBC_cellsY = int(matchstring(inputfile_, "TBC_cellsY"));
 
-    BoundaryConnection = double(matchstring(inputfile_, "PBC"));
+    BoundaryConnection_X = double(matchstring(inputfile_, "PBC_X"));
+    BoundaryConnection_Y = double(matchstring(inputfile_, "PBC_Y"));
+    if(BoundaryConnection_X==1.0){
+        PBC_X=true;
+    }
+    else{
+        PBC_X=false;
+    }
+    if(BoundaryConnection_Y==1.0){
+        PBC_Y=true;
+    }
+    else{
+        PBC_Y=false;
+    }
+
 
     ns = lx * ly;
     cout << "TotalNumberOf Unit cells = " << ns << endl;
@@ -159,7 +174,7 @@ void Parameters_TL::Initialize(string inputfile_)
         alpha_OP = matchstring(inputfile_,"alpha_OP");
 
 
-       double Read_OPs_double=double(matchstring(inputfile_,"Read_initial_OPvalues"));
+        double Read_OPs_double=double(matchstring(inputfile_,"Read_initial_OPvalues"));
         if(Read_OPs_double==1.0){
             Read_OPs=true;
         }

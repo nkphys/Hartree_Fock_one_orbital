@@ -55,6 +55,9 @@ public:
     void Get_local_spins();
     void Calculate_Nw();
     double Lorentzian(double x, double brd);
+    void Calculate_ChernNumbers();
+    void Create_Current_Oprs();
+    void Hall_conductance();
     //::DONE
 
 
@@ -95,8 +98,398 @@ public:
     Matrix<double> X_mat, F_mat;
 
 
+    Matrix<complex<double>> J_KE_e1, J_KE_e2;
+    Matrix<complex<double>> J_KE_X, J_KE_Y;
+
+
 };
 
+void Kspace_calculation_TL::Hall_conductance(){
+
+    double hall_cond=0.0;
+    double hall_cond_xy=0.0;
+    double cond_11, cond_22;
+    double eps_temp =0.00000001;
+    Parameters_.eta=0.01;
+
+    string fileout_="sigmaxy_vs_mu.txt";
+    ofstream fileout(fileout_.c_str());
+
+    for(int m=0;m<lx_*ly_*2;m++){
+        for(int n=0;n<lx_*ly_*2;n++){
+            if(abs(Eigenvalues_saved[m]-Eigenvalues_saved[n])>=eps_temp){
+                hall_cond += ((2.0*PI)/(lx_*ly_))*( (1.0/( exp((Eigenvalues_saved[m]-mu_)*Parameters_.beta ) + 1.0))-  (1.0/( exp((Eigenvalues_saved[n]-mu_)*Parameters_.beta ) + 1.0)) )*
+                        (1.0/( (Parameters_.eta*Parameters_.eta) + ((Eigenvalues_saved[n]-Eigenvalues_saved[m])*(Eigenvalues_saved[n]-Eigenvalues_saved[m]))   ))*
+                        ((1.0*J_KE_e1(m,n))*(1.0*J_KE_e2(n,m))).imag();
+            }
+        }
+    }
+
+    for(int m=0;m<lx_*ly_*2;m++){
+        for(int n=0;n<lx_*ly_*2;n++){
+            if(abs(Eigenvalues_saved[m]-Eigenvalues_saved[n])>=eps_temp){
+                hall_cond_xy += ((2.0*PI)/(lx_*ly_))*( (1.0/( exp((Eigenvalues_saved[m]-mu_)*Parameters_.beta ) + 1.0))-  (1.0/( exp((Eigenvalues_saved[n]-mu_)*Parameters_.beta ) + 1.0)) )*
+                        (1.0/( (Parameters_.eta*Parameters_.eta) + ((Eigenvalues_saved[n]-Eigenvalues_saved[m])*(Eigenvalues_saved[n]-Eigenvalues_saved[m]))   ))*
+                        ((1.0*J_KE_X(m,n))*(1.0*J_KE_Y(n,m))).imag();
+            }
+        }
+    }
+
+    cout<<"Hall Conductance_12 = "<<hall_cond<<endl;
+     cout<<"Hall Conductance_XY = "<<hall_cond_xy<<endl;
+
+    double mu=Eigenvalues_saved[0]-1.0;
+    while(mu<Eigenvalues_saved[Eigenvalues_saved.size()-1]+1.0){
+        hall_cond=0.0;
+        hall_cond_xy=0.0;
+        cond_11=0.0;
+        cond_22=0.0;
+
+        for(int m=0;m<lx_*ly_*2;m++){
+            for(int n=0;n<lx_*ly_*2;n++){
+                if(abs(Eigenvalues_saved[m]-Eigenvalues_saved[n])>=eps_temp){
+                    hall_cond += ((2.0*PI)/(lx_*ly_))*( (1.0/( exp((Eigenvalues_saved[m]-mu)*Parameters_.beta ) + 1.0))-  (1.0/( exp((Eigenvalues_saved[n]-mu)*Parameters_.beta ) + 1.0)) )*
+                            (1.0/( (Parameters_.eta*Parameters_.eta) + ((Eigenvalues_saved[n]-Eigenvalues_saved[m])*(Eigenvalues_saved[n]-Eigenvalues_saved[m]))   ))*
+                            ((1.0*J_KE_e1(m,n))*(1.0*J_KE_e2(n,m))).imag();
+                    hall_cond_xy += ((2.0*PI)/(lx_*ly_))*( (1.0/( exp((Eigenvalues_saved[m]-mu)*Parameters_.beta ) + 1.0))-  (1.0/( exp((Eigenvalues_saved[n]-mu)*Parameters_.beta ) + 1.0)) )*
+                            (1.0/( (Parameters_.eta*Parameters_.eta) + ((Eigenvalues_saved[n]-Eigenvalues_saved[m])*(Eigenvalues_saved[n]-Eigenvalues_saved[m]))   ))*
+                            ((1.0*J_KE_X(m,n))*(1.0*J_KE_Y(n,m))).imag();
+                    cond_11 += ((2.0*PI)/(lx_*ly_))*( (1.0/( exp((Eigenvalues_saved[m]-mu)*Parameters_.beta ) + 1.0))-  (1.0/( exp((Eigenvalues_saved[n]-mu)*Parameters_.beta ) + 1.0)) )*
+                            (1.0/( (Parameters_.eta*Parameters_.eta) + ((Eigenvalues_saved[n]-Eigenvalues_saved[m])*(Eigenvalues_saved[n]-Eigenvalues_saved[m]))   ))*
+                            ((1.0*J_KE_e1(m,n))*(1.0*J_KE_e1(n,m))).imag();
+                    cond_22 += ((2.0*PI)/(lx_*ly_))*( (1.0/( exp((Eigenvalues_saved[m]-mu)*Parameters_.beta ) + 1.0))-  (1.0/( exp((Eigenvalues_saved[n]-mu)*Parameters_.beta ) + 1.0)) )*
+                            (1.0/( (Parameters_.eta*Parameters_.eta) + ((Eigenvalues_saved[n]-Eigenvalues_saved[m])*(Eigenvalues_saved[n]-Eigenvalues_saved[m]))   ))*
+                            ((1.0*J_KE_e2(m,n))*(1.0*J_KE_e2(n,m))).imag();
+
+                }
+            }
+        }
+        fileout<<mu<<"  "<<hall_cond<<"  "<<hall_cond_xy<<"  "<<cond_11<<"  "<<cond_22<<endl;
+        mu=mu+0.05;
+    }
+}
+
+
+void Kspace_calculation_TL::Create_Current_Oprs(){
+    J_KE_e1.resize(lx_*ly_*2, lx_*ly_*2);
+    J_KE_e2.resize(lx_*ly_*2, lx_*ly_*2);
+
+    J_KE_X.resize(lx_*ly_*2, lx_*ly_*2);
+    J_KE_Y.resize(lx_*ly_*2, lx_*ly_*2);
+
+
+    //    c1 = alpha + UP_*(S_);
+    //    c2 = alpha + DOWN_*(S_);;
+    //    for(int n=0;n<2*S_;n++){ //band_index
+    //        for(int k1=0;k1<lx_cells;k1++){
+    //            for(int k2=0;k2<ly_cells;k2++){
+    //                k_index = Coordinates_.Ncell(k1,k2);
+    //                state = 2*S_*k_index + n;
+    //                val += (1.0/ncells_)*(
+    //                            (conj(Eigvectors_[state][c1])*Eigvectors_[state][c2])
+    //                            *(1.0/( exp((Eigenvalues_saved[state]-mu_)*Parameters_.beta ) + 1.0))
+    //                            );
+    //            }
+    //        }
+    //    }
+
+
+
+    int row_, col_;
+    int d1_, d2_;
+    int d1_org, d2_org;
+    int alpha_1, alpha_2, alpha_p_1, alpha_p_2;
+    int c1, c2;
+
+
+    //    temp_val=0.0;
+    //    for(int cell_no=0;cell_no<ncells_;cell_no++){
+    //        d1_org = Coordinates_.indx_cellwise(cell_no);
+    //        d2_org = Coordinates_.indy_cellwise(cell_no);
+
+    //        row_ = ( (d1_org*UnitCellSize_x) + alpha_1) + ((d2_org*UnitCellSize_y) + alpha_2)*lx_ + sigma*(lx_*ly_);
+    //        col_ = (0 + alpha_p_1) + (0 + alpha_p_2)*lx_ + sigma_p*(lx_*ly_);
+
+    //        Get_minimum_distance_direction(0, cell_no, d1_, d2_);
+
+    //        temp_val += Connections_.HTB_(row_,col_)*exp(iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_   ));
+
+    //    }
+
+
+    int S_ = UnitCellSize_x*UnitCellSize_y;
+    int k_index;
+    int state_p,state_n;
+    int sigma, sigma_p;
+    sigma=0;sigma_p=0;
+    int d1_net, d2_net;
+    double fac1, fac2, facx, facy, dx_, dy_;
+
+    for(int l=0;l<2*S_;l++){
+        for(int m=0;m<2*S_;m++){
+
+            for(int k1=0;k1<lx_cells;k1++){
+                for(int k2=0;k2<ly_cells;k2++){
+                    k_index = Coordinates_.Ncell(k1,k2);
+                    state_p = 2*S_*k_index + l;
+                    state_n = 2*S_*k_index + m;
+
+                    for(int sigma=0;sigma<2;sigma++){
+
+                        for(int alpha=0;alpha<S_;alpha++){
+                            for(int alpha_p=0;alpha_p<S_;alpha_p++){
+
+                                sigma_p=sigma;
+                                c1 = alpha + sigma*(S_);
+                                c2 = alpha_p + sigma*(S_);
+
+                                alpha_1 = alpha % UnitCellSize_x; //a = a1 +a2*lx
+                                alpha_p_1 = alpha_p % UnitCellSize_x;
+                                alpha_2 = (alpha - alpha_1)/UnitCellSize_x;
+                                alpha_p_2 = (alpha_p - alpha_p_1)/UnitCellSize_x;
+
+                                for(int cell_no=0;cell_no<ncells_;cell_no++){
+
+                                    d1_org = Coordinates_.indx_cellwise(cell_no);
+                                    d2_org = Coordinates_.indy_cellwise(cell_no);
+
+                                    row_ = ( (d1_org*UnitCellSize_x) + alpha_1) + ((d2_org*UnitCellSize_y) + alpha_2)*lx_ + sigma*(lx_*ly_);
+                                    col_ = (0 + alpha_p_1) + (0 + alpha_p_2)*lx_ + sigma_p*(lx_*ly_);
+
+                                    Get_minimum_distance_direction(0, cell_no, d1_, d2_);
+
+                                    d1_net = ( (d1_*UnitCellSize_x) + alpha_1) - (0 + alpha_p_1);
+                                    d2_net = ((d2_*UnitCellSize_y) + alpha_2) - (0 + alpha_p_2);
+
+
+                                    dx_ = 1.0*d1_net + 0.5*(d2_net);
+                                    dy_ = (sqrt(3.0)/2.0)*d2_net;
+//                                    facx = (dx_/sqrt((dx_*dx_) + (dy_*dy_)));
+//                                    facy = (dy_/sqrt((dx_*dx_) + (dy_*dy_)));
+                                     if(dx_==0){
+                                         facx=0;
+                                     }
+                                     else{
+                                        facx=dx_/abs(dx_);
+                                     }
+                                     if(dy_==0){
+                                         facy=0;
+                                     }
+                                     else{
+                                        facy=dy_/abs(dy_);
+                                     }
+
+
+
+//                                    fac1 = (d1_net/sqrt((d1_net*d1_net) + (d2_net*d2_net)));
+//                                    fac2 = (d2_net/sqrt((d1_net*d1_net) + (d2_net*d2_net)));
+
+                                     if(d1_net==0){
+                                         fac1=0;
+                                     }
+                                     else{
+                                        fac1=d1_net/abs(d1_net);
+                                     }
+                                     if(d2_net==0){
+                                         fac2=0;
+                                     }
+                                     else{
+                                        fac2=d2_net/abs(d2_net);
+                                     }
+
+                                    if(abs(Connections_.HTB_(row_,col_)) > 0.0000001){
+                                    J_KE_X(state_p,state_n) += (1.0)*facx*iota_complex*(
+                                                (Connections_.HTB_(row_,col_)*conj(Eigvectors_[state_p][c2])*Eigvectors_[state_n][c1]*exp(iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
+                                                -(Connections_.HTB_(col_,row_)*conj(Eigvectors_[state_p][c1])*Eigvectors_[state_n][c2]*exp(-1.0*iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
+                                                );
+
+                                    J_KE_Y(state_p,state_n) += (1.0)*facy*iota_complex*(
+                                                (Connections_.HTB_(row_,col_)*conj(Eigvectors_[state_p][c2])*Eigvectors_[state_n][c1]*exp(iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
+                                                -(Connections_.HTB_(col_,row_)*conj(Eigvectors_[state_p][c1])*Eigvectors_[state_n][c2]*exp(-1.0*iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
+                                                );
+
+                                    J_KE_e1(state_p,state_n) += (1.0)*fac1*iota_complex*(
+                                                (Connections_.HTB_(row_,col_)*conj(Eigvectors_[state_p][c2])*Eigvectors_[state_n][c1]*exp(iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
+                                                -(Connections_.HTB_(col_,row_)*conj(Eigvectors_[state_p][c1])*Eigvectors_[state_n][c2]*exp(-1.0*iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
+                                                );
+
+                                    J_KE_e2(state_p,state_n) += (1.0)*fac2*iota_complex*(
+                                                (Connections_.HTB_(row_,col_)*conj(Eigvectors_[state_p][c2])*Eigvectors_[state_n][c1]*exp(iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
+                                                -(Connections_.HTB_(col_,row_)*conj(Eigvectors_[state_p][c1])*Eigvectors_[state_n][c2]*exp(-1.0*iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
+                                                );
+
+                                    }
+
+
+
+
+                                }
+
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+    }
+
+
+
+
+}
+
+
+void Kspace_calculation_TL::Calculate_ChernNumbers(){
+
+
+
+    Matrix<complex<double>> F_mat; //F1, F2, F3, F4, F5;
+    F_mat.resize(2*UnitCellSize_x*UnitCellSize_y, lx_cells*ly_cells);
+
+    complex<double> Ux_k, Uy_k, Ux_kpy, Uy_kpx;
+    vector<complex<double>> F_bands;
+    F_bands.resize(2*UnitCellSize_x*UnitCellSize_y);
+    vector<complex<double>> Chern_num;
+    Chern_num.resize(2*UnitCellSize_x*UnitCellSize_y);
+
+    vector<complex<double>> F_bands_orgnl;
+    F_bands_orgnl.resize(2*UnitCellSize_x*UnitCellSize_y);
+    vector<complex<double>> Chern_num_orgnl;
+    Chern_num_orgnl.resize(2*UnitCellSize_x*UnitCellSize_y);
+    for (int band = 0; band < 2*UnitCellSize_x*UnitCellSize_y; band++)
+    {
+        string file_Fk="Fk_band"+to_string(band)+".txt";
+        ofstream fl_Fk_out(file_Fk.c_str());
+        fl_Fk_out<<"#nx  ny  tilde_F(nx,ny).real()  tilde_F(nx,ny).imag()  ArgofLog.real()  ArgofLog.imag()"<<endl;
+        fl_Fk_out<<"#Extra momentum point for pm3d corners2color c1"<<endl;
+
+        //        string file_Fk_orgnl="Fk_original_band"+to_string(band)+".txt";
+        //        ofstream fl_Fk_orgnl_out(file_Fk_orgnl.c_str());
+        //        fl_Fk_orgnl_out<<"#nx  ny  F(nx,ny).real()*(2pi/Lx)*(2pi/Ly)  F(nx,ny).imag()*(2pi/Lx)*(2pi/Ly)"<<endl;
+
+        F_bands[band] = 0.0;
+        F_bands_orgnl[band] = 0.0;
+        for (int nx = 0; nx < lx_cells; nx++)
+        {
+            for (int ny = 0; ny < ly_cells; ny++)
+            {
+                int n = Coordinates_.Ncell(nx,ny);
+                int n_left, n_right, nx_left, ny_left, nx_right, ny_right;
+
+                //U1_k
+                Ux_k = 0;
+                n_left = n;
+                nx_right = (nx + 1) % lx_cells;
+                ny_right = ny;
+                n_right = Coordinates_.Ncell(nx_right, ny_right);
+                for (int comp = 0; comp < 2*UnitCellSize_x*UnitCellSize_y; comp++)
+                {
+                    Ux_k +=
+                            conj(Eigvectors_[2*UnitCellSize_x*UnitCellSize_y*n_left +  band][comp]) *
+                            Eigvectors_[2*UnitCellSize_x*UnitCellSize_y*n_right + band][comp];
+                }
+                Ux_k = Ux_k * (1.0 / abs(Ux_k));
+
+                //U2_kpx
+                Uy_kpx = 0;
+                nx_left = (nx + 1) % lx_cells;
+                ny_left = ny;
+                n_left = Coordinates_.Ncell(nx_left, ny_left);
+                nx_right = nx_left;
+                ny_right = (ny_left + 1) % ly_cells;
+                n_right = Coordinates_.Ncell(nx_right, ny_right);
+                for (int comp = 0; comp < 2*UnitCellSize_x*UnitCellSize_y; comp++)
+                {
+                    Uy_kpx +=
+                            conj(Eigvectors_[2*UnitCellSize_x*UnitCellSize_y*n_left +  band][comp]) *
+                            Eigvectors_[2*UnitCellSize_x*UnitCellSize_y*n_right + band][comp];
+                }
+                Uy_kpx = Uy_kpx * (1.0 / abs(Uy_kpx));
+
+                //U1_kpy
+                Ux_kpy = 0;
+                nx_left = nx;
+                ny_left = (ny + 1) % ly_cells;
+                n_left = Coordinates_.Ncell(nx_left, ny_left);
+                nx_right = (nx_left + 1) % lx_cells;
+                ny_right = ny_left;
+                n_right = Coordinates_.Ncell(nx_right, ny_right);
+                for (int comp = 0; comp < 2*UnitCellSize_x*UnitCellSize_y; comp++)
+                {
+                    Ux_kpy +=
+                            conj(Eigvectors_[2*UnitCellSize_x*UnitCellSize_y*n_left +  band][comp]) *
+                            Eigvectors_[2*UnitCellSize_x*UnitCellSize_y*n_right + band][comp];
+                }
+                Ux_kpy = Ux_kpy * (1.0 / abs(Ux_kpy));
+
+                //U2_k
+                Uy_k = 0;
+                nx_left = nx;
+                ny_left = ny;
+                n_left = Coordinates_.Ncell(nx_left, ny_left);
+                nx_right = nx_left;
+                ny_right = (ny_left + 1) % ly_cells;
+                n_right = Coordinates_.Ncell(nx_right, ny_right);
+                for (int comp = 0; comp < 2*UnitCellSize_x*UnitCellSize_y; comp++)
+                {
+                    Uy_k +=
+                            conj(Eigvectors_[2*UnitCellSize_x*UnitCellSize_y*n_left +  band][comp]) *
+                            Eigvectors_[2*UnitCellSize_x*UnitCellSize_y*n_right + band][comp];
+                }
+                Uy_k = Uy_k * (1.0 / abs(Uy_k));
+
+                // Calculating tilde F12
+                F_mat(band, n) = log(Ux_k *
+                                     Uy_kpx *
+                                     conj(Ux_kpy) * conj(Uy_k));
+
+                F_bands[band] += F_mat(band, n);
+
+
+                fl_Fk_out.precision(10);
+
+                fl_Fk_out<<nx<<"  "<<ny<<"  "<<F_mat(band, n).real()<<"  "<<F_mat(band, n).imag()<<
+                           "  "<<(Ux_k*Uy_kpx*conj(Ux_kpy)*conj(Uy_k)).real()<<
+                           "  "<<(Ux_k*Uy_kpx*conj(Ux_kpy)*conj(Uy_k)).imag()<<endl;
+
+
+
+
+                if(abs((abs(F_mat(band, n).imag()) - PI))<0.0000001){
+                    cout<<ny<<"  "<<nx<<"  gives Pi for band"<< band <<endl;
+                    // assert (abs((abs(F_mat(band, n).imag()) - M_PI))>0.0000001);
+                }
+
+
+                if(ny==ly_cells-1){//For pm3d corners2color c1
+                    fl_Fk_out<<nx<<"  "<<ny<<"  "<<F_mat(band, n).real()<<"  "<<F_mat(band, n).imag()<<
+                               "  "<<(Ux_k*Uy_kpx*conj(Ux_kpy)*conj(Uy_k)).real()<<
+                               "  "<<(Ux_k*Uy_kpx*conj(Ux_kpy)*conj(Uy_k)).imag()<<endl;
+                }
+            }
+            if(nx==lx_cells-1){//For pm3d corners2color c1
+                fl_Fk_out<<endl;
+                for(int ny_=0;ny_<ly_cells;ny_++){
+                    int n_ = nx + lx_cells*ny_;
+                    fl_Fk_out<<nx<<"  "<<ny_<<"  "<<F_mat(band, n_).real()<<"  "<<F_mat(band, n_).imag()<<
+                               "  "<<(Ux_k*Uy_kpx*conj(Ux_kpy)*conj(Uy_k)).real()<<
+                               "  "<<(Ux_k*Uy_kpx*conj(Ux_kpy)*conj(Uy_k)).imag()<<endl;
+                }
+            }
+            fl_Fk_out<<endl;
+        }
+
+
+        Chern_num[band] = (-1.0 * iota_complex / (2 * PI)) * F_bands[band];
+        // Chern_num_orgnl[band] = (-1.0 * iota_complex / (2 * PI)) * F_bands_orgnl[band];
+        fl_Fk_out<<"#Chern no*2pi*Iota= "<<F_bands[band].real()<<"  "<<F_bands[band].imag()<<endl;
+        cout << "tilde Chern number [" << band << "] = " << Chern_num[band].real() << "        " << Chern_num[band].imag() << endl;
+        //  cout << "Chern number [" << band << "] = " << Chern_num_orgnl[band].real() << " " << Chern_num_orgnl[band].imag() << endl;
+
+    }
+
+}
 
 double Kspace_calculation_TL::Lorentzian(double x, double brd)
 {
@@ -545,7 +938,7 @@ void Kspace_calculation_TL::Get_Energies(){
                 //Intra-Fock
                 if( Parameters_.FockType=="Onsite_Intra" || Parameters_.FockType=="Onsite_Intra_Inter" ){
 
-                     //----
+                    //----
                     for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
                         for(int spin=0;spin<2;spin++){
                             for(int alpha_p=0;alpha_p<UnitCellSize_x*UnitCellSize_y;alpha_p++){
@@ -1720,6 +2113,11 @@ void Kspace_calculation_TL::SelfConsistency(){
 
             Create_Kspace_Spectrum();
             Arranging_spectrum();
+
+            //            for(int ei=0;ei<Eigenvalues_.size();ei++){
+            //                cout<<ei<<"  "<<Eigenvalues_[ei]<<endl;
+            //            }
+
             mu_=chemicalpotential(Parameters_.Total_Particles);
             Get_new_OPs_and_error();
             Get_Energies();
@@ -1748,7 +2146,11 @@ void Kspace_calculation_TL::SelfConsistency(){
 
 
         Create_Kspace_Spectrum();
-        //Get_Bands();
+        Get_Bands();
+        Calculate_ChernNumbers();
+        Create_Current_Oprs();
+        //J_KE_X.print();
+        Hall_conductance();
         Arranging_spectrum();
         mu_=chemicalpotential(Parameters_.Total_Particles);
         cout<<"mu = "<<mu_<<endl;

@@ -31,6 +31,9 @@ public:
     Mat_3_int Nbasis_;
     Matrix<int> Ncell_, neigh_;
     Mat_1_int indx_cellwise_, indy_cellwise_;
+
+    bool HIT_X_BC, HIT_Y_BC;
+
 };
 
 /*  
@@ -155,86 +158,105 @@ int Coordinates_TL::getneigh(int site,int wneigh){
     int ny=indy_cellwise(site);
     int mx=0;
     int my=0;
+    int mx_,my_;
 
     // Nearest Neighbours
     if(wneigh==0){ //PX
-        mx=(nx+1)%(lx_);
+        mx=(nx+1);
         my=ny;
     }
     if(wneigh==1){ //MX
-        mx=(nx+lx_-1)%(lx_);
+        mx=(nx-1);
         my=ny;
     }
     if(wneigh==2){ //PY
         mx=nx;
-        my=(ny+1)%(ly_);
+        my=(ny+1);
     }
     if(wneigh==3){ //MY
         mx=nx;
-        my=(ny+ly_-1)%(ly_);
+        my=(ny-1);
     }
 
 
     // Next-Nearest!
     if(wneigh==4){ //PXPY
-        mx=(nx+1)%(lx_);
-        my=(ny+1)%(ly_);
+        mx=(nx+1);
+        my=(ny+1);
     }
     if(wneigh==5){ //MXPY
-        mx=(nx+lx_-1)%(lx_);
-        my=(ny+1)%(ly_);
+        mx=(nx-1);
+        my=(ny+1);
     }
     if(wneigh==6){ //MXMY
-        mx=(nx+lx_-1)%(lx_);
-        my=(ny+ly_-1)%(ly_);
+        mx=(nx-1);
+        my=(ny-1);
     }
     if(wneigh==7){ //PXMY
-        mx=(nx+1)%(lx_);
-        my=(ny+ly_-1)%(ly_);
+        mx=(nx+1);
+        my=(ny-1);
     }
 
     if(wneigh==8){ //2PX MY
-        mx=(nx+2)%(lx_);
-        my=(ny+ly_-1)%(ly_);
+        mx=(nx+2);
+        my=(ny-1);
     }
     if(wneigh==9){ //MX 2PY
-        mx=(nx+lx_-1)%(lx_);
-        my=(ny+ly_+2)%(ly_);
+        mx=(nx-1);
+        my=(ny+2);
     }
 
     if(wneigh==10){ //2PX
-        mx=(nx+lx_+2)%(lx_);
-        my=(ny+ly_)%(ly_);
+        mx=(nx+2);
+        my=(ny);
     }
     if(wneigh==11){ //2PY
-        mx=(nx+lx_)%(lx_);
-        my=(ny+ly_+2)%(ly_);
+        mx=(nx);
+        my=(ny+2);
     }
     if(wneigh==12){ //2PX 2MY
-        mx=(nx+lx_+2)%(lx_);
-        my=(ny+ly_-2)%(ly_);
+        mx=(nx+2);
+        my=(ny-2);
     }
 
     if(wneigh==13){ //2MX PY
-        mx=(nx+lx_-2)%(lx_);
-        my=(ny+ly_+1)%(ly_);
+        mx=(nx-2);
+        my=(ny+1);
     }
 
     if(wneigh==14){ //2MY PX
-        mx=(nx+lx_+1)%(lx_);
-        my=(ny+ly_-2)%(ly_);
+        mx=(nx+1);
+        my=(ny-2);
     }
 
     if(wneigh==15){ //2PY 2MX
-        mx=(nx+lx_-2)%(lx_);
-        my=(ny+ly_+2)%(ly_);
+        mx=(nx-2);
+        my=(ny+2);
     }
 
     if(wneigh==16){ //2MY
-        mx=(nx+lx_)%(lx_);
-        my=(ny+ly_-2)%(ly_);
+        mx=(nx);
+        my=(ny-2);
     }
 
+
+    if(mx>=lx_ || mx<0){
+        HIT_X_BC=true;
+    }
+    else{
+        HIT_X_BC=false;
+    }
+
+    if(my>=ly_ || my<0){
+        HIT_Y_BC=true;
+    }
+    else{
+        HIT_Y_BC=false;
+    }
+
+
+    mx = (mx+lx_)%lx_;
+    my = (my+ly_)%ly_;
 
 //    //t4
 //    if(wneigh==13){ //2PX+PY

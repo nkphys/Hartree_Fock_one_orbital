@@ -175,8 +175,11 @@ int main(int argc, char *argv[]) {
 
             Connections_TL Connections_TL_(Parameters_TL_, Coordinates_TL_);
             Connections_TL_.Print_Hopping();                                       //::DONE
+            Connections_TL_.Print_Hopping2();                                       //::DONE
+            Connections_TL_.Print_Hopping3();
 
             Connections_TL_.InteractionsCreate();
+            Connections_TL_.Print_LongRangeInt_SNAKE3();
             Connections_TL_.Print_LongRangeInt();
             Connections_TL_.Print_Spin_resolved_OnsiteE();
 

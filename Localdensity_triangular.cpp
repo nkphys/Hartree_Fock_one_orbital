@@ -156,7 +156,7 @@ for(int x=0;x<Lx;x++){
 		site_ref=x+Lx*y;
 
                 if(S_val[site_ref]>0){
-                        file_out<<"\\filldraw[fill=blue,draw=blue,opacity="<<Sp_val[site_ref]*Sp_val[site_ref]*sqrt(Sp_val[site_ref])<<"]" <<decouple(m_val[site],Lx)<<" circle (0.7mm);"<<endl;
+                        file_out<<"\\filldraw[fill=blue,draw=blue,opacity="<<3.0*Sp_val[site_ref]*Sp_val[site_ref]*sqrt(Sp_val[site_ref])<<"]" <<decouple(m_val[site],Lx)<<" circle (0.7mm);"<<endl;
                 }
 
                 if(S_val[site_ref]<0){

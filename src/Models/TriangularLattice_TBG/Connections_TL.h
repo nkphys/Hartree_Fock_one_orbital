@@ -24,6 +24,10 @@ public:
 
     void Initialize();                                     //::DONE
     void Print_Hopping();                                       //::DONE
+    void Print_Hopping2();                                       //::DONE
+    void Print_Hopping3();                                       //::DONE
+    void Print_LongRangeInt_SNAKE3();
+
     void Print_LongRangeInt();
     void Print_Spin_resolved_OnsiteE();
     void InteractionsCreate();                             //::DONE
@@ -522,15 +526,24 @@ void Connections_TL::InteractionsCreate()
 
             //For U1, U2, U3
             for(int neigh=0;neigh<9;neigh++){
-                m = Coordinates_.neigh(l, U_neighs[neigh]); //+x neighbour cell
-                m1_pos = Coordinates_.indx_cellwise(m);
-                m2_pos = Coordinates_.indy_cellwise(m);
+                m = Coordinates_.getneigh(l, U_neighs[neigh]); //+x neighbour cell
 
-                assert(l != m);
-                if (l != m)
-                {
-                    Hint_(l, m) = complex<double>(1.0 * U_hoppings[neigh], 0.0);
-                    Hint_(m, l) = conj(Hint_(l, m));
+                if( (!Coordinates_.HIT_X_BC) || Parameters_.PBC_X){
+
+                    if( (!Coordinates_.HIT_Y_BC) || Parameters_.PBC_Y){
+
+                        m1_pos = Coordinates_.indx_cellwise(m);
+                        m2_pos = Coordinates_.indy_cellwise(m);
+
+                        assert(l != m);
+                        if (l != m)
+                        {
+                            Hint_(l, m) = complex<double>(1.0 * U_hoppings[neigh], 0.0);
+                            Hint_(m, l) = conj(Hint_(l, m));
+                        }
+
+                    }
+
                 }
 
             }
@@ -538,6 +551,7 @@ void Connections_TL::InteractionsCreate()
         }
     }
     else{
+        cout <<"WARNING: ALWAYS ASSUMED PBC in Long range int"<<endl;
         int r1_, r2_;
         double rx_, ry_;
         double dis_;
@@ -683,33 +697,41 @@ void Connections_TL::HTBCreate()
 
         //For t1,t2,t3 hoppings
         for(int neigh=0;neigh<t_neighs.size();neigh++){
-            m = Coordinates_.neigh(l, t_neighs[neigh]);
-            mx_pos = Coordinates_.indx_cellwise(m);
-            my_pos = Coordinates_.indy_cellwise(m);
+            m = Coordinates_.getneigh(l, t_neighs[neigh]);
 
-            for (int spin = 0; spin < 2; spin++)
-            {
-                for (int orb1 = 0; orb1 < n_orbs_; orb1++)
-                {
-                    for (int orb2 = 0; orb2 < n_orbs_; orb2++)
+            if( (!Coordinates_.HIT_X_BC) || Parameters_.PBC_X){
+
+                if( (!Coordinates_.HIT_Y_BC) || Parameters_.PBC_Y){
+
+                    mx_pos = Coordinates_.indx_cellwise(m);
+                    my_pos = Coordinates_.indy_cellwise(m);
+
+                    for (int spin = 0; spin < 2; spin++)
                     {
-                        a = Coordinates_.Nbasis(lx_pos, ly_pos, orb1) + ncells_ * n_orbs_ * spin;
-                        b = Coordinates_.Nbasis(mx_pos, my_pos, orb2) + ncells_ * n_orbs_ * spin;
-                        assert(a != b);
-                        if (a != b)
+                        for (int orb1 = 0; orb1 < n_orbs_; orb1++)
                         {
-                            if(spin==0){
-                                HTB_(b, a) = -1.0*t_hoppings[neigh];
-                                HTB_(a, b) = conj(HTB_(b, a));
-                            }
-                            else{
-                                HTB_(b, a) = -1.0*conj(t_hoppings[neigh]);
-                                HTB_(a, b) = conj(HTB_(b, a));
+                            for (int orb2 = 0; orb2 < n_orbs_; orb2++)
+                            {
+                                a = Coordinates_.Nbasis(lx_pos, ly_pos, orb1) + ncells_ * n_orbs_ * spin;
+                                b = Coordinates_.Nbasis(mx_pos, my_pos, orb2) + ncells_ * n_orbs_ * spin;
+                                assert(a != b);
+                                if (a != b)
+                                {
+                                    if(spin==0){
+                                        HTB_(b, a) = -1.0*t_hoppings[neigh];
+                                        HTB_(a, b) = conj(HTB_(b, a));
+                                    }
+                                    else{
+                                        HTB_(b, a) = -1.0*conj(t_hoppings[neigh]);
+                                        HTB_(a, b) = conj(HTB_(b, a));
+                                    }
+                                }
+
                             }
                         }
-
                     }
                 }
+
             }
 
         }
@@ -746,6 +768,76 @@ void Connections_TL::Print_Hopping(){
 
 }
 
+
+void Connections_TL::Print_Hopping2(){
+
+    string fileout= "REALMatrix_form_SPINUP" + Parameters_.File_Hoppings;
+    ofstream file_Hopping_out(fileout.c_str());
+
+    //file_Hopping_out<<"#site_i spin_i site_j spin_j Hopping[site_i,spin_i][site_j,spin_j]"<<endl;
+
+    int spin_i=0;
+    int index_i, index_j;
+    for(int i=0;i<ncells_*n_orbs_;i++){
+        index_i=i+spin_i*ncells_*n_orbs_;
+
+        for(int j=0;j<ncells_*n_orbs_;j++){
+            index_j=j+spin_i*ncells_*n_orbs_;
+            file_Hopping_out<<HTB_(index_i,index_j).real()<<"   ";
+        }
+        file_Hopping_out<<endl;
+    }
+
+}
+
+
+
+
+void Connections_TL::Print_Hopping3(){
+
+    assert (Parameters_.PBC_Y==false);
+    //assert (Parameters_.PBC_Y==true);
+    string fileout= "REALMatrix_Snake3_form_SPINUP" + Parameters_.File_Hoppings;
+    ofstream file_Hopping_out(fileout.c_str());
+
+    //file_Hopping_out<<"#site_i spin_i site_j spin_j Hopping[site_i,spin_i][site_j,spin_j]"<<endl;
+
+    int spin_i=0;
+    int index_i, index_j;
+    int ix, iy, ix_new, iy_new, i_new;
+    int jx, jy, jx_new, jy_new, j_new;
+    for(int i=0;i<ncells_*n_orbs_;i++){
+        ix = Coordinates_.indx_cellwise(i);
+        iy = Coordinates_.indy_cellwise(i);
+        if(iy%2==0){
+            ix_new=ix;
+        }
+        else{
+            ix_new = (lx_-1 - ix);
+        }
+        i_new = Coordinates_.Ncell(ix_new, iy);
+        index_i=i_new+spin_i*ncells_*n_orbs_;
+
+        for(int j=0;j<ncells_*n_orbs_;j++){
+            jx = Coordinates_.indx_cellwise(j);
+            jy = Coordinates_.indy_cellwise(j);
+
+            if(jy%2==0){
+                jx_new=jx;
+            }
+            else{
+                jx_new = (lx_-1 - jx);
+            }
+
+            j_new = Coordinates_.Ncell(jx_new, jy);
+            index_j=j_new+spin_i*ncells_*n_orbs_;
+            file_Hopping_out<<HTB_(index_i,index_j).real()<<"   ";
+        }
+        file_Hopping_out<<endl;
+    }
+
+}
+
 void Connections_TL::Print_LongRangeInt(){
     string fileout=Parameters_.File_LongRange_Ints;
     ofstream file_out(fileout.c_str());
@@ -753,6 +845,7 @@ void Connections_TL::Print_LongRangeInt(){
     file_out<<"#i j Uij"<<endl;
 
     for(int i=0;i<ncells_;i++){
+
         for(int j=0;j<ncells_;j++){
 
             if(abs(Hint_(i,j))>0.0000001){
@@ -760,6 +853,50 @@ void Connections_TL::Print_LongRangeInt(){
             }
 
         }
+    }
+
+}
+
+void Connections_TL::Print_LongRangeInt_SNAKE3(){
+    string fileout="REALMatrix_Snake3_LONG_RANGE_INT" + Parameters_.File_LongRange_Ints;
+    ofstream file_out(fileout.c_str());
+
+    int index_i, index_j;
+    int ix, iy, ix_new, iy_new, i_new;
+    int jx, jy, jx_new, jy_new, j_new;
+
+    file_out<<"#i j Uij"<<endl;
+
+    for(int i=0;i<ncells_;i++){
+        ix = Coordinates_.indx_cellwise(i);
+        iy = Coordinates_.indy_cellwise(i);
+        if(iy%2==0){
+            ix_new=ix;
+        }
+        else{
+            ix_new = (lx_-1 - ix);
+        }
+        i_new = Coordinates_.Ncell(ix_new, iy);
+
+        for(int j=0;j<ncells_;j++){
+
+            jx = Coordinates_.indx_cellwise(j);
+            jy = Coordinates_.indy_cellwise(j);
+
+            if(jy%2==0){
+                jx_new=jx;
+            }
+            else{
+                jx_new = (lx_-1 - jx);
+            }
+
+            j_new = Coordinates_.Ncell(jx_new, jy);
+
+            file_out<<Hint_(i_new,j_new).real()<<"   ";
+
+
+        }
+        file_out<<endl;
     }
 
 }

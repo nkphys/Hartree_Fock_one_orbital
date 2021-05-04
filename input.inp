@@ -1,5 +1,5 @@
-Total_sites=144
-Total No. of particles=96
+Total_sites=48
+Total No. of particles=24
 FixingMu=false
 MuValueFixed=5.0
 RandomSeed=112
@@ -13,30 +13,30 @@ DisorderSeedFile=DisorderFile.txt
 RandomDisorderSeed=43
 Disorder_Strength=0.0
 
-Temperature=10
+Temperature=0.0001
 Just_Hartree=0
 
-Simple_Mixing=0
+Simple_Mixing=1
 Broyden_Mixing=0
 Broyden_Second_Method_Mixing=0
-Anderson_Mixing=1
+Anderson_Mixing=0
 Anderson_Mixing_m=3
-alpha_OP=0.1
+alpha_OP=1
 
 w_minus1=0.1
 wn=0.6
 BroydenSecondMethodCounter=10
 
-U_Onsite=500.0
+U_Onsite=0.0
 
 dw_dos=0.001
 eta_dos=0.1
 w_min=-5.0
 w_max=15.0
 
-No_of_SelfConsistency_iters=200
+No_of_SelfConsistency_iters=2
 Convergence_Error=0.00001
-Read_initial_OPvalues=1
+Read_initial_OPvalues=0
 Read_initial_OPvalues_file=OrderParams_OUT.txt
 Write_Final_OPvalues_file=OrderParams_OUT.txt
 
