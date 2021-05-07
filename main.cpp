@@ -305,7 +305,7 @@ int main(int argc, char *argv[]) {
 
 
             Observables_SQL_.Calculate_Akw();
-            Observables_SQL_.Calculate_OrbResolved_Nw();
+            //Observables_SQL_.Calculate_OrbResolved_Nw();
             Observables_SQL_.Calculate_Nw();
             //Create and call:
             //quantum spin-spin corrs
@@ -315,6 +315,37 @@ int main(int argc, char *argv[]) {
 
         }
 
+
+        if(ModelType=="TriangularLattice"){
+
+            Parameters_TL Parameters_TL_;
+            Parameters_TL_.Initialize(model_inputfile);
+
+            Coordinates_TL Coordinates_TL_(Parameters_TL_.lx, Parameters_TL_.ly, Parameters_TL_.n_orbs);
+            Connections_TL Connections_TL_(Parameters_TL_, Coordinates_TL_);
+
+            Observables_TL Observables_TL_(Parameters_TL_, Coordinates_TL_, Connections_TL_ );
+
+            Parameters_TL_.beta=Parameters_.beta;
+            Parameters_TL_.mus=Parameters_.mus;
+            Parameters_TL_.eta=Parameters_.eta_dos;
+            Parameters_TL_.domega=Parameters_.dw_dos;
+            Observables_TL_.Ham_ = Hamiltonian_.Ham_;
+            Observables_TL_.eigs_ = Hamiltonian_.eigs_;
+
+
+            Observables_TL_.Calculate_Local_spins_resolved();
+            //Observables_TL_.Calculate_Akw();
+            Observables_TL_.Calculate_Akxw_ribbon();
+            //Observables_TL_.Calculate_OrbResolved_Nw();
+            Observables_TL_.Calculate_Nw();
+            //Create and call:
+            //quantum spin-spin corrs
+            //<s_i^2>
+            //<n_iup n_idn>
+            //spin resolved local density
+
+        }
 
 
 

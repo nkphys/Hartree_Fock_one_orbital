@@ -1541,7 +1541,14 @@ void Observables::Calculate_Local_spins_resolved(){
 
 
     int c1, c2;
+    int site_x, site_y;
+    double rx_, ry_;
     for(int site=0;site<ns_;site++){
+
+        site_x = site%12;
+        site_y = (site-site_x)/12;
+        rx_ = ((1.0)*(site_x) +  (1.0/2.0)*(site_y));
+        ry_ =  (0.0*(site_x) + (sqrt(3.0)/2.0)*(site_y));
 
         //sz
         sz=0.0;
@@ -1580,7 +1587,8 @@ void Observables::Calculate_Local_spins_resolved(){
 
 
         // LocalS<<site<<setw(15)<<sz<<setw(15)<<sx<<setw(15)<<sy<<endl;
-        LocalS<<site<<"  "<<sz<<"  "<<sx<<"   "<<sy<<endl;
+        //LocalS<<site<<"  "<<sz<<"  "<<sx<<"   "<<sy<<endl;
+        LocalS<<site<<"  "<<site_x<<"   "<< site_y <<"   "<<rx_<<"   "<<ry_<<"   "<<sz<<"  "<<sx<<"   "<<sy<<endl;
 
     }
 

@@ -123,7 +123,7 @@ void Parameters::Initialize(string inputfile_){
             for(int i=0;i<ns;i++){
                 CDW_Ansatz_sites[i]=-1.0; //ideally empty
             }
-            Ansatz_file=matchstring2(inputfile_,"Given_CDW_file");
+            Ansatz_file=matchstring2(inputfile_,"Given_ansatz_file");
             ifstream inputfile_Ansatz_file(Ansatz_file.c_str());
             string line_temp_;
             int i_temp_;
@@ -137,6 +137,8 @@ void Parameters::Initialize(string inputfile_){
         }
     }
     else{
+        Ansatz=matchstring2(inputfile_,"HF_Ansatz");
+        Ansatz_file=matchstring2(inputfile_,"Given_ansatz_file");
         Restricted_HF=false;
     }
 

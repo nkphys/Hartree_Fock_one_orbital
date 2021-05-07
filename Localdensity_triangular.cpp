@@ -150,17 +150,19 @@ for(int x=0;x<Lx;x++){
 }
 
 int site_ref;
+double check;
 for(int x=0;x<Lx;x++){
         for(int y=0;y<Ly;y++){
                 site=x+Lx*y;
 		site_ref=x+Lx*y;
-
-                if(S_val[site_ref]>0){
-                        file_out<<"\\filldraw[fill=blue,draw=blue,opacity="<<3.0*Sp_val[site_ref]*Sp_val[site_ref]*sqrt(Sp_val[site_ref])<<"]" <<decouple(m_val[site],Lx)<<" circle (0.7mm);"<<endl;
+		check = 0.5 - S_val[site_ref];
+		
+                if(check>0){
+                        file_out<<"\\filldraw[fill=blue,draw=blue,opacity="<<10.0*(check)<<"]" <<decouple(m_val[site],Lx)<<" circle (0.7mm);"<<endl;
                 }
 
-                if(S_val[site_ref]<0){
-                        file_out<<"\\filldraw[fill=red,draw=red,opacity="<<Sp_val[site_ref]<<"]" <<decouple(m_val[site],Lx)<<" circle (0.7mm);"<<endl;
+                if(check<0){
+                        file_out<<"\\filldraw[fill=red,draw=red,opacity="<<-10.0*(check)<<"]" <<decouple(m_val[site],Lx)<<" circle (0.7mm);"<<endl;
                 }
 
 //		cout<<site<<"	"<<decouple(m_val[site],Ly)<<endl;

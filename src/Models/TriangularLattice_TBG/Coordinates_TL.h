@@ -76,7 +76,10 @@ int Coordinates_TL::Nbasis(int x, int y, int orb){
 
 
 int Coordinates_TL::Ncell(int x, int y){
-    if(!(x<lx_&& y<ly_)){perror("Coordinates_TL.h:ith-sitelabel of lattice excede limit");}
+    if(!(x<lx_&& y<ly_)){
+        cout<<x<<"   "<<y<<endl;
+        perror("Coordinates_TL.h:ith-sitelabel of lattice excede limit : Ncell(int x, int y) ");
+    }
     return Ncell_(x,y);
     // ----------
 }

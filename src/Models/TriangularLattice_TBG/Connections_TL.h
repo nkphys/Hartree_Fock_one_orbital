@@ -795,7 +795,7 @@ void Connections_TL::Print_Hopping2(){
 
 void Connections_TL::Print_Hopping3(){
 
-    assert (Parameters_.PBC_Y==false);
+   // assert (Parameters_.PBC_Y==false);
     //assert (Parameters_.PBC_Y==true);
     string fileout= "REALMatrix_Snake3_form_SPINUP" + Parameters_.File_Hoppings;
     ofstream file_Hopping_out(fileout.c_str());
