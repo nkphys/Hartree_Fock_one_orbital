@@ -264,7 +264,7 @@ void MFParams::initialize(){
 
             }
             else if(Parameters_.Ansatz=="Given_Tetrahedron"){
-                cout<<"Creating Tetrahedron Ansatz"<<endl;
+                cout<<"Creating Tetrahedron Ansatz using file = '"<<Parameters_.Ansatz_file<<"'"<<endl;
                 int uc_x=2;
                 int uc_y=2;
                 int lx;
@@ -315,6 +315,7 @@ void MFParams::initialize(){
                     assert(alpha1==alpha2);
 
                     OP_TEMP[alpha1][spin1][spin2]=value_OP;
+                   // cout<<alpha1<<"  "<<spin1<<"  "<<spin2<<"  "<<value_OP<<endl;
                 }
 
 
@@ -396,7 +397,7 @@ void MFParams::initialize(){
                             row_temp = Coordinates_.Nc_dof(site_i, spin_i_);
                             col_temp = Coordinates_.Nc_dof(site_j, spin_j_);
                             comp_temp=OP_TEMP[alpha1][spin_i_][spin_j_];
-                            OParams_.value.push_back(value_temp);
+                            OParams_.value.push_back(comp_temp);
                             OParams_.rows.push_back(row_temp);
                             OParams_.columns.push_back(col_temp);
                             SI_to_ind[row_temp + (2*ns_*col_temp)] = OParams_.value.size() - 1;

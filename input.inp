@@ -1,16 +1,16 @@
-Total_sites=48
+Total_sites=24
 Total No. of particles=24
 FixingMu=false
 MuValueFixed=5.0
-RandomSeed=112
+RandomSeed=1
 
 File_Onsite_Energies=TL_Onsite_E_12x12.txt
-File_Hopping_Connections=TL_Hoppings_12x4_PBCXOBC.txt
+File_Hopping_Connections=TL_Hoppings_12x12_OBCXOBC.txt
 File_NonLocal_Int_Connections=TL_Interactions_12x12.txt
 
 ReadDisorderConf=false
 DisorderSeedFile=DisorderFile.txt
-RandomDisorderSeed=43
+RandomDisorderSeed=5
 Disorder_Strength=0.0
 
 Temperature=0.0001
@@ -20,29 +20,30 @@ Simple_Mixing=0
 Broyden_Mixing=0
 Broyden_Second_Method_Mixing=0
 Anderson_Mixing=1
-Anderson_Mixing_m=3
+Anderson_Mixing_m=6
 alpha_OP=0.2
 
 w_minus1=0.1
 wn=0.6
 BroydenSecondMethodCounter=10
 
-U_Onsite=15.0
+U_Onsite=10.6565
+#191.816
 
 dw_dos=0.005
-eta_dos=0.01
+eta_dos=0.05
 w_min=-5.0
 w_max=15.0
 
-No_of_SelfConsistency_iters=5000
+No_of_SelfConsistency_iters=8000
 Convergence_Error=0.00001
-Read_initial_OPvalues=1
-Read_initial_OPvalues_file=OrderParams_OUT.txt
-Write_Final_OPvalues_file=OrderParams_OUT_12x4.txt
+Read_initial_OPvalues=0
+Read_initial_OPvalues_file=OrderParams_OUT2.txt
+Write_Final_OPvalues_file=OrderParams_OUT3.txt
 
 Create_OPvalues=0
 Create_OPType=NOT_USED
 
 Restricted_HF=0
 HF_Ansatz=Given_Tetrahedron
-Given_ansatz_file=Inputs/OUTPUT_OP_TetraHedron_example.txt
+Given_ansatz_file=OUTPUT_OP_OUT_Temp0.0001000000.txt

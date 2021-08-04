@@ -188,7 +188,7 @@ void Observables::Update_OrderParameters_AndersonMixing(int iter){
 
 
     if(iter==0){
-//        cout<<"Anderson mixing for iter "<<iter<<endl;
+        //        cout<<"Anderson mixing for iter "<<iter<<endl;
 
         x_k_.clear();x_k_.resize(OP_size);
         for(int i=0;i<OP_size;i++){
@@ -229,7 +229,7 @@ void Observables::Update_OrderParameters_AndersonMixing(int iter){
 
     }
     else{
-  //      cout<<"Anderson mixing for iter "<<iter<<endl;
+        //      cout<<"Anderson mixing for iter "<<iter<<endl;
         x_k_.clear();x_k_.resize(OP_size);
         for(int i=0;i<OP_size;i++){
             if(i<MFParams_.OParams_.value.size()){
@@ -328,59 +328,59 @@ void Observables::Update_OrderParameters_AndersonMixing(int iter){
 
         //Update gamma_k using Total least sqaure minimaztion (using SVD of F_mat)
         if(with_SVD==false){
-        for(int i=0;i<m_;i++){
-            gamma_k_[i] = 1.0/(1.0*m_);
-        }
+            for(int i=0;i<m_;i++){
+                gamma_k_[i] = 1.0/(1.0*m_);
+            }
         }
         else{
-        int r_;
-        r_=min(OP_size,m_);
-        Matrix<double> A_;  //nxm; n=OP_size
-        Matrix<double> VT_; //mxm
-        Matrix<double> U_;  //nxn
-        vector<double> Sigma_; //atmost non-zero min(n,m) values
-        A_.resize(F_mat.n_row(), F_mat.n_col());
-        A_=F_mat;
+            int r_;
+            r_=min(OP_size,m_);
+            Matrix<double> A_;  //nxm; n=OP_size
+            Matrix<double> VT_; //mxm
+            Matrix<double> U_;  //nxn
+            vector<double> Sigma_; //atmost non-zero min(n,m) values
+            A_.resize(F_mat.n_row(), F_mat.n_col());
+            A_=F_mat;
 
-        //cout<<"here 2"<<endl;
-        Perform_SVD(A_,VT_,U_,Sigma_);
-        //cout<<"here 2.5"<<endl;
+            //cout<<"here 2"<<endl;
+            Perform_SVD(A_,VT_,U_,Sigma_);
+            //cout<<"here 2.5"<<endl;
 
-        Matrix<double> UT_f;
-        Matrix<double> Sinv_UT_f;
+            Matrix<double> UT_f;
+            Matrix<double> Sinv_UT_f;
 
-        UT_f.resize(r_,1);
-        for(int i=0;i<r_;i++){
-            for(int j=0;j<OP_size;j++){
-                UT_f(i,0) += U_(j,i)*f_k_[j];
+            UT_f.resize(r_,1);
+            for(int i=0;i<r_;i++){
+                for(int j=0;j<OP_size;j++){
+                    UT_f(i,0) += U_(j,i)*f_k_[j];
+                }
             }
-        }
 
-        Sinv_UT_f.resize(r_,1);//S-inv in Pseudoinverse of Sigma_
-        for(int i=0;i<r_;i++){
-            if(abs(Sigma_[i])>=0.001){
-                Sinv_UT_f(i,0) = (1.0/Sigma_[i])*UT_f(i,0);
+            Sinv_UT_f.resize(r_,1);//S-inv in Pseudoinverse of Sigma_
+            for(int i=0;i<r_;i++){
+                if(abs(Sigma_[i])>=0.001){
+                    Sinv_UT_f(i,0) = (1.0/Sigma_[i])*UT_f(i,0);
+                }
+                else{
+                    Sinv_UT_f(i,0)=0.0;
+                }
             }
-            else{
-                Sinv_UT_f(i,0)=0.0;
+
+            double sum_gamma=0.0;
+            for(int i=0;i<m_;i++){
+                gamma_k_[i]=0.0;
+                for(int j=0;j<r_;j++){
+                    gamma_k_[i] += VT_(j,i)*Sinv_UT_f(j,0);
+                }
+                sum_gamma += abs(gamma_k_[i]);
+
             }
-        }
 
-        double sum_gamma=0.0;
-        for(int i=0;i<m_;i++){
-            gamma_k_[i]=0.0;
-            for(int j=0;j<r_;j++){
-                gamma_k_[i] += VT_(j,i)*Sinv_UT_f(j,0);
+            if(sum_gamma>1){
+                for(int i=0;i<m_;i++){
+                    gamma_k_[i] = gamma_k_[i]*(1.0/sum_gamma);
+                }
             }
-             sum_gamma += abs(gamma_k_[i]);
-
-        }
-
-        if(sum_gamma>1){
-        for(int i=0;i<m_;i++){
-           gamma_k_[i] = gamma_k_[i]*(1.0/sum_gamma);
-        }
-        }
 
         }
 
@@ -1533,20 +1533,39 @@ void Observables::Calculate_Local_n_orb_resolved(){
 
 void Observables::Calculate_Local_spins_resolved(){
 
-    string fileoutLocalS="LocalS_HF.txt";
+    string fileoutLocalS="LocalS_HF_Snake3.txt";
     ofstream LocalS(fileoutLocalS.c_str());
     double sz, sx, sy;
     int UP_=0;
     int DOWN_=1;
 
+    int LX_=3;
+
 
     int c1, c2;
     int site_x, site_y;
     double rx_, ry_;
+    int site_;
+    int ix, iy, ix_new, iy_new, i_new;
+    int jx, jy, jx_new, jy_new, j_new;
+
     for(int site=0;site<ns_;site++){
 
-        site_x = site%12;
-        site_y = (site-site_x)/12;
+        ix = site%LX_;
+        iy =  (site-ix)/LX_;
+
+        if(iy%2==0){
+            ix_new=ix;
+        }
+        else{
+            ix_new = (LX_-1 - ix);
+        }
+
+        site_ = ix_new + iy*(LX_);
+
+
+        site_x = site_%LX_;
+        site_y = (site_-site_x)/LX_;
         rx_ = ((1.0)*(site_x) +  (1.0/2.0)*(site_y));
         ry_ =  (0.0*(site_x) + (sqrt(3.0)/2.0)*(site_y));
 
@@ -1780,7 +1799,9 @@ void Observables::Calculate_SpinSpincorrelations_Smartly(){
 
 
     for(int i=0;i<ns_;i++){
+
         for(int j=0;j<ns_;j++){
+
             for(int orbi=0;orbi<1;orbi++){
                 for(int orbj=0;orbj<1;orbj++){
 
@@ -1943,6 +1964,89 @@ void Observables::Calculate_SpinSpincorrelations_Smartly(){
     }
 
     cout<<"Avg Local Moment (S^2) = "<<real(Avg_S2)/(1.0*ns_)<<"\t"<<imag(Avg_S2)/(1.0*ns_)<<endl;
+
+
+
+    //Assuming square lattice
+    int LY_=3; //This are what geometry looks like, flipped from model_TL_..inp file
+    int LX_=3;
+    int mLX_, mLY_;
+    mLX_=-1*LX_;mLY_=-1*LY_;
+
+    int ix,iy,ixp,iyp,iy_new, iyp_new,site_, site_p;
+    string SSq_out = "SSq_Lx"   + to_string(LX_) + "_Ly" + to_string(LY_) + "_OUR_XC.txt";
+    ofstream file_SSq_out(SSq_out.c_str());
+    file_SSq_out<<"#These results are not true in general, use cautiously"<<endl;
+    file_SSq_out<<"#qx qy  SS_q"<<endl;
+
+    double x_dis, y_dis, xp_dis, yp_dis;
+
+    complex<double> temp_doub;
+    for(int qx_i=mLX_*5;qx_i<LX_*5;qx_i++){
+        for(int qy_i=mLY_*5;qy_i<LY_*5;qy_i++){
+            temp_doub=0.0;
+
+
+            //------------------------------------------
+            for(int ix=0;ix<LX_;ix++){
+
+                for(int iy=0;iy<LY_;iy++){
+
+//                    x_dis = (1.0*ix) ;
+//                    y_dis = (1.0)*iy;
+
+                    x_dis = (1.0*ix) + (0.5*iy);
+                    y_dis = (sqrt(3.0)/2.0)*iy;
+
+                    if(ix%2==0){
+                        iy_new=iy;
+                    }
+                    else{
+                        iy_new = (LY_-1 - iy);
+                    }
+                    site_ = iy_new + ix*(LY_);
+
+
+                    for(int ixp=0;ixp<LX_;ixp++){
+                        for(int iyp=0;iyp<LY_;iyp++){
+
+//                            xp_dis = (1.0*ixp);
+//                            yp_dis = (1.0)*iyp;
+
+                            xp_dis = (1.0*ixp) + (0.5*iyp);
+                            yp_dis = (sqrt(3.0)/2.0)*iyp;
+
+                            if(ixp%2==0){
+                                iyp_new=iyp;
+                            }
+                            else{
+                                iyp_new = (LY_-1 - iyp);
+                            }
+                            site_p = iyp_new + ixp*(LY_);
+
+
+                            temp_doub += exp(iota_complex*( ((yp_dis-y_dis)*qy_i*(PI/(1.0*LY_)))  + ((xp_dis-x_dis)*qx_i*(PI/(1.0*LX_))) ) )*
+                                         (SS_ij[site_][site_p]);
+
+
+                        }
+                    }
+
+
+                }
+            }
+
+            //--------------------------------------------
+
+
+            file_SSq_out<<qx_i*(PI/(1.0*LX_))<<"    "<<qy_i*(PI/(1.0*LY_))<<"   "<<temp_doub.real()<<"   "<<temp_doub.imag()<<endl;
+
+
+
+
+        }
+        file_SSq_out<<endl;
+    }
 
 
 

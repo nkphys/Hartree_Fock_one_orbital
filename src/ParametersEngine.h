@@ -154,12 +154,14 @@ void Parameters::Initialize(string inputfile_){
     int i_temp, spin_temp;
     double onsite_temp;
 
+    //cout<<"Here 1"<<endl;
     getline(inputfile_Onsite_Energy,line_temp); //#ix iy spin E[site]
     if(inputfile_Onsite_Energy.is_open())
     {
         while(getline(inputfile_Onsite_Energy,line_temp))
         {
             stringstream line_temp_ss(line_temp);
+            cout<<line_temp<<endl;
             line_temp_ss >> i_temp >> spin_temp >> onsite_temp;
             Onsite_E[i_temp][spin_temp]=onsite_temp;
         }
@@ -167,6 +169,7 @@ void Parameters::Initialize(string inputfile_){
     }
     else
     {cout<<"Unable to open file = '"<<file_onsite_energies_<<"'"<<endl;}
+
 
 
 

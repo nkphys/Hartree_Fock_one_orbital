@@ -29,6 +29,7 @@ public:
     T& operator()(int i, int j);
     void print();
     void resize(int newrow, int newcol);
+    void clear();
     int n_row();
     int n_col();
     void fill(T val);
@@ -72,6 +73,13 @@ void Matrix<T>::resize(int newrow, int newcol) {
     data_.resize(newrow*newcol);
 } // ----------
 
+template<class T>
+void Matrix<T>::clear(){
+
+    vector<T>().swap(data_);
+    nrow_=0;
+    ncol_=0;
+}
 
 template<class T>
 const T& Matrix<T>::operator()(int i, int j) const{

@@ -29,4 +29,9 @@ src/Models/TriangularLattice_TBG/Kspace_calculation_TL.h
 src/Models/TriangularLattice_TBG/Coordinates_TL.h
 src/Models/TriangularLattice_TBG/Observables_TL.h
 src/Models/TriangularLattice_TBG/Parameters_TL.h
+src/Models/HoneycombLattice_TBG/Parameters_HC.h
+src/Models/HoneycombLattice_TBG/Connections_HC.h
+src/Models/HoneycombLattice_TBG/Kspace_calculation_HC.h
+src/Models/HoneycombLattice_TBG/Coordinates_HC.h
+src/Models/HoneycombLattice_TBG/Observables_HC.h
 main.cpp

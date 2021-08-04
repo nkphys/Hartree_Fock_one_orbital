@@ -42,6 +42,13 @@ using namespace std;
 #include "src/Models/TriangularLattice_TBG/Connections_TL.h"
 #include "src/Models/TriangularLattice_TBG/Observables_TL.h"
 #include "src/Models/TriangularLattice_TBG/Kspace_calculation_TL.h"
+
+
+#include "src/Models/HoneycombLattice_TBG/Parameters_HC.h"
+#include "src/Models/HoneycombLattice_TBG/Coordinates_HC.h"
+#include "src/Models/HoneycombLattice_TBG/Connections_HC.h"
+#include "src/Models/HoneycombLattice_TBG/Observables_HC.h"
+#include "src/Models/HoneycombLattice_TBG/Kspace_calculation_HC.h"
 #include "random"
 
 
@@ -57,7 +64,7 @@ int main(int argc, char *argv[]) {
 
 
 
-    if(ex_string=="tency"){
+    if(ex_string=="tency"){ //k_space_SelfConsistency
         string ModelType = argv[1];
         string model_inputfile = argv[2];
 
@@ -112,6 +119,28 @@ int main(int argc, char *argv[]) {
             Kspace_calculation_TL Kspace_calculation_TL_(Parameters_TL_, Coordinates_TL_UC_, Connections_TL_, Generator_);
 
             Kspace_calculation_TL_.SelfConsistency();
+
+        }
+
+
+        if(ModelType=="HoneycombLattice"){
+
+            Parameters_HC Parameters_HC_;
+            Parameters_HC_.Initialize(model_inputfile);
+
+            Coordinates_HC Coordinates_HC_(Parameters_HC_.lx, Parameters_HC_.ly, Parameters_HC_.n_orbs);
+            Connections_HC Connections_HC_(Parameters_HC_, Coordinates_HC_);
+            Connections_HC_.Print_Hopping();                                       //::DONE
+            Connections_HC_.InteractionsCreate();
+            Connections_HC_.Print_LongRangeInt();
+            Connections_HC_.Print_Spin_resolved_OnsiteE();
+
+            Coordinates_HC Coordinates_HC_UC_(Parameters_HC_.lx/Parameters_HC_.UnitCellSize_x, Parameters_HC_.ly/Parameters_HC_.UnitCellSize_y, 1);
+
+
+            mt19937_64 Generator_(Parameters_HC_.RandomSeed);
+            Kspace_calculation_HC Kspace_calculation_HC_(Parameters_HC_, Coordinates_HC_UC_, Connections_HC_, Generator_);
+            Kspace_calculation_HC_.SelfConsistency();
 
         }
 
@@ -177,6 +206,8 @@ int main(int argc, char *argv[]) {
             Connections_TL_.Print_Hopping();                                       //::DONE
             Connections_TL_.Print_Hopping2();                                       //::DONE
             Connections_TL_.Print_Hopping3();
+            Connections_TL_.Print_Hopping_Snake3();
+            Connections_TL_.Print_Hopping_YCn();
 
             Connections_TL_.InteractionsCreate();
             Connections_TL_.Print_LongRangeInt_SNAKE3();
@@ -184,6 +215,22 @@ int main(int argc, char *argv[]) {
             Connections_TL_.Print_Spin_resolved_OnsiteE();
 
             Connections_TL_.Print_Ansatz_LocalDen_CDW();
+
+        }
+
+        if(ModelType=="HoneycombLattice"){
+
+            Parameters_HC Parameters_HC_;
+            Parameters_HC_.Initialize(inputfile);
+
+            Coordinates_HC Coordinates_HC_(Parameters_HC_.lx, Parameters_HC_.ly, Parameters_HC_.n_orbs);
+
+            Connections_HC Connections_HC_(Parameters_HC_, Coordinates_HC_);
+            Connections_HC_.Print_Hopping();                                       //::DONE
+
+            Connections_HC_.InteractionsCreate();
+            Connections_HC_.Print_LongRangeInt();
+            Connections_HC_.Print_Spin_resolved_OnsiteE();
 
         }
     }
@@ -401,11 +448,17 @@ int main(int argc, char *argv[]) {
         SelfConsistencyEngine SelfConsistencyEngine_(Parameters_,Coordinates_,MFParams_,Hamiltonian_,Observables_);
         SelfConsistencyEngine_.RUN_SelfConsistencyEngine();
 
-        Observables_.Calculate_Local_n_orb_resolved();
+        cout<<"_________________________________"<<endl;
+        for(int i=0;i<Hamiltonian_.eigs_.size();i++){
+            cout<<Hamiltonian_.eigs_[i]<<endl;
+        }
+        cout<<"_________________________________"<<endl;
+
+       // Observables_.Calculate_Local_n_orb_resolved();
         //Observables_.Calculate_SpinSpincorrelations_Smartly();
-        //Observables_.Calculate_DenDencorrelations_Smartly();
+       // Observables_.Calculate_DenDencorrelations_Smartly();
         Observables_.Calculate_Nw();
-        Observables_.Calculate_Local_spins_resolved();
+       // Observables_.Calculate_Local_spins_resolved();
 
 
     }

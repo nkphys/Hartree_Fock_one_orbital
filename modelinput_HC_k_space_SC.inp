@@ -4,11 +4,11 @@
 PBC_X=1
 PBC_Y=1
 
-Xsite=3
-Ysite=3
-N_Orbs=1
-UnitCellSize_x=2
-UnitCellSize_y=2
+Xsite=8
+Ysite=8
+N_Orbs=2
+UnitCellSize_x=8
+UnitCellSize_y=8
 
 File_Onsite_Energies=TL_Onsite_E_12x12.txt
 File_Hopping_Connections=TL_Hoppings_12x12_OBCXOBC.txt
@@ -19,78 +19,53 @@ TwistedBoundaryCond_my=0
 TBC_cellsX=1
 TBC_cellsY=1
 
-
-t1=(1.0,0)
-t2=(0,0)
-t3=(0,0)
+t0=(1.0,0)
+t1=(0.0,0) (1.0,0) (0,0) (0.0,0) 
+t2=(0,0) (0,0) (0,0) (0,0)
+t3=(0,0) (0,0) (0,0) (0,0)
 
 #1=(-6.09911,4.5193e-14)
 #2=(-0.226546,1.84609e-13)
 #3=(-0.927747,-5.37348e-14)
 
-LongRange_interaction=0
-a_moire_in_Angstorm=37.58606310817134000700
+LongRange_interaction=1
+a_moire_in_Angstorm=60
 #46.98257888521417500876
 #37.5860
 d_screening_in_Angstorm=600
-eps_DE=45.0
-U0=12.0
-U1=0
-U2=0
-U3=0
+eps_DE=300.0
 
-#U0=0
-#U1=0
-#U2=0
-#U3=0
-
-#eps_DE=45.0
-#U0=29.33333
-#U1=7.97884
-#U2=4.38376
-#U3=3.72646
-
-#eps_DE=60.0
-#U0=22.00000
-#U1=5.98413
-#U2=2.79484
-#U3=1.73475
-
-#eps_DE=50.0
-#U0=26.40000
-#U1=7.18096
-#U2=3.35381
-#U3=2.08170
-
-#eps_DE=40.0
-#U0=33.00000
-#U1=8.97620
-#U2=4.19227
-#U3=2.60213
+U0=20.00
+U0_interorb=5.0
+U1=0 0 0 0
+U2=0 0 0 0
+U3=0 0 0 0
 
 AnisotropyZ=0.0
 OnSiteE_up0=0.0
 OnSiteE_dn0=0.0
+OnSiteE_up1=0.0
+OnSiteE_dn1=0.0
 
 Self_consistency_kspace=1
-Total_particles=72
+Total_particles=96
 
-No_of_SelfConsistency_iters=20000
-Convergence_Error=0.00000001
-RandomSeed=315
-alpha_OP=0.1
+No_of_SelfConsistency_iters=10000
+Convergence_Error=0.001
+RandomSeed=135
+alpha_OP=0.2
 
 Cooling=1
 Temperature=1 0.0001
 #17 0.001 1.0 0.001 1.0 0.001 1.0 0.001 1.0 0.001 1.0 0.001 1.0 0.001 1.0 2.0 1.0 0.001
 
 Anderson_Mixing=1
-Anderson_Mixing_m=6
+Anderson_Mixing_m=5
 
 Just_Hartree=0
-Fock_type=Onsite
+Fock_type=Onsite_Intra_Inter
 #Onsite, Onsite_Intra, Onsite_Intra_Inter
-Read_initial_OPvalues=1
+Read_initial_OPvalues=0
 Read_initial_OPvalues_file=OrderParams_OUT3.txt
 #OUTPUT_OP_PiPi_alongZ.txt
 #OUTPUT_OP_0Pi_alongZ.txt

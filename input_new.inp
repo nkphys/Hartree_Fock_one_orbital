@@ -1,12 +1,12 @@
-Total_sites=48
-Total No. of particles=1
+Total_sites=128
+Total No. of particles=64
 FixingMu=false
 MuValueFixed=5.1619459
 RandomSeed=5
 
 
 File_Onsite_Energies=TL_Onsite_E_12x12.txt
-File_Hopping_Connections=TL_Hoppings_12x12.txt
+File_Hopping_Connections=TL_Hoppings_12x12_OBCXOBC.txt
 File_NonLocal_Int_Connections=TL_Interactions_12x12.txt
 
 
@@ -19,8 +19,8 @@ Temperature=0.0001
 Just_Hartree=0
 
 
-Simple_Mixing=1
-Broyden_Mixing=0
+Simple_Mixing=0
+Broyden_Mixing=1
 Broyden_Second_Method_Mixing=0
 alpha_OP=1.0
 
@@ -28,15 +28,15 @@ w_minus1=0.1
 wn=0.6
 BroydenSecondMethodCounter=10
 
-U_Onsite=0
+U_Onsite=20
 
 dw_dos=0.001
 eta_dos=0.05
 w_min=-5.0
 w_max=15.0
 
-No_of_SelfConsistency_iters=1
-Convergence_Error=0.000000001
+No_of_SelfConsistency_iters=200
+Convergence_Error=0.0000001
 Read_initial_OPvalues=0
 Read_initial_OPvalues_file=OrderParams_OUTPUT_new9.txt
 Write_Final_OPvalues_file=OrderParams_OUTPUT_new10.txt
@@ -47,5 +47,3 @@ Create_OPType=NOT_USED
 Restricted_HF=0
 HF_Ansatz=Given_CDW
 Given_CDW_file=ZZB_vertical.txt
-
-

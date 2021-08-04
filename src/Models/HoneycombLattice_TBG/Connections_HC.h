@@ -2,19 +2,19 @@
 #include <functional>
 #include <math.h>
 #include "tensor_type.h"
-#include "Parameters_TL.h"
-#include "Coordinates_TL.h"
+#include "Parameters_HC.h"
+#include "Coordinates_HC.h"
 #include "../../Matrix.h"
 #define PI acos(-1.0)
 
-#ifndef Connections_TL_class
-#define Connections_TL_class
+#ifndef Connections_HC_class
+#define Connections_HC_class
 
 
-class Connections_TL
+class Connections_HC
 {
 public:
-    Connections_TL(Parameters_TL &Parameters__, Coordinates_TL &Coordinates__)
+    Connections_HC(Parameters_HC &Parameters__, Coordinates_HC &Coordinates__)
         : Parameters_(Parameters__), Coordinates_(Coordinates__)
 
     {
@@ -24,11 +24,7 @@ public:
 
     void Initialize();                                     //::DONE
     void Print_Hopping();                                       //::DONE
-    void Print_Hopping2();                                       //::DONE
-    void Print_Hopping3();                                       //::DONE
-    void Print_Hopping_Snake3();
-    void Print_Hopping_YCn();
-    void Print_LongRangeInt_SNAKE3();
+
 
     void Print_LongRangeInt();
     void Print_Spin_resolved_OnsiteE();
@@ -37,13 +33,13 @@ public:
     void Check_up_down_symmetry();                         //::DONE
     void HTBCreate();                                      //::DONE
     void Print_Ansatz_LocalDen_CDW();
-    void Get_minimum_distance_direction(int l,int m,int &r1_, int &r2_);
+    void Get_minimum_distance_direction(int l, int gamma_l, int m, int gamma_m, int &r1_, int &r2_, double &dis_min);
 
 
 
-    Parameters_TL &Parameters_;
-    Coordinates_TL &Coordinates_;
-    int lx_, ly_, ncells_, n_orbs_;
+    Parameters_HC &Parameters_;
+    Coordinates_HC &Coordinates_;
+    int lx_, ly_, nsites_, ncells_, n_orbs_;
     Matrix<complex<double>> HTB_;
     Matrix<complex<double>> Hint_;
     Matrix<complex<double>> Ham_;
@@ -54,12 +50,14 @@ public:
 };
 
 
-void Connections_TL::Get_minimum_distance_direction(int l,int m,int &r1_, int &r2_){
+void Connections_HC::Get_minimum_distance_direction(int l,int gamma_l, int m, int gamma_m, int &r1_, int &r2_, double &dis_min){
 
     int r1_a,r1_b, r2_a, r2_b;
     int l1_pos, l2_pos;
     int m1_pos, m2_pos;
     double rx_, ry_;
+    double dis_x_offset_a, dis_x_offset_b;
+    double dis_y_offset_a, dis_y_offset_b;
 
     l1_pos = Coordinates_.indx_cellwise(l);
     l2_pos = Coordinates_.indy_cellwise(l);
@@ -68,35 +66,53 @@ void Connections_TL::Get_minimum_distance_direction(int l,int m,int &r1_, int &r
 
     r1_a=m1_pos-l1_pos;
     if(r1_a>0){
+        dis_x_offset_a= (gamma_m - gamma_l)*(1.0/2.0);
+
         r1_b=-1*(lx_-r1_a);
+        dis_x_offset_b= (gamma_m - gamma_l)*(1.0/2.0);
+
     }
     else if (r1_a<0){
+        dis_x_offset_a= (gamma_m - gamma_l)*(1.0/2.0);
+
         r1_b=lx_-abs(r1_a);
+        dis_x_offset_b= (gamma_m - gamma_l)*(1.0/2.0);
+
     }
     else{
+        dis_x_offset_a= (gamma_m - gamma_l)*(1.0/2.0);
+        dis_x_offset_b= (gamma_m - gamma_l)*(1.0/2.0);
         r1_b=0;
         assert(r1_a==0);
     }
 
     r2_a=m2_pos-l2_pos;
     if(r2_a>0){
+        dis_y_offset_a= (gamma_m - gamma_l)*(1.0/(2.0*sqrt(3.0)));
+
         r2_b=-1*(ly_-r2_a);
+        dis_y_offset_b= (gamma_m - gamma_l)*(1.0/(2.0*sqrt(3.0)));
     }
     else if (r2_a<0){
+        dis_y_offset_a= (gamma_m - gamma_l)*(1.0/(2.0*sqrt(3.0)));
+
         r2_b=ly_-abs(r2_a);
+        dis_y_offset_b= (gamma_m - gamma_l)*(1.0/(2.0*sqrt(3.0)));
     }
     else{
+        dis_y_offset_a= (gamma_m - gamma_l)*(1.0/(2.0*sqrt(3.0)));
+        dis_y_offset_b= (gamma_m - gamma_l)*(1.0/(2.0*sqrt(3.0)));
         r2_b=0;
         assert(r2_a==0);
     }
 
 
-    double min_dis=1000000.0;
+    double min_dis=1000000000.0;
     double dis;
 
     //r1a r2a
-    rx_ = ((1.0)*(r1_a) +  (1.0/2.0)*(r2_a));
-    ry_ =  (0.0*(r1_a) + (sqrt(3.0)/2.0)*(r2_a));
+    rx_ = ((1.0)*(r1_a) +  (1.0/2.0)*(r2_a)) + dis_x_offset_a;
+    ry_ =  (0.0*(r1_a) + (sqrt(3.0)/2.0)*(r2_a)) + dis_y_offset_a;
     dis= sqrt(rx_*rx_ + ry_*ry_);
     if(dis<=min_dis){
         r1_=r1_a;
@@ -105,8 +121,8 @@ void Connections_TL::Get_minimum_distance_direction(int l,int m,int &r1_, int &r
     }
 
     //r1a r2b
-    rx_ = ((1.0)*(r1_a) +  (1.0/2.0)*(r2_b));
-    ry_ =  (0.0*(r1_a) + (sqrt(3.0)/2.0)*(r2_b));
+    rx_ = ((1.0)*(r1_a) +  (1.0/2.0)*(r2_b)) + dis_x_offset_a;
+    ry_ =  (0.0*(r1_a) + (sqrt(3.0)/2.0)*(r2_b)) + dis_y_offset_b;
     dis= sqrt(rx_*rx_ + ry_*ry_);
     if(dis<=min_dis){
         r1_=r1_a;
@@ -115,8 +131,8 @@ void Connections_TL::Get_minimum_distance_direction(int l,int m,int &r1_, int &r
     }
 
     //r1b r2a
-    rx_ = ((1.0)*(r1_b) +  (1.0/2.0)*(r2_a));
-    ry_ =  (0.0*(r1_b) + (sqrt(3.0)/2.0)*(r2_a));
+    rx_ = ((1.0)*(r1_b) +  (1.0/2.0)*(r2_a)) + dis_x_offset_b;
+    ry_ =  (0.0*(r1_b) + (sqrt(3.0)/2.0)*(r2_a)) + dis_y_offset_a;
     dis= sqrt(rx_*rx_ + ry_*ry_);
     if(dis<=min_dis){
         r1_=r1_b;
@@ -125,8 +141,8 @@ void Connections_TL::Get_minimum_distance_direction(int l,int m,int &r1_, int &r
     }
 
     //r1b r2b
-    rx_ = ((1.0)*(r1_b) +  (1.0/2.0)*(r2_b));
-    ry_ =  (0.0*(r1_b) + (sqrt(3.0)/2.0)*(r2_b));
+    rx_ = ((1.0)*(r1_b) +  (1.0/2.0)*(r2_b)) + dis_x_offset_b;
+    ry_ =  (0.0*(r1_b) + (sqrt(3.0)/2.0)*(r2_b)) + dis_y_offset_b;
     dis= sqrt(rx_*rx_ + ry_*ry_);
     if(dis<=min_dis){
         r1_=r1_b;
@@ -134,21 +150,23 @@ void Connections_TL::Get_minimum_distance_direction(int l,int m,int &r1_, int &r
         min_dis=dis;
     }
 
+
+    dis_min = min_dis;
 }
 
-void Connections_TL::Initialize()
+void Connections_HC::Initialize()
 {
 
 
     ly_ = Parameters_.ly;
     lx_ = Parameters_.lx;
-    ncells_ = lx_ * ly_;
+    nsites_ = lx_ * ly_;  //total no of sites, each site has 2 orb
     n_orbs_ = Parameters_.n_orbs;
-    int space = 2 * ncells_ * n_orbs_;
+    int space = 2 * n_orbs_*nsites_ * n_orbs_;
 
     HTB_.resize(space, space);
     Ham_.resize(space, space);
-    Hint_.resize(ncells_,ncells_);
+    Hint_.resize(n_orbs_*nsites_,n_orbs_*nsites_);
 
     if(lx_%2==0){
         max_l1_dis = lx_/2;
@@ -168,7 +186,7 @@ void Connections_TL::Initialize()
 } // ----------
 
 
-void Connections_TL::Print_Ansatz_LocalDen_CDW(){
+void Connections_HC::Print_Ansatz_LocalDen_CDW(){
 
 
 
@@ -494,24 +512,16 @@ void Connections_TL::Print_Ansatz_LocalDen_CDW(){
 
 }
 
-void Connections_TL::InteractionsCreate()
+void Connections_HC::InteractionsCreate()
 {
 
     Mat_1_int U_neighs;
-    Mat_1_doub U_hoppings;
-    U_neighs.push_back(0);U_neighs.push_back(3);U_neighs.push_back(5);
-    U_hoppings.push_back(Parameters_.U1);U_hoppings.push_back(Parameters_.U1);U_hoppings.push_back(Parameters_.U1);
-
-    U_neighs.push_back(4);U_neighs.push_back(13);U_neighs.push_back(14);
-    U_hoppings.push_back(Parameters_.U2);U_hoppings.push_back(Parameters_.U2);U_hoppings.push_back(Parameters_.U2);
-
-    U_neighs.push_back(10);U_neighs.push_back(15);U_neighs.push_back(16);
-    U_hoppings.push_back(Parameters_.U3);U_hoppings.push_back(Parameters_.U3);U_hoppings.push_back(Parameters_.U3);
+    Mat_3_doub U_hoppings;
+    U_neighs.push_back(0);U_neighs.push_back(2);
+    U_hoppings.push_back(Parameters_.U1);U_hoppings.push_back(Parameters_.U1);
 
 
     double U_val;
-
-
 
 
     int l, m, a, b;
@@ -521,13 +531,34 @@ void Connections_TL::InteractionsCreate()
     Hint_.fill(0.0);
 
     if(!Parameters_.LongRange_interaction){
-        for (l = 0; l < ncells_; l++)
+
+        //Intra-site interactions
+        for(l=0;l<nsites_;l++){
+
+            l1_pos = Coordinates_.indx_cellwise(l);
+            l2_pos = Coordinates_.indy_cellwise(l);
+            int orb0=0;
+            int orb1=1;
+
+            a = Coordinates_.Nbasis(l1_pos, l2_pos, orb0);
+            b = Coordinates_.Nbasis(l1_pos, l2_pos, orb1);
+
+            if(a!=b){
+                Hint_(a,b) = complex<double>(1.0 * Parameters_.U0_interorb, 0.0);
+                Hint_(b,a) = Hint_(a,b);
+            }
+
+        }
+
+
+        //inter-sites
+        for (l = 0; l < nsites_; l++)
         {
             l1_pos = Coordinates_.indx_cellwise(l);
             l2_pos = Coordinates_.indy_cellwise(l);
 
             //For U1, U2, U3
-            for(int neigh=0;neigh<9;neigh++){
+            for(int neigh=0;neigh<U_neighs.size();neigh++){
                 m = Coordinates_.getneigh(l, U_neighs[neigh]); //+x neighbour cell
 
                 if( (!Coordinates_.HIT_X_BC) || Parameters_.PBC_X){
@@ -537,13 +568,23 @@ void Connections_TL::InteractionsCreate()
                         m1_pos = Coordinates_.indx_cellwise(m);
                         m2_pos = Coordinates_.indy_cellwise(m);
 
-                        assert(l != m);
-                        if (l != m)
+                        for (int orb1 = 0; orb1 < n_orbs_; orb1++)
                         {
-                            Hint_(l, m) = complex<double>(1.0 * U_hoppings[neigh], 0.0);
-                            Hint_(m, l) = conj(Hint_(l, m));
-                        }
+                            for (int orb2 = 0; orb2 < n_orbs_; orb2++)
+                            {
+                                a = Coordinates_.Nbasis(l1_pos, l2_pos, orb1);
+                                b = Coordinates_.Nbasis(m1_pos, m2_pos, orb2);
 
+                                assert(a != b);
+                                if (a != b)
+                                {
+                                    Hint_(a, b) = complex<double>(1.0 * U_hoppings[neigh][orb1][orb2], 0.0);
+                                    Hint_(b, a) = conj(Hint_(a, b));
+                                }
+
+
+                            }
+                        }
                     }
 
                 }
@@ -551,54 +592,78 @@ void Connections_TL::InteractionsCreate()
             }
 
         }
+
+
+
     }
     else{
         cout <<"WARNING: ALWAYS ASSUMED PBC in Long range int"<<endl;
         int r1_, r2_;
         double rx_, ry_;
         double dis_;
-        for(l=0; l < ncells_; l++)
+        double dis_min;
+        Get_minimum_distance_direction(0 ,0, 0, 1, r1_,r2_, dis_min);
+        for(l=0; l < nsites_; l++)
         {
             l1_pos = Coordinates_.indx_cellwise(l);
             l2_pos = Coordinates_.indy_cellwise(l);
+            for(int gamma_l=0;gamma_l<n_orbs_;gamma_l++){
 
-            //For U[l][m]
-            for(m=0;m<ncells_;m++){
-                m1_pos = Coordinates_.indx_cellwise(m);
-                m2_pos = Coordinates_.indy_cellwise(m);
+                //For U[l][m]
+                for(m=0;m<nsites_;m++){
+                    m1_pos = Coordinates_.indx_cellwise(m);
+                    m2_pos = Coordinates_.indy_cellwise(m);
 
-                Get_minimum_distance_direction(l,m,r1_,r2_);
+                    for(int gamma_m=0;gamma_m<n_orbs_;gamma_m++){
 
-                //a1 = (1,0) in (x,y)
-                //a2 = (1/2, (sqrt(3)/2)/2)
-                rx_ = ((1.0)*(r1_) +  (1.0/2.0)*(r2_));
-                ry_ =  (0.0*(r1_) + (sqrt(3.0)/2.0)*(r2_));
-                dis_= sqrt(rx_*rx_ + ry_*ry_);
+                        a = Coordinates_.Nbasis(l1_pos, l2_pos, gamma_l);
+                        b = Coordinates_.Nbasis(m1_pos, m2_pos, gamma_m);
 
-                //cout <<l<<"  "<<m<<"  "<<r1_<<"   "<<r2_<<"   "<<dis_<<endl;
-                //(14.3952)*( (1.0/(x*62.6434))  - (1.0/(sqrt( (x*x*62.6434*62.6434)  + d*d)))  )
+                        Get_minimum_distance_direction(l,gamma_l, m,gamma_m, r1_,r2_, dis_);
 
-                U_val = ((14.3952*1000)/Parameters_.eps_DE)*( (1.0/(dis_*Parameters_.a_moire))  -
-                                                              (1.0/(sqrt( (dis_*dis_*Parameters_.a_moire*Parameters_.a_moire)
-                                                                          + Parameters_.d_screening*Parameters_.d_screening)))  );
-                // assert(l != m);
-                if (l != m)
-                {
-                    Hint_(l, m) = complex<double>(1.0 * U_val, 0.0);
-                    //Hint_(m, l) += conj(Hint_(l, m));
+                        //a1 = (1,0) in (x,y)
+                        //a2 = (1/2, (sqrt(3)/2)/2)
+                        //                rx_ = ((1.0)*(r1_) +  (1.0/2.0)*(r2_));
+                        //                ry_ =  (0.0*(r1_) + (sqrt(3.0)/2.0)*(r2_));
+                        //                dis_= sqrt(rx_*rx_ + ry_*ry_);
+
+                        //cout <<l<<"  "<<m<<"  "<<r1_<<"   "<<r2_<<"   "<<dis_<<endl;
+                        //(14.3952)*( (1.0/(x*62.6434))  - (1.0/(sqrt( (x*x*62.6434*62.6434)  + d*d)))  )
+
+                       // U_val = ((14.3952*1000)/Parameters_.eps_DE)*( (1.0/(dis_*Parameters_.a_moire))  -
+                       //                                               (1.0/(sqrt( (dis_*dis_*Parameters_.a_moire*Parameters_.a_moire)
+                       //                                                           + Parameters_.d_screening*Parameters_.d_screening)))  );
+                        U_val = Parameters_.U0_interorb*( (1.0/(dis_*Parameters_.a_moire))  -
+                                             (1.0/(sqrt( (dis_*dis_*Parameters_.a_moire*Parameters_.a_moire)
+                                             + Parameters_.d_screening*Parameters_.d_screening)))  )*
+                                (1.0 /   (  ( (1.0/(dis_min*Parameters_.a_moire))  -
+                                              (1.0/(sqrt( (dis_min*dis_min*Parameters_.a_moire*Parameters_.a_moire)
+                                              + Parameters_.d_screening*Parameters_.d_screening)))  )  ));
+
+
+                        // assert(l != m);
+                        if (  (l!=m) || (gamma_l!=gamma_m)   )
+                        {
+                            //cout<<"NOT WORKING"<<endl;
+                            //if(dis_<=1.01){
+                            Hint_(a, b) = complex<double>(1.0 * U_val, 0.0);
+                            //}
+                            //Hint_(b, a) = conj(Hint_(a, b));
+                        }
+
+                    }
+
                 }
 
             }
-
         }
-
     }
 
 
 } // ----------
 
 
-void Connections_TL::Check_up_down_symmetry()
+void Connections_HC::Check_up_down_symmetry()
 
 {
     complex<double> temp(0, 0);
@@ -616,7 +681,7 @@ void Connections_TL::Check_up_down_symmetry()
     cout << "Assymetry in up-down sector: " << temp << endl;
 }
 
-void Connections_TL::Check_Hermiticity()
+void Connections_HC::Check_Hermiticity()
 
 {
 
@@ -639,25 +704,26 @@ void Connections_TL::Check_Hermiticity()
 }
 
 
-void Connections_TL::HTBCreate()
+void Connections_HC::HTBCreate()
 {
 
     //Convention used
-    //orb=0=A
-    //orb=1=B
-    //orb=2=C
+    //orb=0=Blue  //See Cartoon in notes
+    //orb=1=Red
 
     Mat_1_int t_neighs;
-    Mat_1_Complex_doub t_hoppings;
+    Mat_3_Complex_doub t_hoppings;
     //t1 hoppings
-    t_neighs.push_back(0);t_neighs.push_back(3);t_neighs.push_back(5);
-    t_hoppings.push_back(Parameters_.t1);t_hoppings.push_back(Parameters_.t1);t_hoppings.push_back(Parameters_.t1);
+    t_neighs.push_back(0);t_neighs.push_back(2);
+    //t_neighs.push_back(5);
+    t_hoppings.push_back(Parameters_.t1);t_hoppings.push_back(Parameters_.t1);
+    //t_hoppings.push_back(Parameters_.t1);
 
-    t_neighs.push_back(4);t_neighs.push_back(13);t_neighs.push_back(14);
-    t_hoppings.push_back(Parameters_.t2);t_hoppings.push_back(Parameters_.t2);t_hoppings.push_back(Parameters_.t2);
+    //    t_neighs.push_back(4);t_neighs.push_back(13);t_neighs.push_back(14);
+    //    t_hoppings.push_back(Parameters_.t2);t_hoppings.push_back(Parameters_.t2);t_hoppings.push_back(Parameters_.t2);
 
-    t_neighs.push_back(10);t_neighs.push_back(15);t_neighs.push_back(16);
-    t_hoppings.push_back(Parameters_.t3);t_hoppings.push_back(Parameters_.t3);t_hoppings.push_back(Parameters_.t3);
+    //    t_neighs.push_back(10);t_neighs.push_back(15);t_neighs.push_back(16);
+    //    t_hoppings.push_back(Parameters_.t3);t_hoppings.push_back(Parameters_.t3);t_hoppings.push_back(Parameters_.t3);
 
 
 
@@ -692,10 +758,38 @@ void Connections_TL::HTBCreate()
 
     HTB_.fill(0.0);
 
-    for (l = 0; l < ncells_; l++)
+    for (l = 0; l < nsites_; l++)
     {
         lx_pos = Coordinates_.indx_cellwise(l);
         ly_pos = Coordinates_.indy_cellwise(l);
+
+
+        //Intra-site hoppings
+        for (int spin = 0; spin < 2; spin++)
+        {
+            int orb1 = 0;
+            int orb2 = 1;
+
+            a = Coordinates_.Nbasis(lx_pos, ly_pos, orb1) + nsites_ * n_orbs_ * spin;
+            b = Coordinates_.Nbasis(lx_pos, ly_pos, orb2) + nsites_ * n_orbs_ * spin;
+            assert(a != b);
+            if (a != b)
+            {
+                if(spin==0){
+                    HTB_(b, a) = -1.0*Parameters_.t0;
+                    HTB_(a, b) = conj(HTB_(b, a));
+                }
+                else{
+                    HTB_(b, a) = -1.0*Parameters_.t0;
+                    HTB_(a, b) = conj(HTB_(b, a));
+                }
+            }
+
+        }
+
+
+
+
 
         //For t1,t2,t3 hoppings
         for(int neigh=0;neigh<t_neighs.size();neigh++){
@@ -714,17 +808,17 @@ void Connections_TL::HTBCreate()
                         {
                             for (int orb2 = 0; orb2 < n_orbs_; orb2++)
                             {
-                                a = Coordinates_.Nbasis(lx_pos, ly_pos, orb1) + ncells_ * n_orbs_ * spin;
-                                b = Coordinates_.Nbasis(mx_pos, my_pos, orb2) + ncells_ * n_orbs_ * spin;
+                                a = Coordinates_.Nbasis(lx_pos, ly_pos, orb1) + nsites_ * n_orbs_ * spin;
+                                b = Coordinates_.Nbasis(mx_pos, my_pos, orb2) + nsites_ * n_orbs_ * spin;
                                 assert(a != b);
                                 if (a != b)
                                 {
                                     if(spin==0){
-                                        HTB_(b, a) = -1.0*t_hoppings[neigh];
+                                        HTB_(b, a) = -1.0*t_hoppings[neigh][orb2][orb1];
                                         HTB_(a, b) = conj(HTB_(b, a));
                                     }
                                     else{
-                                        HTB_(b, a) = -1.0*conj(t_hoppings[neigh]);
+                                        HTB_(b, a) = -1.0*conj(t_hoppings[neigh][orb2][orb1]);
                                         HTB_(a, b) = conj(HTB_(b, a));
                                     }
                                 }
@@ -744,7 +838,7 @@ void Connections_TL::HTBCreate()
 } // ----------
 
 
-void Connections_TL::Print_Hopping(){
+void Connections_HC::Print_Hopping(){
 
     string fileout=Parameters_.File_Hoppings;
     ofstream file_Hopping_out(fileout.c_str());
@@ -752,13 +846,13 @@ void Connections_TL::Print_Hopping(){
     file_Hopping_out<<"#site_i spin_i site_j spin_j Hopping[site_i,spin_i][site_j,spin_j]"<<endl;
 
     int index_i, index_j;
-    for(int i=0;i<ncells_*n_orbs_;i++){
+    for(int i=0;i<nsites_*n_orbs_;i++){
         for(int spin_i=0;spin_i<2;spin_i++){
-            index_i=i+spin_i*ncells_*n_orbs_;
+            index_i=i+spin_i*nsites_*n_orbs_;
 
-            for(int j=0;j<ncells_*n_orbs_;j++){
+            for(int j=0;j<nsites_*n_orbs_;j++){
                 for(int spin_j=0;spin_j<2;spin_j++){
-                    index_j=j+spin_j*ncells_*n_orbs_;
+                    index_j=j+spin_j*nsites_*n_orbs_;
 
                     if(abs(HTB_(index_i,index_j))>0.0000001){
                         file_Hopping_out<<i<<"  "<<spin_i<<"  "<<j<<"  "<<spin_j<<"  "<<HTB_(index_i,index_j)<<endl;
@@ -771,385 +865,16 @@ void Connections_TL::Print_Hopping(){
 }
 
 
-void Connections_TL::Print_Hopping2(){
 
-    string fileout= "REALMatrixUPPERTRIANGLE_form_SPINUP" + Parameters_.File_Hoppings;
-    ofstream file_Hopping_out(fileout.c_str());
-
-    //file_Hopping_out<<"#site_i spin_i site_j spin_j Hopping[site_i,spin_i][site_j,spin_j]"<<endl;
-
-    int spin_i=0;
-    int index_i, index_j;
-    for(int i=0;i<ncells_*n_orbs_;i++){
-        index_i=i+spin_i*ncells_*n_orbs_;
-
-        for(int j=0;j<ncells_*n_orbs_;j++){
-            index_j=j+spin_i*ncells_*n_orbs_;
-            if(index_i<index_j){
-                file_Hopping_out<<HTB_(index_i,index_j).real()<<"   ";
-            }
-            else{
-                file_Hopping_out<<0<<"   ";
-            }
-        }
-        file_Hopping_out<<endl;
-    }
-
-
-    string fileout2= "REALMatrix_form_SPINUP" + Parameters_.File_Hoppings;
-    ofstream file_Hopping_out2(fileout2.c_str());
-
-    //file_Hopping_out<<"#site_i spin_i site_j spin_j Hopping[site_i,spin_i][site_j,spin_j]"<<endl;
-    for(int i=0;i<ncells_*n_orbs_;i++){
-        index_i=i+spin_i*ncells_*n_orbs_;
-
-        for(int j=0;j<ncells_*n_orbs_;j++){
-            index_j=j+spin_i*ncells_*n_orbs_;
-            file_Hopping_out2<<HTB_(index_i,index_j).real()<<"   ";
-
-        }
-        file_Hopping_out2<<endl;
-    }
-
-
-
-}
-
-
-
-
-void Connections_TL::Print_Hopping3(){
-
-    // assert (Parameters_.PBC_Y==false);
-    //assert (Parameters_.PBC_Y==true);
-
-    string fileout= "REALMatrix_Snake3_form_SPINUP" + Parameters_.File_Hoppings;
-    ofstream file_Hopping_out(fileout.c_str());
-
-    //file_Hopping_out<<"#site_i spin_i site_j spin_j Hopping[site_i,spin_i][site_j,spin_j]"<<endl;
-
-    int spin_i=0;
-    int index_i, index_j;
-    int ix, iy, ix_new, iy_new, i_new;
-    int jx, jy, jx_new, jy_new, j_new;
-    for(int i=0;i<ncells_*n_orbs_;i++){
-        ix = Coordinates_.indx_cellwise(i);
-        iy = Coordinates_.indy_cellwise(i);
-        if(iy%2==0){
-            ix_new=ix;
-        }
-        else{
-            ix_new = (lx_-1 - ix);
-        }
-        i_new = Coordinates_.Ncell(ix_new, iy);
-        index_i=i_new+spin_i*ncells_*n_orbs_;
-
-        for(int j=0;j<ncells_*n_orbs_;j++){
-            jx = Coordinates_.indx_cellwise(j);
-            jy = Coordinates_.indy_cellwise(j);
-
-            if(jy%2==0){
-                jx_new=jx;
-            }
-            else{
-                jx_new = (lx_-1 - jx);
-            }
-
-            j_new = Coordinates_.Ncell(jx_new, jy);
-            index_j=j_new+spin_i*ncells_*n_orbs_;
-
-            if(j>=i){
-            file_Hopping_out<<HTB_(index_i,index_j).real()<<"   ";}
-            else{
-            file_Hopping_out<<0.0<<"   ";
-            }
-        }
-        file_Hopping_out<<endl;
-    }
-
-}
-
-
-
-void Connections_TL::Print_Hopping_YCn(){
-
-
-    string fileout_HF="YCn_Lattice_Hoppings.txt";
-    ofstream file_Hopping_out_HF(fileout_HF.c_str());
-
-    file_Hopping_out_HF<<"#site_i spin_i site_j spin_j Hopping[site_i,spin_i][site_j,spin_j]"<<endl;
-
-
-
-    Matrix<double> Hopp_mat;
-    Hopp_mat.resize(ncells_*n_orbs_, ncells_*n_orbs_);
-    string fileout= "REALMatrix_YCn_Snake3_form_SPINUP" + Parameters_.File_Hoppings;
-    ofstream file_Hopping_out(fileout.c_str());
-
-    int index_i, index_j;
-    int ix, iy, ix_new, iy_new, i_new;
-    int jx, jy, jx_new, jy_new, j_new;
-    int ix_neigh_,iy_neigh_;
-
-
-    //Hopping mat in conventional notation------
-
-    for(int i=0;i<ncells_*n_orbs_;i++){
-        ix = Coordinates_.indx_cellwise(i);
-        iy = Coordinates_.indy_cellwise(i);
-
-
-        Mat_1_int ix_neigh, iy_neigh;
-        int i_neigh;
-
-        //+x
-        if(ix==(lx_-1)){
-            if(Parameters_.PBC_X){
-            ix_neigh_ = (ix + 1)%lx_;
-            iy_neigh_ = iy;
-            ix_neigh.push_back(ix_neigh_);
-            iy_neigh.push_back(iy_neigh_);
-            }
-        }
-        else{
-            ix_neigh_ = (ix + 1);
-            iy_neigh_ = iy;
-            ix_neigh.push_back(ix_neigh_);
-            iy_neigh.push_back(iy_neigh_);
-        }
-
-
-        //+y
-        if(iy==(ly_-1)){
-            if(Parameters_.PBC_Y){
-            ix_neigh_ = ix;
-            iy_neigh_ = (iy+1)%ly_;
-            ix_neigh.push_back(ix_neigh_);
-            iy_neigh.push_back(iy_neigh_);
-            }
-        }
-        else{
-            ix_neigh_ = ix;
-            iy_neigh_ = (iy+1)%ly_;
-            ix_neigh.push_back(ix_neigh_);
-            iy_neigh.push_back(iy_neigh_);
-        }
-
-        //diagonal
-        if(iy%2==0){
-            ix_neigh_ = (ix +1)%lx_;
-            iy_neigh_ = (iy+1)%ly_;
-        }
-        else{
-            ix_neigh_ = (ix-1+lx_)%lx_;
-            iy_neigh_ = (iy+1)%ly_;
-        }
-        if( (iy==(ly_-1)) && (ix==(lx_-1)) ){
-            if(Parameters_.PBC_Y && Parameters_.PBC_X){
-                ix_neigh.push_back(ix_neigh_);
-                iy_neigh.push_back(iy_neigh_);
-            }
-
-        }
-        if((iy==(ly_-1)) && (ix!=(lx_-1)) ){
-            if(Parameters_.PBC_Y){
-                ix_neigh.push_back(ix_neigh_);
-                iy_neigh.push_back(iy_neigh_);
-            }
-
-        }
-        if((iy!=(ly_-1)) && (ix==(lx_-1))  ){
-            if(Parameters_.PBC_X){
-                ix_neigh.push_back(ix_neigh_);
-                iy_neigh.push_back(iy_neigh_);
-            }
-
-        }
-        if((iy!=(ly_-1)) && (ix!=(lx_-1)) ){
-            ix_neigh.push_back(ix_neigh_);
-            iy_neigh.push_back(iy_neigh_);
-        }
-
-
-
-        cout<<"--------- i = "<<i<<"("<<ix <<","<<iy<<")"<<"-----------"<<endl;
-            for(int neigh_no=0;neigh_no<ix_neigh.size();neigh_no++){
-                cout<< ix_neigh[neigh_no]<<"   "<<iy_neigh[neigh_no]<<"   "<<Coordinates_.Ncell(ix_neigh[neigh_no], iy_neigh[neigh_no])<<endl;
-            }
-         cout<<"================================"<<endl;
-
-        for(int neigh_no=0;neigh_no<ix_neigh.size();neigh_no++){
-            i_neigh = Coordinates_.Ncell(ix_neigh[neigh_no], iy_neigh[neigh_no]);
-
-            Hopp_mat(i_neigh,i)=-1.0;
-            Hopp_mat(i,i_neigh)=-1.0;
-        }
-
-
-
-
-    }
-    //-------------------------------------------
-
-
-
-    //file_Hopping_out<<"#site_i spin_i site_j spin_j Hopping[site_i,spin_i][site_j,spin_j]"<<endl;
-
-
-    //Hopping for Snake-3------used later in DMRG----
-    for(int i=0;i<ncells_*n_orbs_;i++){
-        ix = Coordinates_.indx_cellwise(i);
-        iy = Coordinates_.indy_cellwise(i);
-        if(iy%2==0){
-            ix_new=ix;
-        }
-        else{
-            ix_new = (lx_-1 - ix);
-        }
-        i_new = Coordinates_.Ncell(ix_new, iy);
-        //index_i=i_new+spin_i*ncells_*n_orbs_;
-
-        for(int j=0;j<ncells_*n_orbs_;j++){
-            jx = Coordinates_.indx_cellwise(j);
-            jy = Coordinates_.indy_cellwise(j);
-
-            if(jy%2==0){
-                jx_new=jx;
-            }
-            else{
-                jx_new = (lx_-1 - jx);
-            }
-
-            j_new = Coordinates_.Ncell(jx_new, jy);
-            //index_j=j_new+spin_i*ncells_*n_orbs_;
-
-            file_Hopping_out<<Hopp_mat(i_new,j_new)<<"   ";
-        }
-        file_Hopping_out<<endl;
-    }
-    //----------------------------
-
-
-    //Hopping file for HF Run-----
-    file_Hopping_out_HF<<"#site_i spin_i site_j spin_j Hopping[site_i,spin_i][site_j,spin_j]"<<endl;
-    double hopp_val;
-    for(int i=0;i<ncells_*n_orbs_;i++){
-        ix = Coordinates_.indx_cellwise(i);
-        iy = Coordinates_.indy_cellwise(i);
-        if(iy%2==0){
-            ix_new=ix;
-        }
-        else{
-            ix_new = (lx_-1 - ix);
-        }
-        i_new = Coordinates_.Ncell(ix_new, iy);
-
-
-        for(int spin_i=0;spin_i<2;spin_i++){
-            index_i=i+spin_i*ncells_*n_orbs_;
-
-            for(int j=0;j<ncells_*n_orbs_;j++){
-                jx = Coordinates_.indx_cellwise(j);
-                jy = Coordinates_.indy_cellwise(j);
-
-                if(jy%2==0){
-                    jx_new=jx;
-                }
-                else{
-                    jx_new = (lx_-1 - jx);
-                }
-
-                j_new = Coordinates_.Ncell(jx_new, jy);
-
-                for(int spin_j=0;spin_j<2;spin_j++){
-                    index_j=j+spin_j*ncells_*n_orbs_;
-
-
-                    if(i>j){
-                    hopp_val = Hopp_mat(i_new,j_new);
-                    }
-                    else{
-                    hopp_val = Hopp_mat(j_new,i_new);
-                    }
-
-                    if(spin_j!=spin_i){
-                    hopp_val=0.0;
-                    }
-
-                        file_Hopping_out_HF<<i<<"  "<<spin_i<<"  "<<j<<"  "<<spin_j<<"  "<<hopp_val<<endl;
-
-                }
-            }
-        }
-    }
-    //---------------------------------
-
-
-
-}
-
-
-void Connections_TL::Print_Hopping_Snake3(){
-
-    string fileout="Snake3_" + Parameters_.File_Hoppings;
-    ofstream file_Hopping_out(fileout.c_str());
-
-    file_Hopping_out<<"#site_i spin_i site_j spin_j Hopping[site_i,spin_i][site_j,spin_j]"<<endl;
-
-    int index_i, index_j;
-    int ix, iy, ix_new, iy_new, i_new;
-    int jx, jy, jx_new, jy_new, j_new;
-
-    for(int i=0;i<ncells_*n_orbs_;i++){
-        ix = Coordinates_.indx_cellwise(i);
-        iy = Coordinates_.indy_cellwise(i);
-        if(iy%2==0){
-            ix_new=ix;
-        }
-        else{
-            ix_new = (lx_-1 - ix);
-        }
-        i_new = Coordinates_.Ncell(ix_new, iy);
-
-        for(int spin_i=0;spin_i<2;spin_i++){
-            index_i=i_new+spin_i*ncells_*n_orbs_;
-
-
-            for(int j=0;j<ncells_*n_orbs_;j++){
-                jx = Coordinates_.indx_cellwise(j);
-                jy = Coordinates_.indy_cellwise(j);
-
-                if(jy%2==0){
-                    jx_new=jx;
-                }
-                else{
-                    jx_new = (lx_-1 - jx);
-                }
-
-                j_new = Coordinates_.Ncell(jx_new, jy);
-                for(int spin_j=0;spin_j<2;spin_j++){
-
-                    index_j=j_new+spin_j*ncells_*n_orbs_;
-
-                    if(abs(HTB_(index_i,index_j))>0.0000001){
-                        file_Hopping_out<<i<<"  "<<spin_i<<"  "<<j<<"  "<<spin_j<<"  "<<HTB_(index_i,index_j)<<endl;
-                    }
-                }
-            }
-        }
-    }
-
-}
-
-void Connections_TL::Print_LongRangeInt(){
+void Connections_HC::Print_LongRangeInt(){
     string fileout=Parameters_.File_LongRange_Ints;
     ofstream file_out(fileout.c_str());
 
     file_out<<"#i j Uij"<<endl;
 
-    for(int i=0;i<ncells_;i++){
+    for(int i=0;i<nsites_*n_orbs_;i++){
 
-        for(int j=0;j<ncells_;j++){
+        for(int j=0;j<nsites_*n_orbs_;j++){
 
             if(abs(Hint_(i,j))>0.0000001){
                 file_out<<i<<"   "<<j<<"   "<<Hint_(i,j)<<endl;
@@ -1160,58 +885,14 @@ void Connections_TL::Print_LongRangeInt(){
 
 }
 
-void Connections_TL::Print_LongRangeInt_SNAKE3(){
-    string fileout="REALMatrix_Snake3_LONG_RANGE_INT" + Parameters_.File_LongRange_Ints;
-    ofstream file_out(fileout.c_str());
-
-    int index_i, index_j;
-    int ix, iy, ix_new, iy_new, i_new;
-    int jx, jy, jx_new, jy_new, j_new;
-
-    file_out<<"#i j Uij"<<endl;
-
-    for(int i=0;i<ncells_;i++){
-        ix = Coordinates_.indx_cellwise(i);
-        iy = Coordinates_.indy_cellwise(i);
-        if(iy%2==0){
-            ix_new=ix;
-        }
-        else{
-            ix_new = (lx_-1 - ix);
-        }
-        i_new = Coordinates_.Ncell(ix_new, iy);
-
-        for(int j=0;j<ncells_;j++){
-
-            jx = Coordinates_.indx_cellwise(j);
-            jy = Coordinates_.indy_cellwise(j);
-
-            if(jy%2==0){
-                jx_new=jx;
-            }
-            else{
-                jx_new = (lx_-1 - jx);
-            }
-
-            j_new = Coordinates_.Ncell(jx_new, jy);
-
-            file_out<<Hint_(i_new,j_new).real()<<"   ";
-
-
-        }
-        file_out<<endl;
-    }
-
-}
-
-void Connections_TL::Print_Spin_resolved_OnsiteE(){
+void Connections_HC::Print_Spin_resolved_OnsiteE(){
 
     string fileout=Parameters_.File_Onsite_Energies;
     ofstream file_out(fileout.c_str());
     file_out<<"#Site Spin Onsite_E"<<endl;
     int index, i_posx, i_posy;
 
-    for (int i = 0; i < ncells_; i++)
+    for (int i = 0; i < nsites_; i++)
     { // For each cell
         i_posx = Coordinates_.indx_cellwise(i);
         i_posy = Coordinates_.indy_cellwise(i);
