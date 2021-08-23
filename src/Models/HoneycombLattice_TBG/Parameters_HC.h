@@ -47,6 +47,9 @@ public:
     int RandomSeed;
     double alpha_OP;
     bool Read_OPs;
+    pair_int UnitCellType_intialOPs;
+    bool Create_OPs_Ansatz;
+    string OP_Ansatz_type;
 
     bool Anderson_Mixing;
     int AM_m; //Anderson_Mixing_m;
@@ -307,6 +310,11 @@ void Parameters_HC::Initialize(string inputfile_)
         double Read_OPs_double=double(matchstring(inputfile_,"Read_initial_OPvalues"));
         if(Read_OPs_double==1.0){
             Read_OPs=true;
+
+            string string_OP_type = matchstring2(inputfile_, "Read_initial_OPvalues_UnitCellsType");
+            stringstream OP_type_ss(string_OP_type);
+            OP_type_ss >> UnitCellType_intialOPs.first;
+            OP_type_ss >> UnitCellType_intialOPs.second;
         }
         else{
             Read_OPs=false;
