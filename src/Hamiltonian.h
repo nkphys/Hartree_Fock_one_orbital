@@ -317,7 +317,7 @@ double Hamiltonian::GetCLEnergy(){
                         SI_new = alpha_new + (2*ns_*beta_new);
                         ind_new = MFParams_.SI_to_ind[SI_new];
 
-                        EClassical +=  (1.0*0.5)*Parameters_.LongRangeInteractions[site_alpha][site_beta]*
+                        EClassical +=  (1.0)*Parameters_.LongRangeInteractions[site_alpha][site_beta]*
                                 MFParams_.OParams_.value[ind]*conj(MFParams_.OParams_.value[ind_new]);
 
                     }
@@ -444,9 +444,9 @@ void Hamiltonian::InteractionsCreate(){
                         site_col = site_alpha;
                         spin_row = spin_beta;
                         spin_col = spin_alpha;
-                        Ham_(site_row + spin_row*ns_, site_col + spin_col*ns_) += (-1.0*0.5)*Parameters_.LongRangeInteractions[site_alpha][site_beta]*
+                        Ham_(site_row + spin_row*ns_, site_col + spin_col*ns_) += (-1.0)*Parameters_.LongRangeInteractions[site_alpha][site_beta]*
                                 MFParams_.OParams_.value[ind];
-                        Ham_(site_col + spin_col*ns_, site_row + spin_row*ns_) += (-1.0*0.5)*Parameters_.LongRangeInteractions[site_beta][site_alpha]*
+                        Ham_(site_col + spin_col*ns_, site_row + spin_row*ns_) += (-1.0)*Parameters_.LongRangeInteractions[site_beta][site_alpha]*
                                 conj(MFParams_.OParams_.value[ind]);
 
                     }

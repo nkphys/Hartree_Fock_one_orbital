@@ -100,7 +100,9 @@ void SelfConsistencyEngine::RUN_SelfConsistencyEngine(){
 
 
             Hamiltonian_.InteractionsCreate();
-            //Hamiltonian_.Ham_.print();
+            cout<<"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"<<endl;
+            Hamiltonian_.Ham_.print();
+            cout<<"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"<<endl;
             //assert(false);
             //Hamiltonian_.Check_Hermiticity();
             Hamiltonian_.Diagonalize(Parameters_.Dflag);

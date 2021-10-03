@@ -119,6 +119,7 @@ int main(int argc, char *argv[]) {
             Kspace_calculation_TL Kspace_calculation_TL_(Parameters_TL_, Coordinates_TL_UC_, Connections_TL_, Generator_);
 
             Kspace_calculation_TL_.SelfConsistency();
+            //Observables_TL_.Calculate_Akxw_ribbon();
 
         }
 

@@ -417,7 +417,7 @@ void MFParams::initialize(){
     else{
 
         double small_=0.01;
-        //Adding OPs's to  OPaams_ to be small value, which in principle can be finite
+        //Adding OPs's to  OParams_ to be small value, which in principle can be finite
         for(int site_i=0;site_i<ns_;site_i++){
             for(int site_j=0;site_j<ns_;site_j++){
 

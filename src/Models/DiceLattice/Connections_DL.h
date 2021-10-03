@@ -118,7 +118,6 @@ void Connections_DL::HTBCreate()
     //orb=1=B
     //orb=2=C
 
-
     Matrix<complex <double>> sigma_x, sigma_y, sigma_z, Value_mat;
     sigma_x.resize(2, 2);
     sigma_y.resize(2, 2);

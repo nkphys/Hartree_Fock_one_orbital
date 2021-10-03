@@ -1,5 +1,5 @@
-Total_sites=24
-Total No. of particles=24
+Total_sites=288
+Total No. of particles=192
 FixingMu=false
 MuValueFixed=5.0
 RandomSeed=1
@@ -21,13 +21,13 @@ Broyden_Mixing=0
 Broyden_Second_Method_Mixing=0
 Anderson_Mixing=1
 Anderson_Mixing_m=6
-alpha_OP=0.2
+alpha_OP=0.5
 
 w_minus1=0.1
 wn=0.6
 BroydenSecondMethodCounter=10
 
-U_Onsite=10.6565
+U_Onsite=8.0
 #191.816
 
 dw_dos=0.005
@@ -35,11 +35,11 @@ eta_dos=0.05
 w_min=-5.0
 w_max=15.0
 
-No_of_SelfConsistency_iters=8000
+No_of_SelfConsistency_iters=5
 Convergence_Error=0.00001
-Read_initial_OPvalues=0
-Read_initial_OPvalues_file=OrderParams_OUT2.txt
-Write_Final_OPvalues_file=OrderParams_OUT3.txt
+Read_initial_OPvalues=1
+Read_initial_OPvalues_file=OP_Hartree_Onsite_RS.txt
+Write_Final_OPvalues_file=OrderParams_OUT_RS.txt
 
 Create_OPvalues=0
 Create_OPType=NOT_USED
