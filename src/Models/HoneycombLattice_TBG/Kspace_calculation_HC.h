@@ -58,6 +58,7 @@ public:
     void Calculate_ChernNumbers();
     void Create_Current_Oprs();
     void Hall_conductance();
+    void Update_Total_Density();
     //::DONE
 
 
@@ -81,6 +82,7 @@ public:
     Matrix<double> IntraCell_Hopp, InterCell_px_Hopp, InterCell_py_Hopp, InterCell_pxmy_Hopp;
 
     Matrix_COO_Complex OPs_, OPs_new_;
+    double OPs_total_den;
     Mat_1_int SI_to_ind;
 
     double mu_;
@@ -102,6 +104,10 @@ public:
     Matrix<complex<double>> J_KE_X, J_KE_Y;
 
     double kick_while_cooling;
+
+    double Global_Eps;
+
+    bool OP_only_finite_Int;
 
 
 };
@@ -514,7 +520,7 @@ void Kspace_calculation_HC::Calculate_Nw()
     //---------Read from input file-----------------------//
     string fileout = "Nw" + string(temp_char)+ ".txt";
     double omega_min, omega_max, d_omega;
-    double eta = 0.05;
+    double eta = 0.15;
     omega_min = Eigenvalues_[0]-10.0;
     omega_max = Eigenvalues_[ind_max-1] + 10.0;
     d_omega = 0.001;
@@ -962,7 +968,6 @@ void Kspace_calculation_HC::Get_Energies(){
             //Interaction:Fock
             if(!Parameters_.Just_Hartree){
 
-
                 //Onsite-Fock, same orbital
                 if( (Parameters_.FockType=="Onsite" || Parameters_.FockType=="Onsite_Intra") || Parameters_.FockType=="Onsite_Intra_Inter" ){
                     for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
@@ -993,7 +998,9 @@ void Kspace_calculation_HC::Get_Energies(){
                                     OP_value= conj(OPs_.value[index_OP]);
                                 }
 
+
                                 E_class_temp += 0.5*Parameters_.U0*OP_value*OP_value2;
+
 
                             }
                         }
@@ -1003,9 +1010,23 @@ void Kspace_calculation_HC::Get_Energies(){
 
                 //Onsite-Fock, different orbital
                 if( (Parameters_.FockType=="Onsite_Intra") || Parameters_.FockType=="Onsite_Intra_Inter" ){
+
+                    int alpha_1, alpha_2, alpha_p_1, alpha_p_2, d1_org, d2_org;
+                    int row_U,col_U;
+
                     for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
                         for(int gamma=0;gamma<n_orbs_;gamma++){
                             gamma_bar = (gamma +1 )%2;
+
+
+                            alpha_1 = alpha % UnitCellSize_x;
+                            alpha_2 = (alpha - alpha_1)/UnitCellSize_x;
+                            d1_org = Coordinates_.indx_cellwise(0);
+                            d2_org = Coordinates_.indy_cellwise(0);
+                            row_U = gamma + (0 + alpha_1)*n_orbs_ + (0 + alpha_2)*(n_orbs_*lx_);
+                            col_U = gamma_bar + ((d1_org*UnitCellSize_x) + alpha_1)*n_orbs_ + ((d2_org*UnitCellSize_y) + alpha_2)*(n_orbs_*lx_);
+
+
                             for(int spin=0;spin<2;spin++){
                                 for(int spin_p=0;spin_p<2;spin_p++){
                                     row_ = alpha + gamma*(UnitCellSize_x*UnitCellSize_y) + spin*(n_orbs_*UnitCellSize_x*UnitCellSize_y);
@@ -1030,7 +1051,10 @@ void Kspace_calculation_HC::Get_Energies(){
                                         OP_value= conj(OPs_.value[index_OP]);
                                     }
 
-                                    E_class_temp += 0.5*Parameters_.U0_interorb*OP_value*OP_value2;
+                                    if( (!OP_only_finite_Int) ||  (abs(Connections_.Hint_(row_U, col_U)) > Global_Eps )){
+
+                                        E_class_temp += 0.5*Parameters_.U0_interorb*OP_value*OP_value2;
+                                    }
 
                                 }
                             }
@@ -1044,6 +1068,9 @@ void Kspace_calculation_HC::Get_Energies(){
                 //Intra-Fock
                 if( Parameters_.FockType=="Onsite_Intra" || Parameters_.FockType=="Onsite_Intra_Inter" ){
 
+                    int alpha_1, alpha_2, alpha_p_1, alpha_p_2, d1_org, d2_org;
+                    int row_U,col_U;
+
                     for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
                         for(int gamma=0;gamma<n_orbs_;gamma++){
                             for(int spin=0;spin<2;spin++){
@@ -1051,6 +1078,16 @@ void Kspace_calculation_HC::Get_Energies(){
                                     if(alpha != alpha_p){
                                         for(int gamma_p=0;gamma_p<n_orbs_;gamma_p++){
                                             for(int spin_p=0;spin_p<2;spin_p++){
+
+
+                                                alpha_1 = alpha % UnitCellSize_x;
+                                                alpha_p_1 = alpha_p % UnitCellSize_x;
+                                                alpha_2 = (alpha - alpha_1)/UnitCellSize_x;
+                                                alpha_p_2 = (alpha_p - alpha_p_1)/UnitCellSize_x;
+                                                d1_org = Coordinates_.indx_cellwise(0);
+                                                d2_org = Coordinates_.indy_cellwise(0);
+                                                row_U = gamma + (0 + alpha_1)*n_orbs_ + (0 + alpha_2)*(n_orbs_*lx_);
+                                                col_U = gamma_p + ((d1_org*UnitCellSize_x) + alpha_p_1)*n_orbs_ + ((d2_org*UnitCellSize_y) + alpha_p_2)*(n_orbs_*lx_);
 
                                                 row_ = alpha_p + gamma_p*(UnitCellSize_x*UnitCellSize_y) + spin_p*(n_orbs_*UnitCellSize_x*UnitCellSize_y);
                                                 col_= alpha + gamma*(UnitCellSize_x*UnitCellSize_y) + spin*(n_orbs_*UnitCellSize_x*UnitCellSize_y);
@@ -1076,7 +1113,10 @@ void Kspace_calculation_HC::Get_Energies(){
                                                     OP_value= conj(OPs_.value[index_OP]);
                                                 }
 
-                                                E_class_temp += 0.5*IntraCell_U(alpha,gamma, alpha_p, gamma_p)*OP_value*conj(OP_value);//conj(OP_value);//*OP_value2;
+                                                if( (!OP_only_finite_Int) ||  (abs(Connections_.Hint_(row_U, col_U)) > Global_Eps )){
+
+                                                    E_class_temp += 0.5*IntraCell_U(alpha,gamma, alpha_p, gamma_p)*OP_value*conj(OP_value);//conj(OP_value);//*OP_value2;
+                                                }
                                             }
                                         }
                                     }
@@ -1127,7 +1167,10 @@ void Kspace_calculation_HC::Get_Energies(){
                                                     OP_value2= conj(OPs_.value[index_OP]);
                                                 }
 
+                                                if( (!OP_only_finite_Int) ||  (abs(Connections_.Hint_(row_, col_)) > Global_Eps )){
+
                                                 E_class_temp +=0.5*Connections_.Hint_(row_,col_)*OP_value2*conj(OP_value2);
+                                                }
 
                                             }}
                                     }
@@ -1310,6 +1353,26 @@ void Kspace_calculation_HC::Get_spin_resolved_local_densities(){
 
 
 }
+
+
+
+void Kspace_calculation_HC::Update_Total_Density(){
+
+    //For sum_c1 <c_{c1}* c_{c1}>
+
+    double val;
+
+    val=0.0;
+
+    for(int state=0;state<Eigenvalues_.size();state++){
+        val += (1.0/( exp((Eigenvalues_[state]-mu_)*Parameters_.beta ) + 1.0));
+    }
+
+    Parameters_.Total_Particles = val;
+
+
+}
+
 
 void Kspace_calculation_HC::Get_local_spins(){
 
@@ -1570,6 +1633,10 @@ double Kspace_calculation_HC::random1(){
 void Kspace_calculation_HC::Initialize()
 {
 
+
+    OP_only_finite_Int=true;
+    Global_Eps=0.0000001;
+
     cout<<"Parameters_.FockType = '" << Parameters_.FockType<<"'"<<endl;
     ly_ = Parameters_.ly;
     lx_ = Parameters_.lx;
@@ -1632,6 +1699,7 @@ void Kspace_calculation_HC::Initialize()
 
     int row_temp, col_temp; // col_ = alpha + gamma*(S_) + sigma*(n_orbs_*S_) + cell_no*(2*n_orbs_*S_) ;
 
+    double temp_den;
 
     Parameters_.Create_OPs_Ansatz=false;
     Parameters_.OP_Ansatz_type="120AFM_Wigner";
@@ -1645,10 +1713,9 @@ void Kspace_calculation_HC::Initialize()
             for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
                 for(int gamma=0;gamma<n_orbs_;gamma++){
                     for(int sigma=0;sigma<2;sigma++){
-                        OPs_.value.push_back(complex<double> (random1(),0.0));
+                        // OPs_.value.push_back(complex<double> (random1(),0.0));
                         //OPs_.value.push_back(complex<double> (0.2,0.0));
-
-                        OPs_new_.value.push_back(0.0);
+                        //OPs_new_.value.push_back(0.0);
 
                         row_temp=  alpha + gamma*(S_) +  sigma*(n_orbs_*S_) + 0*(2*n_orbs_*S_);
                         col_temp=row_temp;
@@ -1656,7 +1723,21 @@ void Kspace_calculation_HC::Initialize()
                         OPs_.rows.push_back(row_temp);OPs_new_.rows.push_back(row_temp);
                         OPs_.columns.push_back(col_temp);OPs_new_.columns.push_back(col_temp);
 
+                        OPs_new_.value.push_back(0.0);
+                        if(Parameters_.Fixing_mu){
+                            //assuming near half-filling
+                            temp_den = 0.5;//half-filling
+                            temp_den += (random1()-0.5)*0.1;
+                            OPs_.value.push_back(complex<double> (temp_den,0.0));
+                        }
+                        else{
+                            temp_den = (1.0*Parameters_.Total_Particles)/(1.0*2*n_orbs_*lx_*ly_);//filling given
+                            temp_den += (random1()-0.5)*0.2;
+                            OPs_.value.push_back(complex<double> (temp_den,0.0));
+                        }
+
                         SI_to_ind[col_temp + row_temp*(ncells_*2*n_orbs_*S_)] = OPs_.value.size()-1;
+
 
                     }
                 }
@@ -1665,6 +1746,8 @@ void Kspace_calculation_HC::Initialize()
             //Fock Terms
             if(!Parameters_.Just_Hartree){
                 bool check_;
+                int alpha_1, alpha_2, alpha_p_1, alpha_p_2, d1_org, d2_org;
+                int row_,col_;
                 for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
                     for(int gamma=0;gamma<n_orbs_;gamma++){
                         for(int sigma=0;sigma<2;sigma++){
@@ -1673,6 +1756,19 @@ void Kspace_calculation_HC::Initialize()
                                 for(int alpha_p=0;alpha_p<UnitCellSize_x*UnitCellSize_y;alpha_p++){
                                     for(int gamma_p=0;gamma_p<n_orbs_;gamma_p++){
                                         for(int sigma_p=0;sigma_p<2;sigma_p++){
+
+
+                                            alpha_1 = alpha % UnitCellSize_x;
+                                            alpha_p_1 = alpha_p % UnitCellSize_x;
+
+                                            alpha_2 = (alpha - alpha_1)/UnitCellSize_x;
+                                            alpha_p_2 = (alpha_p - alpha_p_1)/UnitCellSize_x;
+
+                                            d1_org = Coordinates_.indx_cellwise(cell_);
+                                            d2_org = Coordinates_.indy_cellwise(cell_);
+                                            row_ = gamma + (0 + alpha_1)*n_orbs_ + (0 + alpha_2)*(n_orbs_*lx_);
+                                            col_ = gamma_p + ((d1_org*UnitCellSize_x) + alpha_p_1)*n_orbs_ + ((d2_org*UnitCellSize_y) + alpha_p_2)*(n_orbs_*lx_);
+
 
                                             if(Parameters_.FockType=="Onsite_Intra_Inter"){
                                                 if(cell_==0){
@@ -1707,10 +1803,21 @@ void Kspace_calculation_HC::Initialize()
                                                 }
                                             }
 
+                                            if(row_!=col_){
+                                            if( (OP_only_finite_Int) && (abs(Connections_.Hint_(row_, col_)) < Global_Eps )){
+                                                check_=false;
+                                            }
+                                            }
+
                                             if( check_ ){
+
+
+
 
                                                 row_temp = alpha + gamma*(S_) +  sigma*(n_orbs_*S_) + 0*(2*n_orbs_*S_);
                                                 col_temp = alpha_p + gamma_p*(S_) +  sigma_p*(n_orbs_*S_) + cell_*(2*n_orbs_*S_);
+
+                                                //cout<<row_temp<<"  "<<col_temp<<endl;
 
                                                 OPs_.value.push_back(complex<double> (random1(),random1()));
                                                 OPs_new_.value.push_back(0.0);
@@ -1729,6 +1836,10 @@ void Kspace_calculation_HC::Initialize()
                 }
 
             }
+
+
+
+
 
         }
         else{
@@ -2593,8 +2704,11 @@ complex<double> Kspace_calculation_HC::V_fock(int alpha, int gamma, int sigma, i
 
         index_OP = SI_to_ind[col_OP + row_OP*(2*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
 
+        if( (!OP_only_finite_Int) ||  (abs(Connections_.Hint_(row_, col_)) > Global_Eps )){
+
         temp_val += Connections_.Hint_(row_, col_)*OPs_.value[index_OP]*
                 exp(iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_   ));
+        }
 
     }
 
@@ -2605,8 +2719,34 @@ void Kspace_calculation_HC::Create_Kspace_Spectrum(){
 
 
 
+
+    //Calculating density using OP's will be going inside Hamiltonian
+    OPs_total_den=0.0;
+    int index_OP;
+    int row_OP, col_OP;
+    for(int k1=0;k1<lx_cells;k1++){
+        for(int k2=0;k2<ly_cells;k2++){
+            for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+                for(int gamma=0;gamma<n_orbs_;gamma++){
+                    for(int spin=0;spin<2;spin++){
+                        row_OP = alpha + gamma*(UnitCellSize_x*UnitCellSize_y)
+                                + spin*(n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                        col_OP = alpha + gamma*(UnitCellSize_x*UnitCellSize_y)
+                                + spin*(n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                        index_OP = SI_to_ind[col_OP + row_OP*(2*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                        OPs_total_den += OPs_.value[index_OP].real();
+                    }
+                }
+            }
+        }
+    }
+
+
+
+
+
+
     int row_, col_;
-    int row_OP, col_OP, index_OP;
     int UP_, DOWN_;
     UP_=0;DOWN_=1;
     int spin_bar, gamma_bar;
@@ -2698,6 +2838,10 @@ void Kspace_calculation_HC::Create_Kspace_Spectrum(){
                     }
                 }
             }
+
+
+
+
 
 
             //Interaction:Hartree
@@ -2812,9 +2956,21 @@ void Kspace_calculation_HC::Create_Kspace_Spectrum(){
 
                 //Onsite-Fock, different orbital
                 if( (Parameters_.FockType=="Onsite_Intra") || Parameters_.FockType=="Onsite_Intra_Inter" ){
+
+                    int alpha_1, alpha_2, alpha_p_1, alpha_p_2, d1_org, d2_org;
+                    int row_U,col_U;
+
                     for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
                         for(int gamma=0;gamma<n_orbs_;gamma++){
                             gamma_bar = (gamma +1 )%2;
+
+                            alpha_1 = alpha % UnitCellSize_x;
+                            alpha_2 = (alpha - alpha_1)/UnitCellSize_x;
+                            d1_org = Coordinates_.indx_cellwise(0);
+                            d2_org = Coordinates_.indy_cellwise(0);
+                            row_U = gamma + (0 + alpha_1)*n_orbs_ + (0 + alpha_2)*(n_orbs_*lx_);
+                            col_U = gamma_bar + ((d1_org*UnitCellSize_x) + alpha_1)*n_orbs_ + ((d2_org*UnitCellSize_y) + alpha_2)*(n_orbs_*lx_);
+
                             for(int spin=0;spin<2;spin++){
                                 for(int spin_p=0;spin_p<2;spin_p++){
                                     row_ = alpha + gamma*(UnitCellSize_x*UnitCellSize_y) + spin*(n_orbs_*UnitCellSize_x*UnitCellSize_y);
@@ -2831,7 +2987,9 @@ void Kspace_calculation_HC::Create_Kspace_Spectrum(){
                                         OP_value= conj(OPs_.value[index_OP]);
                                     }
 
+                                    if( (!OP_only_finite_Int) ||  (abs(Connections_.Hint_(row_U, col_U)) > Global_Eps )){
                                     Ham_(row_,col_) += -1.0*Parameters_.U0_interorb*OP_value;
+                                    }
 
                                 }
                             }
@@ -2845,6 +3003,9 @@ void Kspace_calculation_HC::Create_Kspace_Spectrum(){
                 //Intra-Fock
                 if( Parameters_.FockType=="Onsite_Intra" || Parameters_.FockType=="Onsite_Intra_Inter" ){
 
+                    int alpha_1, alpha_2, alpha_p_1, alpha_p_2, d1_org, d2_org;
+                    int row_U,col_U;
+
                     for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
                         for(int gamma=0;gamma<n_orbs_;gamma++){
                             for(int spin=0;spin<2;spin++){
@@ -2852,6 +3013,15 @@ void Kspace_calculation_HC::Create_Kspace_Spectrum(){
                                     if(alpha != alpha_p){
                                         for(int gamma_p=0;gamma_p<n_orbs_;gamma_p++){
                                             for(int spin_p=0;spin_p<2;spin_p++){
+
+                                                alpha_1 = alpha % UnitCellSize_x;
+                                                alpha_p_1 = alpha_p % UnitCellSize_x;
+                                                alpha_2 = (alpha - alpha_1)/UnitCellSize_x;
+                                                alpha_p_2 = (alpha_p - alpha_p_1)/UnitCellSize_x;
+                                                d1_org = Coordinates_.indx_cellwise(0);
+                                                d2_org = Coordinates_.indy_cellwise(0);
+                                                row_U = gamma + (0 + alpha_1)*n_orbs_ + (0 + alpha_2)*(n_orbs_*lx_);
+                                                col_U = gamma_p + ((d1_org*UnitCellSize_x) + alpha_p_1)*n_orbs_ + ((d2_org*UnitCellSize_y) + alpha_p_2)*(n_orbs_*lx_);
 
                                                 row_ = alpha_p + gamma_p*(UnitCellSize_x*UnitCellSize_y) + spin_p*(n_orbs_*UnitCellSize_x*UnitCellSize_y);
                                                 col_= alpha + gamma*(UnitCellSize_x*UnitCellSize_y) + spin*(n_orbs_*UnitCellSize_x*UnitCellSize_y);
@@ -2868,7 +3038,10 @@ void Kspace_calculation_HC::Create_Kspace_Spectrum(){
                                                     OP_value= conj(OPs_.value[index_OP]);
                                                 }
 
+                                                if( (!OP_only_finite_Int) ||  (abs(Connections_.Hint_(row_U, col_U)) > Global_Eps )){
+
                                                 Ham_(row_,col_) += -1.0*IntraCell_U(alpha,gamma, alpha_p, gamma_p)*OP_value;
+                                                }
                                             }
                                         }
                                     }
@@ -2907,9 +3080,9 @@ void Kspace_calculation_HC::Create_Kspace_Spectrum(){
 
 
 
-            cout<<"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"<<endl;
-            Ham_.print();
-            cout<<"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"<<endl;
+            //            cout<<"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"<<endl;
+            //            Ham_.print();
+            //            cout<<"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"<<endl;
 
 
             char Dflag='V';
@@ -2999,9 +3172,9 @@ void Kspace_calculation_HC::SelfConsistency(){
                     + ((alpha_p_2)*lx_*n_orbs_);
 
             if(col_<row_){
-              col_new=row_;
-              row_new=col_;
-              value_new=conj(OPs_.value[index_]);
+                col_new=row_;
+                row_new=col_;
+                value_new=conj(OPs_.value[index_]);
             }
             else{
                 col_new=col_;
@@ -3009,7 +3182,7 @@ void Kspace_calculation_HC::SelfConsistency(){
                 value_new=OPs_.value[index_];
             }
             if((abs(Connections_.Hint_(row_int, col_int))>0.00000001) || (row_int==col_int)){
-            file_out_Local_OP_Initial_RS<<row_new<<setw(15)<<col_new<<setw(15)<<"  "<<value_new<<endl;
+                file_out_Local_OP_Initial_RS<<row_new<<setw(15)<<col_new<<setw(15)<<"  "<<value_new<<endl;
             }
         }
         //-------------------------------------------------
@@ -3048,6 +3221,8 @@ void Kspace_calculation_HC::SelfConsistency(){
         File_Out_progress = "output_Kspace_SelfConsistency_Temp" + string(temp_char) + ".txt";
         ofstream file_out_progress(File_Out_progress.c_str());
 
+        file_out_progress<<"# iter   OP_error_   E_class   E_quant    mu_   Total_Particles   OPs_.total_Den" <<endl;
+
         cout<<"error targetted = "<<Parameters_.Convergence_Error<<endl;
         cout<<"Max iterations = "<<Parameters_.IterMax<<endl;
 
@@ -3062,12 +3237,19 @@ void Kspace_calculation_HC::SelfConsistency(){
             //                cout<<ei<<"  "<<Eigenvalues_[ei]<<endl;
             //            }
 
-            mu_=chemicalpotential(Parameters_.Total_Particles);
+            if(Parameters_.Fixing_mu){
+                mu_ = Parameters_.Fixed_mu;
+                Update_Total_Density();
+            }
+            else{
+                mu_=chemicalpotential(Parameters_.Total_Particles);
+            }
+
             Get_new_OPs_and_error();
             Get_Energies();
 
 
-            file_out_progress<<setprecision(15)<<iter<<"   "<<OP_error_<<"   "<<E_class<<"   "<<E_quant<<"    "<<endl;
+            file_out_progress<<setprecision(15)<<iter<<"   "<<OP_error_<<"   "<<E_class<<"   "<<E_quant<<"    "<<mu_<<"   "<<Parameters_.Total_Particles <<"   "<< OPs_total_den <<endl;
             //        for(int OP_no=0;OP_no<6;OP_no++){
             //            file_out_progress<<OPs_[OP_no].real()<<"    "<<OPs_[OP_no].imag()<<"    ";
             //        }
@@ -3099,7 +3281,14 @@ void Kspace_calculation_HC::SelfConsistency(){
         //J_KE_X.print();
         //        Hall_conductance();
         Arranging_spectrum();
-        mu_=chemicalpotential(Parameters_.Total_Particles);
+        if(Parameters_.Fixing_mu){
+            mu_ = Parameters_.Fixed_mu;
+            Update_Total_Density();
+        }
+        else{
+            mu_=chemicalpotential(Parameters_.Total_Particles);
+        }
+
         cout<<"mu = "<<mu_<<endl;
         cout<<"energies shown below , Eclass and Equant:"<<endl;
         Get_new_OPs_and_error();
@@ -3109,6 +3298,13 @@ void Kspace_calculation_HC::SelfConsistency(){
         Get_spin_resolved_local_densities();
         Get_local_spins();
         Calculate_Nw();
+
+        string Eigenvalues_fl_out = "Eigenvalues.txt";
+        ofstream Eigenvalues_file_out(Eigenvalues_fl_out.c_str());
+        for(int ie=0;ie<Eigenvalues_.size();ie++){
+            Eigenvalues_file_out<<ie<<"  "<<Eigenvalues_[ie]<<endl;
+        }
+
 
 
 
@@ -3180,9 +3376,9 @@ void Kspace_calculation_HC::SelfConsistency(){
                         + ((alpha_p_2)*lx_*n_orbs_);
 
                 if(col_<row_){
-                  col_new=row_;
-                  row_new=col_;
-                  value_new=conj(OPs_new_.value[index_]);
+                    col_new=row_;
+                    row_new=col_;
+                    value_new=conj(OPs_new_.value[index_]);
                 }
                 else{
                     col_new=col_;
@@ -3191,7 +3387,7 @@ void Kspace_calculation_HC::SelfConsistency(){
                 }
 
                 if((abs(Connections_.Hint_(row_int, col_int))>0.00000001) || (row_int==col_int)){
-                file_out_Local_OP_RS<<row_new<<setw(15)<<col_new<<setw(15)<<"  "<<value_new<<endl;
+                    file_out_Local_OP_RS<<row_new<<setw(15)<<col_new<<setw(15)<<"  "<<value_new<<endl;
                 }
 
             }
@@ -3522,6 +3718,50 @@ void Kspace_calculation_HC::Update_OrderParameters_AndersonMixing(int iter){
         f_km1_=f_k_;
 
     }
+
+
+
+
+
+    //    double OPs_total_den_=0.0;
+    //    int index_OP;
+    //    int row_OP, col_OP;
+    //    for(int k1=0;k1<lx_cells;k1++){
+    //        for(int k2=0;k2<ly_cells;k2++){
+    //            for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+    //                for(int gamma=0;gamma<n_orbs_;gamma++){
+    //                    for(int spin=0;spin<2;spin++){
+    //                        row_OP = alpha + gamma*(UnitCellSize_x*UnitCellSize_y)
+    //                                + spin*(n_orbs_*UnitCellSize_x*UnitCellSize_y);
+    //                        col_OP = alpha + gamma*(UnitCellSize_x*UnitCellSize_y)
+    //                                + spin*(n_orbs_*UnitCellSize_x*UnitCellSize_y);
+    //                        index_OP = SI_to_ind[col_OP + row_OP*(2*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+    //                        OPs_total_den_ += OPs_.value[index_OP].real();
+    //                    }
+    //                }
+    //            }
+    //        }
+    //    }
+
+
+    //    double ratio = Parameters_.Total_Particles/(OPs_total_den_+0.0001);
+
+    //    for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+    //        for(int gamma=0;gamma<n_orbs_;gamma++){
+    //            for(int spin=0;spin<2;spin++){
+    //                row_OP = alpha + gamma*(UnitCellSize_x*UnitCellSize_y)
+    //                        + spin*(n_orbs_*UnitCellSize_x*UnitCellSize_y);
+    //                col_OP = alpha + gamma*(UnitCellSize_x*UnitCellSize_y)
+    //                        + spin*(n_orbs_*UnitCellSize_x*UnitCellSize_y);
+    //                index_OP = SI_to_ind[col_OP + row_OP*(2*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+    //                OPs_.value[index_OP] += ratio/(1.0+ratio);
+    //            }
+    //        }
+    //    }
+
+
+
+
 
 
 }

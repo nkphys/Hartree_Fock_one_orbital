@@ -209,6 +209,8 @@ int main(int argc, char *argv[]) {
             Connections_TL_.Print_Hopping3();
             Connections_TL_.Print_Hopping_Snake3();
             Connections_TL_.Print_Hopping_YCn();
+            Connections_TL_.Print_RingExchange();
+            Connections_TL_.Print_RingExchange_YCn();
 
             Connections_TL_.InteractionsCreate();
             Connections_TL_.Print_LongRangeInt_SNAKE3();

@@ -578,7 +578,7 @@ void Connections_HC::InteractionsCreate()
                                 assert(a != b);
                                 if (a != b)
                                 {
-                                    Hint_(a, b) = complex<double>(1.0 * U_hoppings[neigh][orb1][orb2], 0.0);
+                                    Hint_(a, b) = complex<double>(1.0 * U_hoppings[neigh][orb2][orb1], 0.0);
                                     Hint_(b, a) = conj(Hint_(a, b));
                                 }
 
@@ -633,12 +633,19 @@ void Connections_HC::InteractionsCreate()
                        // U_val = ((14.3952*1000)/Parameters_.eps_DE)*( (1.0/(dis_*Parameters_.a_moire))  -
                        //                                               (1.0/(sqrt( (dis_*dis_*Parameters_.a_moire*Parameters_.a_moire)
                        //                                                           + Parameters_.d_screening*Parameters_.d_screening)))  );
+
+
+                        if(dis_<=Parameters_.Truncating_Length_in_am){
                         U_val = Parameters_.U0_interorb*( (1.0/(dis_*Parameters_.a_moire))  -
                                              (1.0/(sqrt( (dis_*dis_*Parameters_.a_moire*Parameters_.a_moire)
                                              + Parameters_.d_screening*Parameters_.d_screening)))  )*
                                 (1.0 /   (  ( (1.0/(dis_min*Parameters_.a_moire))  -
                                               (1.0/(sqrt( (dis_min*dis_min*Parameters_.a_moire*Parameters_.a_moire)
                                               + Parameters_.d_screening*Parameters_.d_screening)))  )  ));
+                        }
+                        else{
+                            U_val=0.0;
+                        }
 
 
                         // assert(l != m);

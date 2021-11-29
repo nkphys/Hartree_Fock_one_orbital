@@ -51,6 +51,9 @@ public:
     bool Create_OPs_Ansatz;
     string OP_Ansatz_type;
 
+    bool Fixing_mu;
+    double Fixed_mu;
+
     bool Anderson_Mixing;
     int AM_m; //Anderson_Mixing_m;
 
@@ -63,6 +66,9 @@ public:
     void Initialize(string inputfile_);
     double matchstring(string file, string match);
     string matchstring2(string file, string match);
+
+    bool OP_only_finite_Int;
+    double Truncating_Length_in_am;
 
 };
 
@@ -158,9 +164,9 @@ void Parameters_HC::Initialize(string inputfile_)
     U0_interorb = double(matchstring(inputfile_, "U0_interorb")); //This is U1 too (nearest neighbour)
 
 
-//    U1 = double(matchstring(inputfile_, "U1"));
-//    U2 = double(matchstring(inputfile_, "U2"));
-//    U3 = double(matchstring(inputfile_, "U3"));
+    //    U1 = double(matchstring(inputfile_, "U1"));
+    //    U2 = double(matchstring(inputfile_, "U2"));
+    //    U3 = double(matchstring(inputfile_, "U3"));
 
 
 
@@ -241,6 +247,20 @@ void Parameters_HC::Initialize(string inputfile_)
         Just_Hartree=false;
         FockType = matchstring2(inputfile_,"Fock_type");
     }
+
+
+
+    int Fixing_mu_int;
+    Fixing_mu_int = int(matchstring(inputfile_, "Fixing_mu"));
+    if(Fixing_mu_int==1){
+        Fixing_mu=true;
+        Fixed_mu = double(matchstring(inputfile_,"Mu_value"));
+    }
+    else{
+        Fixing_mu=false;
+    }
+
+
 
 
     TBC_mx = int(matchstring(inputfile_, "TwistedBoundaryCond_mx"));
@@ -324,6 +344,17 @@ void Parameters_HC::Initialize(string inputfile_)
 
 
 
+    double OP_only_finite_Int_doub = double(matchstring(inputfile_, "OP_only_finite_Int"));
+    if(OP_only_finite_Int_doub==1.0){
+        OP_only_finite_Int=true;
+    }
+    else{
+        OP_only_finite_Int=false;
+    }
+
+    Truncating_Length_in_am = double(matchstring(inputfile_,"Truncating_Length_in_am"));
+
+
     double Anderson_Mixing_double=double(matchstring(inputfile_,"Anderson_Mixing"));
     if(Anderson_Mixing_double==1.0){
         Anderson_Mixing=true;
@@ -402,6 +433,8 @@ string Parameters_HC::matchstring2(string file, string match)
     string amount;
     int offset;
 
+    match = match + "=";
+
     if (readFile.is_open())
     {
         while (!readFile.eof())
@@ -410,7 +443,7 @@ string Parameters_HC::matchstring2(string file, string match)
 
             if ((offset = line.find(match, 0)) != string::npos)
             {
-                amount = line.substr(offset + match.length() + 1);
+                amount = line.substr(offset + match.length());
             }
         }
         readFile.close();
@@ -420,7 +453,7 @@ string Parameters_HC::matchstring2(string file, string match)
         cout << "Unable to open input file while in the Parameters_HC class." << endl;
     }
 
-    cout << match << " = " << amount << endl;
+    cout << match << " " << amount << endl;
     return amount;
 }
 

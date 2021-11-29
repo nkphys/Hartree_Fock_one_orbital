@@ -56,6 +56,8 @@ public:
     void Calculate_Nw();
     double Lorentzian(double x, double brd);
     void Calculate_ChernNumbers();
+    void Calculate_ChernNumbers_in_ntimes_brillouin_zone(int N_);
+    void Create_Kspace_Spectrum_in_ntimes_brillouin_zone(int N_);
     void Create_Current_Oprs();
     void Hall_conductance();
     //::DONE
@@ -136,7 +138,7 @@ void Kspace_calculation_TL::Hall_conductance(){
     }
 
     cout<<"Hall Conductance_12 = "<<hall_cond<<endl;
-     cout<<"Hall Conductance_XY = "<<hall_cond_xy<<endl;
+    cout<<"Hall Conductance_XY = "<<hall_cond_xy<<endl;
 
     double mu=Eigenvalues_saved[0]-1.0;
     while(mu<Eigenvalues_saved[Eigenvalues_saved.size()-1]+1.0){
@@ -264,59 +266,59 @@ void Kspace_calculation_TL::Create_Current_Oprs(){
 
                                     dx_ = 1.0*d1_net + 0.5*(d2_net);
                                     dy_ = (sqrt(3.0)/2.0)*d2_net;
-//                                    facx = (dx_/sqrt((dx_*dx_) + (dy_*dy_)));
-//                                    facy = (dy_/sqrt((dx_*dx_) + (dy_*dy_)));
-                                     if(dx_==0){
-                                         facx=0;
-                                     }
-                                     else{
+                                    //                                    facx = (dx_/sqrt((dx_*dx_) + (dy_*dy_)));
+                                    //                                    facy = (dy_/sqrt((dx_*dx_) + (dy_*dy_)));
+                                    if(dx_==0){
+                                        facx=0;
+                                    }
+                                    else{
                                         facx=dx_/abs(dx_);
-                                     }
-                                     if(dy_==0){
-                                         facy=0;
-                                     }
-                                     else{
+                                    }
+                                    if(dy_==0){
+                                        facy=0;
+                                    }
+                                    else{
                                         facy=dy_/abs(dy_);
-                                     }
+                                    }
 
 
 
-//                                    fac1 = (d1_net/sqrt((d1_net*d1_net) + (d2_net*d2_net)));
-//                                    fac2 = (d2_net/sqrt((d1_net*d1_net) + (d2_net*d2_net)));
+                                    //                                    fac1 = (d1_net/sqrt((d1_net*d1_net) + (d2_net*d2_net)));
+                                    //                                    fac2 = (d2_net/sqrt((d1_net*d1_net) + (d2_net*d2_net)));
 
-                                     if(d1_net==0){
-                                         fac1=0;
-                                     }
-                                     else{
+                                    if(d1_net==0){
+                                        fac1=0;
+                                    }
+                                    else{
                                         fac1=d1_net/abs(d1_net);
-                                     }
-                                     if(d2_net==0){
-                                         fac2=0;
-                                     }
-                                     else{
+                                    }
+                                    if(d2_net==0){
+                                        fac2=0;
+                                    }
+                                    else{
                                         fac2=d2_net/abs(d2_net);
-                                     }
+                                    }
 
                                     if(abs(Connections_.HTB_(row_,col_)) > 0.0000001){
-                                    J_KE_X(state_p,state_n) += (1.0)*facx*iota_complex*(
-                                                (Connections_.HTB_(row_,col_)*conj(Eigvectors_[state_p][c2])*Eigvectors_[state_n][c1]*exp(iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
-                                                -(Connections_.HTB_(col_,row_)*conj(Eigvectors_[state_p][c1])*Eigvectors_[state_n][c2]*exp(-1.0*iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
-                                                );
+                                        J_KE_X(state_p,state_n) += (1.0)*facx*iota_complex*(
+                                                    (Connections_.HTB_(row_,col_)*conj(Eigvectors_[state_p][c2])*Eigvectors_[state_n][c1]*exp(iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
+                                                    -(Connections_.HTB_(col_,row_)*conj(Eigvectors_[state_p][c1])*Eigvectors_[state_n][c2]*exp(-1.0*iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
+                                                    );
 
-                                    J_KE_Y(state_p,state_n) += (1.0)*facy*iota_complex*(
-                                                (Connections_.HTB_(row_,col_)*conj(Eigvectors_[state_p][c2])*Eigvectors_[state_n][c1]*exp(iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
-                                                -(Connections_.HTB_(col_,row_)*conj(Eigvectors_[state_p][c1])*Eigvectors_[state_n][c2]*exp(-1.0*iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
-                                                );
+                                        J_KE_Y(state_p,state_n) += (1.0)*facy*iota_complex*(
+                                                    (Connections_.HTB_(row_,col_)*conj(Eigvectors_[state_p][c2])*Eigvectors_[state_n][c1]*exp(iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
+                                                    -(Connections_.HTB_(col_,row_)*conj(Eigvectors_[state_p][c1])*Eigvectors_[state_n][c2]*exp(-1.0*iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
+                                                    );
 
-                                    J_KE_e1(state_p,state_n) += (1.0)*fac1*iota_complex*(
-                                                (Connections_.HTB_(row_,col_)*conj(Eigvectors_[state_p][c2])*Eigvectors_[state_n][c1]*exp(iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
-                                                -(Connections_.HTB_(col_,row_)*conj(Eigvectors_[state_p][c1])*Eigvectors_[state_n][c2]*exp(-1.0*iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
-                                                );
+                                        J_KE_e1(state_p,state_n) += (1.0)*fac1*iota_complex*(
+                                                    (Connections_.HTB_(row_,col_)*conj(Eigvectors_[state_p][c2])*Eigvectors_[state_n][c1]*exp(iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
+                                                    -(Connections_.HTB_(col_,row_)*conj(Eigvectors_[state_p][c1])*Eigvectors_[state_n][c2]*exp(-1.0*iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
+                                                    );
 
-                                    J_KE_e2(state_p,state_n) += (1.0)*fac2*iota_complex*(
-                                                (Connections_.HTB_(row_,col_)*conj(Eigvectors_[state_p][c2])*Eigvectors_[state_n][c1]*exp(iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
-                                                -(Connections_.HTB_(col_,row_)*conj(Eigvectors_[state_p][c1])*Eigvectors_[state_n][c2]*exp(-1.0*iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
-                                                );
+                                        J_KE_e2(state_p,state_n) += (1.0)*fac2*iota_complex*(
+                                                    (Connections_.HTB_(row_,col_)*conj(Eigvectors_[state_p][c2])*Eigvectors_[state_n][c1]*exp(iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
+                                                    -(Connections_.HTB_(col_,row_)*conj(Eigvectors_[state_p][c1])*Eigvectors_[state_n][c2]*exp(-1.0*iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
+                                                    );
 
                                     }
 
@@ -336,6 +338,157 @@ void Kspace_calculation_TL::Create_Current_Oprs(){
 
 
 
+
+}
+
+
+
+
+void Kspace_calculation_TL::Calculate_ChernNumbers_in_ntimes_brillouin_zone(int N_){
+
+
+    cout<<"Chern numbers in "<<N_<<" times Brilloun Zone XXXXXXXXXXXXXXXX"<<endl;
+    //cout<<"here"<<endl;
+    Matrix<complex<double>> F_mat; //F1, F2, F3, F4, F5;
+    F_mat.resize(2*UnitCellSize_x*UnitCellSize_y, N_*N_*lx_cells*ly_cells);
+    //cout<<"here"<<endl;
+
+    int no_of_bands=2*UnitCellSize_x*UnitCellSize_y;
+    complex<double> Ux_k, Uy_k, Ux_kpy, Uy_kpx;
+    vector<complex<double>> F_bands;
+    F_bands.resize(2*UnitCellSize_x*UnitCellSize_y);
+    vector<complex<double>> Chern_num;
+    Chern_num.resize(2*UnitCellSize_x*UnitCellSize_y);
+
+
+    for (int band = 0; band < 2*UnitCellSize_x*UnitCellSize_y; band++)
+    {
+        //cout<<"here"<<endl;
+        string file_Fk="Fk_band"+to_string(band)+"_" + to_string(N_) +"times_brillouin_zone.txt";
+        ofstream fl_Fk_out(file_Fk.c_str());
+        fl_Fk_out<<"#nx  ny  tilde_F(nx,ny).real()  tilde_F(nx,ny).imag()  ArgofLog.real()  ArgofLog.imag()"<<endl;
+        fl_Fk_out<<"#Extra momentum point for pm3d corners2color c1"<<endl;
+
+        F_bands[band] = 0.0;
+        for (int nx = 0; nx < N_*lx_cells; nx++)
+        {
+            for (int ny = 0; ny < N_*ly_cells; ny++)
+            {
+
+                int n = nx + N_*lx_cells*ny;
+                int n_left, n_right, nx_left, ny_left, nx_right, ny_right;
+
+                //U1_k
+                Ux_k = 0;
+                n_left = n;
+                nx_right = (nx + 1) % (N_*lx_cells);
+                ny_right = ny;
+                n_right = nx_right + N_*lx_cells*ny_right;
+                for (int comp = 0; comp < no_of_bands; comp++)
+                {
+                    Ux_k +=
+                            conj(Eigvectors_[no_of_bands*n_left +  band][comp]) *
+                            Eigvectors_[no_of_bands*n_right + band][comp];
+                }
+                Ux_k = Ux_k * (1.0 / abs(Ux_k));
+
+                //U2_kpx
+                Uy_kpx = 0;
+                nx_left = (nx + 1) % (N_*lx_cells);
+                ny_left = ny;
+                n_left = nx_left + N_*lx_cells*ny_left;
+                nx_right = nx_left;
+                ny_right = (ny_left + 1) % (N_*ly_cells);
+                n_right = nx_right + N_*lx_cells*ny_right;
+                for (int comp = 0; comp < no_of_bands; comp++)
+                {
+                    Uy_kpx +=
+                            conj(Eigvectors_[no_of_bands*n_left +  band][comp]) *
+                            Eigvectors_[no_of_bands*n_right + band][comp];
+                }
+                Uy_kpx = Uy_kpx * (1.0 / abs(Uy_kpx));
+
+                //U1_kpy
+                Ux_kpy = 0;
+                nx_left = nx;
+                ny_left = (ny + 1) % (N_*ly_cells);
+                n_left = nx_left + N_*lx_cells*ny_left;
+                nx_right = (nx_left + 1) % (N_*lx_cells);
+                ny_right = ny_left;
+                n_right = nx_right + N_*lx_cells*ny_right;
+                for (int comp = 0; comp < no_of_bands; comp++)
+                {
+                    Ux_kpy +=
+                            conj(Eigvectors_[no_of_bands*n_left +  band][comp]) *
+                            Eigvectors_[no_of_bands*n_right + band][comp];
+                }
+                Ux_kpy = Ux_kpy * (1.0 / abs(Ux_kpy));
+
+                //U2_k
+                Uy_k = 0;
+                nx_left = nx;
+                ny_left = ny;
+                n_left = nx_left + N_*lx_cells*ny_left;
+                nx_right = nx_left;
+                ny_right = (ny_left + 1) % (N_*ly_cells);
+                n_right = nx_right + N_*lx_cells*ny_right;
+                for (int comp = 0; comp < no_of_bands; comp++)
+                {
+                    Uy_k +=
+                            conj(Eigvectors_[no_of_bands*n_left +  band][comp]) *
+                            Eigvectors_[no_of_bands*n_right + band][comp];
+                }
+                Uy_k = Uy_k * (1.0 / abs(Uy_k));
+
+                // Calculating tilde F12
+                F_mat(band, n) = log(Ux_k *
+                                     Uy_kpx *
+                                     conj(Ux_kpy) * conj(Uy_k));
+
+                F_bands[band] += F_mat(band, n);
+
+
+                fl_Fk_out.precision(10);
+
+                fl_Fk_out<<nx<<"  "<<ny<<"  "<<F_mat(band, n).real()<<"  "<<F_mat(band, n).imag()<<
+                           "  "<<(Ux_k*Uy_kpx*conj(Ux_kpy)*conj(Uy_k)).real()<<
+                           "  "<<(Ux_k*Uy_kpx*conj(Ux_kpy)*conj(Uy_k)).imag()<<endl;
+
+
+
+
+                if(abs((abs(F_mat(band, n).imag()) - PI))<0.0000001){
+                    cout<<ny<<"  "<<nx<<"  gives Pi for band"<< band <<endl;
+                    // assert (abs((abs(F_mat(band, n).imag()) - M_PI))>0.0000001);
+                }
+
+
+                if(ny==N_*ly_cells-1){//For pm3d corners2color c1
+                    fl_Fk_out<<nx<<"  "<<ny<<"  "<<F_mat(band, n).real()<<"  "<<F_mat(band, n).imag()<<
+                               "  "<<(Ux_k*Uy_kpx*conj(Ux_kpy)*conj(Uy_k)).real()<<
+                               "  "<<(Ux_k*Uy_kpx*conj(Ux_kpy)*conj(Uy_k)).imag()<<endl;
+                }
+            }
+            if(nx==N_*lx_cells-1){//For pm3d corners2color c1
+                fl_Fk_out<<endl;
+                for(int ny_=0;ny_<N_*ly_cells;ny_++){
+                    int n_ = nx + N_*lx_cells* ny_;
+                    fl_Fk_out<<nx<<"  "<<ny_<<"  "<<F_mat(band, n_).real()<<"  "<<F_mat(band, n_).imag()<<
+                               "  "<<(Ux_k*Uy_kpx*conj(Ux_kpy)*conj(Uy_k)).real()<<
+                               "  "<<(Ux_k*Uy_kpx*conj(Ux_kpy)*conj(Uy_k)).imag()<<endl;
+                }
+            }
+            fl_Fk_out<<endl;
+        }
+
+
+        Chern_num[band] = (-1.0 * iota_complex / (2 * PI*N_*N_)) * F_bands[band];
+        // Chern_num_orgnl[band] = (-1.0 * iota_complex / (2 * PI)) * F_bands_orgnl[band];
+        fl_Fk_out<<"#Chern no*2pi*Iota= "<<F_bands[band].real()<<"  "<<F_bands[band].imag()<<endl;
+        cout << "tilde Chern number [" << band << "] = " << Chern_num[band].real() << "        " << Chern_num[band].imag() << endl;
+        //  cout << "Chern number [" << band << "] = " << Chern_num_orgnl[band].real() << " " << Chern_num_orgnl[band].imag() << endl;
+
+    }
 
 }
 
@@ -652,6 +805,10 @@ void Kspace_calculation_TL::Get_Bands(){
     File_Out_Bands2 = "Bands_Path2_" + string(temp_char) +".txt";
     ofstream file_out_bands2(File_Out_Bands2.c_str());
 
+    string File_Out_Bands3;
+    File_Out_Bands3 = "Bands_All_k_" + string(temp_char) +".txt";
+    ofstream file_out_bands3(File_Out_Bands3.c_str());
+
     int k_index;
     int kx_i, ky_i;
 
@@ -786,6 +943,26 @@ void Kspace_calculation_TL::Get_Bands(){
             file_out_bands2<<Eigenvalues_[2*UnitCellSize_x*UnitCellSize_y*k_index + band]<<"   ";
         }
         file_out_bands2<<endl;
+    }
+
+
+
+    for(int k1_=0;k1_<=lx_cells;k1_++){
+        for(int k2_=0;k2_<=ly_cells;k2_++){
+
+            int k1_temp = k1_%lx_cells;
+            int k2_temp = k2_%ly_cells;
+            k_index=Coordinates_.Ncell(k1_temp, k2_temp);
+
+            file_out_bands3<<k_index<<"  "<<k1_<<"  "<<k2_<<"  ";
+            for(int band=0;band<2*UnitCellSize_x*UnitCellSize_y;band++){
+                file_out_bands3<<Eigenvalues_[2*UnitCellSize_x*UnitCellSize_y*k_index + band]<<"   ";
+            }
+            file_out_bands3<<endl;
+
+        }
+        file_out_bands3<<endl;
+
     }
 
 }
@@ -1392,6 +1569,7 @@ double Kspace_calculation_TL::random1(){
 void Kspace_calculation_TL::Initialize()
 {
 
+
     cout<<"Parameters_.FockType = '" << Parameters_.FockType<<"'"<<endl;
     ly_ = Parameters_.ly;
     lx_ = Parameters_.lx;
@@ -1454,93 +1632,258 @@ void Kspace_calculation_TL::Initialize()
 
     if(!Parameters_.Read_OPs){
 
-        //Hartree Terms
-        for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
-            for(int sigma=0;sigma<2;sigma++){
-                OPs_.value.push_back(complex<double> (random1(),0.0));
-                //OPs_.value.push_back(complex<double> (0.2,0.0));
 
-                OPs_new_.value.push_back(0.0);
+        if(!Parameters_.Using_Initial_Ansatz){
+            //Hartree Terms
+            for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+                for(int sigma=0;sigma<2;sigma++){
+                    OPs_.value.push_back(complex<double> (random1(),0.0));
+                    //OPs_.value.push_back(complex<double> (0.2,0.0));
 
-                row_temp= 0*(2*S_) + alpha + sigma*S_;
-                col_temp=row_temp;
+                    OPs_new_.value.push_back(0.0);
 
-                OPs_.rows.push_back(row_temp);OPs_new_.rows.push_back(row_temp);
-                OPs_.columns.push_back(col_temp);OPs_new_.columns.push_back(col_temp);
+                    row_temp= 0*(2*S_) + alpha + sigma*S_;
+                    col_temp=row_temp;
 
-                SI_to_ind[col_temp + row_temp*(ncells_*2*S_)] = OPs_.value.size()-1;
+                    OPs_.rows.push_back(row_temp);OPs_new_.rows.push_back(row_temp);
+                    OPs_.columns.push_back(col_temp);OPs_new_.columns.push_back(col_temp);
 
+                    SI_to_ind[col_temp + row_temp*(ncells_*2*S_)] = OPs_.value.size()-1;
+
+                }
             }
-        }
 
 
-        //Fock Terms
-        if(!Parameters_.Just_Hartree){
+            //Fock Terms
+            if(!Parameters_.Just_Hartree){
 
-            bool check_;
-            for(int cell_=0;cell_<ncells_;cell_++){
-                for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
-                    for(int sigma=0;sigma<2;sigma++){
-                        for(int alpha_p=0;alpha_p<UnitCellSize_x*UnitCellSize_y;alpha_p++){
-                            for(int sigma_p=0;sigma_p<2;sigma_p++){
+                bool check_;
+                for(int cell_=0;cell_<ncells_;cell_++){
+                    for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+                        for(int sigma=0;sigma<2;sigma++){
+                            for(int alpha_p=0;alpha_p<UnitCellSize_x*UnitCellSize_y;alpha_p++){
+                                for(int sigma_p=0;sigma_p<2;sigma_p++){
 
-                                if(Parameters_.FockType=="Onsite_Intra_Inter"){
-                                    if(cell_==0){
-                                        check_= (alpha_p + sigma_p*(UnitCellSize_x*UnitCellSize_y)) > (alpha + sigma*(UnitCellSize_x*UnitCellSize_y));
+                                    if(Parameters_.FockType=="Onsite_Intra_Inter"){
+                                        if(cell_==0){
+                                            check_= (alpha_p + sigma_p*(UnitCellSize_x*UnitCellSize_y)) > (alpha + sigma*(UnitCellSize_x*UnitCellSize_y));
+                                        }
+                                        else{
+                                            check_ =(alpha_p + sigma_p*(UnitCellSize_x*UnitCellSize_y)) >= (alpha + sigma*(UnitCellSize_x*UnitCellSize_y));
+                                        }
                                     }
-                                    else{
-                                        check_ =(alpha_p + sigma_p*(UnitCellSize_x*UnitCellSize_y)) >= (alpha + sigma*(UnitCellSize_x*UnitCellSize_y));
-                                    }
-                                }
 
 
-                                if(Parameters_.FockType=="Onsite_Intra"){
-                                    if(cell_==0){
-                                        check_ = (alpha_p + sigma_p*(UnitCellSize_x*UnitCellSize_y)) > (alpha + sigma*(UnitCellSize_x*UnitCellSize_y));
-                                    }
-                                    else{ //cell_!=0
-                                        check_=false;
-                                    }
-                                }
-
-                                if(Parameters_.FockType=="Onsite"){
-                                    if(cell_==0){
-                                        if(alpha_p==alpha){
+                                    if(Parameters_.FockType=="Onsite_Intra"){
+                                        if(cell_==0){
                                             check_ = (alpha_p + sigma_p*(UnitCellSize_x*UnitCellSize_y)) > (alpha + sigma*(UnitCellSize_x*UnitCellSize_y));
                                         }
-                                        else{ //alpha !=alpha_p
+                                        else{ //cell_!=0
                                             check_=false;
                                         }
                                     }
-                                    else{ //cell_!=0
-                                        check_=false;
+
+                                    if(Parameters_.FockType=="Onsite"){
+                                        if(cell_==0){
+                                            if(alpha_p==alpha){
+                                                check_ = (alpha_p + sigma_p*(UnitCellSize_x*UnitCellSize_y)) > (alpha + sigma*(UnitCellSize_x*UnitCellSize_y));
+                                            }
+                                            else{ //alpha !=alpha_p
+                                                check_=false;
+                                            }
+                                        }
+                                        else{ //cell_!=0
+                                            check_=false;
+                                        }
                                     }
+
+                                    if( check_ ){
+
+                                        row_temp = 0*(2*S_) + alpha + sigma*S_;
+                                        col_temp = cell_*(2*S_) + alpha_p + sigma_p*S_;
+
+                                        OPs_.value.push_back(complex<double> (random1(),random1()));
+                                        OPs_new_.value.push_back(0.0);
+
+                                        OPs_.rows.push_back(row_temp);OPs_new_.rows.push_back(row_temp);
+                                        OPs_.columns.push_back(col_temp);OPs_new_.columns.push_back(col_temp);
+
+                                        SI_to_ind[col_temp + row_temp*(ncells_*2*S_)] = OPs_.value.size()-1;
+
+
+                                    }
+
                                 }
-
-                                if( check_ ){
-
-                                    row_temp = 0*(2*S_) + alpha + sigma*S_;
-                                    col_temp = cell_*(2*S_) + alpha_p + sigma_p*S_;
-
-                                    OPs_.value.push_back(complex<double> (random1(),random1()));
-                                    OPs_new_.value.push_back(0.0);
-
-                                    OPs_.rows.push_back(row_temp);OPs_new_.rows.push_back(row_temp);
-                                    OPs_.columns.push_back(col_temp);OPs_new_.columns.push_back(col_temp);
-
-                                    SI_to_ind[col_temp + row_temp*(ncells_*2*S_)] = OPs_.value.size()-1;
-
-
-                                }
-
                             }
                         }
                     }
                 }
+
             }
+
 
         }
 
+        else{
+
+            if(Parameters_.Initial_Ansatz_type=="Tetrahedron"){
+
+                /*
+             1: (1.0/sqrt(3))*(1,1,1)=(Sx,Sy,Sz)
+             2: (1.0/sqrt(3))*(1,-1,-1)
+             3: (1.0/sqrt(3))*(-1,1,-1)
+             4: (1.0/sqrt(3))*(-1,-1,1)
+             <n>=0.5
+
+             <n_up>=0.5*<n> + Sz
+             <n_up>=0.5*<n> - Sz
+             <c_up^dag c_dn> = Sx + i*Sy
+            */
+
+                double den_,Sz_,Sx_,Sy_;
+                int alpha_1, alpha_2;
+                double value_temp;
+                // int Site_type;
+                den_=0.5;
+                //            Mat_2_doub den_array, Sx_array, Sy_array, Sz_array;
+                //            den_array.push_back();
+
+                //Hartree Terms
+                for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+
+                    alpha_1 = alpha % UnitCellSize_x; //a = a1 +a2*lx
+                    alpha_2 = (alpha - alpha_1)/UnitCellSize_x;
+
+                    if( (alpha_1%2==0) && (alpha_2%2==0)){
+                        Sx_=(1.0/sqrt(3.0));Sy_=(1.0/sqrt(3.0));Sz_=(1.0/sqrt(3.0));
+                    }
+                    if( (alpha_1%2==1) && (alpha_2%2==0)){
+                        Sx_=(1.0/sqrt(3.0));Sy_=(-1.0/sqrt(3.0));Sz_=(-1.0/sqrt(3.0));
+                    }
+                    if( (alpha_1%2==0) && (alpha_2%2==1)){
+                        Sx_=(-1.0/sqrt(3.0));Sy_=(1.0/sqrt(3.0));Sz_=(-1.0/sqrt(3.0));
+                    }
+                    if( (alpha_1%2==1) && (alpha_2%2==1)){
+                        Sx_=(-1.0/sqrt(3.0));Sy_=(-1.0/sqrt(3.0));Sz_=(1.0/sqrt(3.0));
+                    }
+
+
+                    for(int sigma=0;sigma<2;sigma++){
+
+                        value_temp = 0.5*den_ + (1.0 - (2.0*sigma))*Sz_;
+                        OPs_.value.push_back(complex<double> (value_temp,0.0));
+                        OPs_new_.value.push_back(0.0);
+
+                        row_temp= 0*(2*S_) + alpha + sigma*S_;
+                        col_temp=row_temp;
+
+                        OPs_.rows.push_back(row_temp);OPs_new_.rows.push_back(row_temp);
+                        OPs_.columns.push_back(col_temp);OPs_new_.columns.push_back(col_temp);
+
+                        SI_to_ind[col_temp + row_temp*(ncells_*2*S_)] = OPs_.value.size()-1;
+
+                    }
+
+                }
+
+
+                //Fock Terms
+                if(!Parameters_.Just_Hartree){
+
+                    bool check_;
+                    for(int cell_=0;cell_<ncells_;cell_++){
+                        for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+
+                            alpha_1 = alpha % UnitCellSize_x; //a = a1 +a2*lx
+                            alpha_2 = (alpha - alpha_1)/UnitCellSize_x;
+
+                            if( (alpha_1%2==0) && (alpha_2%2==0)){
+                                Sx_=(1.0/sqrt(3.0));Sy_=(1.0/sqrt(3.0));Sz_=(1.0/sqrt(3.0));
+                            }
+                            if( (alpha_1%2==1) && (alpha_2%2==0)){
+                                Sx_=(1.0/sqrt(3.0));Sy_=(-1.0/sqrt(3.0));Sz_=(-1.0/sqrt(3.0));
+                            }
+                            if( (alpha_1%2==0) && (alpha_2%2==1)){
+                                Sx_=(-1.0/sqrt(3.0));Sy_=(1.0/sqrt(3.0));Sz_=(-1.0/sqrt(3.0));
+                            }
+                            if( (alpha_1%2==1) && (alpha_2%2==1)){
+                                Sx_=(-1.0/sqrt(3.0));Sy_=(-1.0/sqrt(3.0));Sz_=(1.0/sqrt(3.0));
+                            }
+
+
+                            for(int sigma=0;sigma<2;sigma++){
+                                for(int alpha_p=0;alpha_p<UnitCellSize_x*UnitCellSize_y;alpha_p++){
+                                    for(int sigma_p=0;sigma_p<2;sigma_p++){
+
+                                        if(Parameters_.FockType=="Onsite_Intra_Inter"){
+                                            if(cell_==0){
+                                                check_= (alpha_p + sigma_p*(UnitCellSize_x*UnitCellSize_y)) > (alpha + sigma*(UnitCellSize_x*UnitCellSize_y));
+                                            }
+                                            else{
+                                                check_ =(alpha_p + sigma_p*(UnitCellSize_x*UnitCellSize_y)) >= (alpha + sigma*(UnitCellSize_x*UnitCellSize_y));
+                                            }
+                                        }
+
+
+                                        if(Parameters_.FockType=="Onsite_Intra"){
+                                            if(cell_==0){
+                                                check_ = (alpha_p + sigma_p*(UnitCellSize_x*UnitCellSize_y)) > (alpha + sigma*(UnitCellSize_x*UnitCellSize_y));
+                                            }
+                                            else{ //cell_!=0
+                                                check_=false;
+                                            }
+                                        }
+
+                                        if(Parameters_.FockType=="Onsite"){
+                                            if(cell_==0){
+                                                if(alpha_p==alpha){
+                                                    check_ = (alpha_p + sigma_p*(UnitCellSize_x*UnitCellSize_y)) > (alpha + sigma*(UnitCellSize_x*UnitCellSize_y));
+                                                }
+                                                else{ //alpha !=alpha_p
+                                                    check_=false;
+                                                }
+                                            }
+                                            else{ //cell_!=0
+                                                check_=false;
+                                            }
+                                        }
+
+                                        if( check_ ){
+
+                                            row_temp = 0*(2*S_) + alpha + sigma*S_;
+                                            col_temp = cell_*(2*S_) + alpha_p + sigma_p*S_;
+
+                                            if(!(Parameters_.FockType=="Onsite")){
+                                                OPs_.value.push_back(complex<double> (random1(),random1()));
+                                            }
+                                            else{
+                                                OPs_.value.push_back(complex<double> (Sx_,Sy_));
+                                            }
+
+                                            OPs_new_.value.push_back(0.0);
+
+                                            OPs_.rows.push_back(row_temp);OPs_new_.rows.push_back(row_temp);
+                                            OPs_.columns.push_back(col_temp);OPs_new_.columns.push_back(col_temp);
+
+                                            SI_to_ind[col_temp + row_temp*(ncells_*2*S_)] = OPs_.value.size()-1;
+
+
+                                        }
+
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                }
+
+
+            }
+
+
+
+        }
     }
 
     else{
@@ -1930,6 +2273,52 @@ void Kspace_calculation_TL::Create_Kspace_Spectrum(){
             }
 
 
+            //Onsite Energy: Tetrahedron, temporary
+            for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+                int alpha_1 = alpha % UnitCellSize_x; //a = a1 +a2*lx
+                int alpha_2 = (alpha - alpha_1)/UnitCellSize_x;
+                double val_temp;
+                if( (alpha_1%2==0) && (alpha_2%2==0)){
+                   val_temp=0.01;
+                }
+                if( (alpha_1%2==1) && (alpha_2%2==0)){
+                    val_temp=0.02;
+                }
+                if( (alpha_1%2==0) && (alpha_2%2==1)){
+                    val_temp=0.03;
+                }
+                if( (alpha_1%2==1) && (alpha_2%2==1)){
+                    val_temp=0.04;
+                }
+
+                for(int spin1=0;spin1<2;spin1++){
+                        row_ = alpha + spin1*(UnitCellSize_x*UnitCellSize_y);
+                        col_=row_;
+
+                        row_OP = 0*(2*UnitCellSize_x*UnitCellSize_y) + alpha + spin1*(UnitCellSize_x*UnitCellSize_y);
+                        col_OP = 0*(2*UnitCellSize_x*UnitCellSize_y) + alpha + spin1*(UnitCellSize_x*UnitCellSize_y);
+                        index_OP = SI_to_ind[col_OP + row_OP*(2*ncells_*UnitCellSize_x*UnitCellSize_y)];
+
+                        Ham_(row_,col_) += val_temp;
+
+                }
+            }
+
+
+
+
+            //Magnetic field: Tetrahedron, temporary
+//            for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+
+//                for(int spin1=0;spin1<2;spin1++){
+//                        row_ = alpha + spin1*(UnitCellSize_x*UnitCellSize_y);
+//                        col_=row_;
+
+//                        Ham_(row_,col_) += 0.05*(1.0 - (2.0*spin1));
+
+//                }
+//            }
+
 
             //Interaction:Hartree
             //On-site Hartree
@@ -2085,6 +2474,290 @@ void Kspace_calculation_TL::Create_Kspace_Spectrum(){
 }
 
 
+
+
+void Kspace_calculation_TL::Create_Kspace_Spectrum_in_ntimes_brillouin_zone(int N_){
+
+
+    int no_of_bands = 2*UnitCellSize_x*UnitCellSize_y;;
+    Eigvectors_.resize(ncells_*no_of_bands*N_*N_);
+    Eigenvalues_.resize(ncells_*no_of_bands*N_*N_);
+    for(int i=0;i<ncells_*no_of_bands*N_*N_;i++){
+        Eigvectors_[i].resize(no_of_bands); //Eigenvector number
+    }
+
+    Kx_values.resize(ncells_*N_*N_);
+    Ky_values.resize(ncells_*N_*N_);
+
+
+
+    int row_, col_;
+    int row_OP, col_OP, index_OP;
+    int UP_, DOWN_;
+    UP_=0;DOWN_=1;
+    int spin_bar;
+    int k_index;
+    double k1x_val, k2x_val, k1y_val, k2y_val;
+    double fac_;
+    complex<double> OP_value;
+
+
+    for(int k1=0;k1<N_*lx_cells;k1++){
+        k1x_val = (2.0*PI*k1)/(1.0*lx_cells);
+        k1y_val = ((2.0*PI*k1)/(1.0*lx_cells))*(-1.0/sqrt(3));
+
+        for(int k2=0;k2<N_*ly_cells;k2++){
+            k2x_val = 0.0;
+            k2y_val = ((2.0*PI*k2)/(1.0*ly_cells))*(2.0/sqrt(3));
+
+            k_index = k1 + N_*lx_cells*k2; //Coordinates_.Ncell(k1,k2);
+            Kx_values[k_index]=k1x_val + k2x_val;
+            Ky_values[k_index]=k1y_val + k2y_val;
+
+
+            Ham_.fill(0.0);
+
+
+            //Hoppings
+            for(int alpha_p=0;alpha_p<UnitCellSize_x*UnitCellSize_y;alpha_p++){
+                for(int sigma_p=0;sigma_p<2;sigma_p++){
+                    row_ = alpha_p + sigma_p*(UnitCellSize_x*UnitCellSize_y);
+
+                    for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+                        for(int sigma=0;sigma<2;sigma++){
+                            col_ = alpha + sigma*(UnitCellSize_x*UnitCellSize_y);
+
+                            Ham_(row_, col_) += h_KE(alpha_p, sigma_p, alpha, sigma, k1, k2);
+                        }
+                    }
+                }
+            }
+
+
+            //Anisotropy
+            for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+                for(int spin1=0;spin1<2;spin1++){
+                    for(int spin2=0;spin2<2;spin2++){
+
+                        row_ = alpha + spin1*(UnitCellSize_x*UnitCellSize_y);
+                        col_=row_;
+
+                        row_OP = 0*(2*UnitCellSize_x*UnitCellSize_y) + alpha + spin2*(UnitCellSize_x*UnitCellSize_y);
+                        col_OP = 0*(2*UnitCellSize_x*UnitCellSize_y) + alpha + spin2*(UnitCellSize_x*UnitCellSize_y);
+                        index_OP = SI_to_ind[col_OP + row_OP*(2*ncells_*UnitCellSize_x*UnitCellSize_y)];
+
+                        fac_ = 1.0 - (2.0*abs(spin1-spin2)); //i.e 0 --> 1, 1 --> -1
+
+                        Ham_(row_,col_) += (-1.0/2.0)*Parameters_.AnisotropyZ*fac_*OPs_.value[index_OP];
+                    }
+                }
+            }
+
+
+            //Onsite Energy: Tetrahedron, temporary
+            for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+                int alpha_1 = alpha % UnitCellSize_x; //a = a1 +a2*lx
+                int alpha_2 = (alpha - alpha_1)/UnitCellSize_x;
+                double val_temp;
+                if( (alpha_1%2==0) && (alpha_2%2==0)){
+                   val_temp=0.01;
+                }
+                if( (alpha_1%2==1) && (alpha_2%2==0)){
+                    val_temp=0.02;
+                }
+                if( (alpha_1%2==0) && (alpha_2%2==1)){
+                    val_temp=0.03;
+                }
+                if( (alpha_1%2==1) && (alpha_2%2==1)){
+                    val_temp=0.04;
+                }
+
+                for(int spin1=0;spin1<2;spin1++){
+                        row_ = alpha + spin1*(UnitCellSize_x*UnitCellSize_y);
+                        col_=row_;
+
+                        row_OP = 0*(2*UnitCellSize_x*UnitCellSize_y) + alpha + spin1*(UnitCellSize_x*UnitCellSize_y);
+                        col_OP = 0*(2*UnitCellSize_x*UnitCellSize_y) + alpha + spin1*(UnitCellSize_x*UnitCellSize_y);
+                        index_OP = SI_to_ind[col_OP + row_OP*(2*ncells_*UnitCellSize_x*UnitCellSize_y)];
+
+                        Ham_(row_,col_) += val_temp;
+
+                }
+            }
+
+
+
+            //Magnetic field: Tetrahedron, temporary
+//            for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+
+//                for(int spin1=0;spin1<2;spin1++){
+//                        row_ = alpha + spin1*(UnitCellSize_x*UnitCellSize_y);
+//                        col_=row_;
+
+//                        Ham_(row_,col_) += 0.05*(1.0 - (2.0*spin1));
+
+//                }
+//            }
+
+
+            //Interaction:Hartree
+            //On-site Hartree
+            for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+                for(int spin=0;spin<2;spin++){
+                    spin_bar = (spin +1 )%2;
+                    row_ = alpha + spin*(UnitCellSize_x*UnitCellSize_y);
+                    col_=row_;
+
+                    row_OP = 0*(2*UnitCellSize_x*UnitCellSize_y) + alpha + spin_bar*(UnitCellSize_x*UnitCellSize_y);
+                    col_OP = 0*(2*UnitCellSize_x*UnitCellSize_y) + alpha + spin_bar*(UnitCellSize_x*UnitCellSize_y);
+                    index_OP = SI_to_ind[col_OP + row_OP*(2*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                    Ham_(row_,col_) += Parameters_.U0*OPs_.value[index_OP];
+                }
+            }
+
+            //Intra-Cell Hartree
+            for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+                for(int spin=0;spin<2;spin++){
+                    for(int alpha_p=0;alpha_p<UnitCellSize_x*UnitCellSize_y;alpha_p++){
+                        if(alpha != alpha_p){
+                            for(int spin_p=0;spin_p<2;spin_p++){
+
+                                row_ = alpha_p + spin_p*(UnitCellSize_x*UnitCellSize_y);
+                                col_=row_;
+
+                                row_OP = 0*(2*UnitCellSize_x*UnitCellSize_y) + alpha + spin*(UnitCellSize_x*UnitCellSize_y);
+                                col_OP = 0*(2*UnitCellSize_x*UnitCellSize_y) + alpha + spin*(UnitCellSize_x*UnitCellSize_y);
+                                index_OP = SI_to_ind[col_OP + row_OP*(2*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                Ham_(row_,col_) += IntraCell_U(alpha, alpha_p)*OPs_.value[index_OP];
+                            }
+                        }
+                    }
+                }
+            }
+
+            //Inter-Cell Hartree
+            for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+                for(int spin=0;spin<2;spin++){
+                    for(int alpha_p=0;alpha_p<UnitCellSize_x*UnitCellSize_y;alpha_p++){
+                        for(int spin_p=0;spin_p<2;spin_p++){
+
+                            row_ = alpha_p + spin_p*(UnitCellSize_x*UnitCellSize_y);
+                            col_=row_;
+
+                            row_OP = 0*(2*UnitCellSize_x*UnitCellSize_y) + alpha + spin*(UnitCellSize_x*UnitCellSize_y);
+                            col_OP = 0*(2*UnitCellSize_x*UnitCellSize_y) + alpha + spin*(UnitCellSize_x*UnitCellSize_y);
+                            index_OP = SI_to_ind[col_OP + row_OP*(2*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                            Ham_(row_,col_) += U_Bar(alpha, alpha_p)*OPs_.value[index_OP];
+                        }
+                    }
+                }
+            }
+
+
+
+            //Interaction:Fock
+            if(!Parameters_.Just_Hartree){
+
+                //Onsite-Fock
+                if( (Parameters_.FockType=="Onsite" || Parameters_.FockType=="Onsite_Intra") || Parameters_.FockType=="Onsite_Intra_Inter" ){
+                    for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+                        for(int spin=0;spin<2;spin++){
+                            spin_bar = (spin +1 )%2;
+                            row_ = alpha + spin*(UnitCellSize_x*UnitCellSize_y);
+                            col_= alpha + spin_bar*(UnitCellSize_x*UnitCellSize_y);
+
+                            row_OP = 0*(2*UnitCellSize_x*UnitCellSize_y) + alpha + spin_bar*(UnitCellSize_x*UnitCellSize_y);
+                            col_OP = 0*(2*UnitCellSize_x*UnitCellSize_y) + alpha + spin*(UnitCellSize_x*UnitCellSize_y);
+                            if(col_OP>=row_OP){
+                                index_OP = SI_to_ind[col_OP + row_OP*(2*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                OP_value=OPs_.value[index_OP];
+                            }
+                            else{
+                                index_OP = SI_to_ind[row_OP + col_OP*(2*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                OP_value= conj(OPs_.value[index_OP]);
+                            }
+
+                            Ham_(row_,col_) += -1.0*Parameters_.U0*OP_value;
+
+                        }
+                    }
+                }
+
+                //Intra-Fock
+                if( Parameters_.FockType=="Onsite_Intra" || Parameters_.FockType=="Onsite_Intra_Inter" ){
+
+                    for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+                        for(int spin=0;spin<2;spin++){
+                            for(int alpha_p=0;alpha_p<UnitCellSize_x*UnitCellSize_y;alpha_p++){
+                                if(alpha != alpha_p){
+                                    for(int spin_p=0;spin_p<2;spin_p++){
+
+                                        row_ = alpha_p + spin_p*(UnitCellSize_x*UnitCellSize_y);
+                                        col_= alpha + spin*(UnitCellSize_x*UnitCellSize_y);
+
+                                        col_OP = 0*(2*UnitCellSize_x*UnitCellSize_y) + alpha_p + spin_p*(UnitCellSize_x*UnitCellSize_y);
+                                        row_OP = 0*(2*UnitCellSize_x*UnitCellSize_y) + alpha + spin*(UnitCellSize_x*UnitCellSize_y);
+
+                                        if(col_OP>=row_OP){
+                                            index_OP = SI_to_ind[col_OP + row_OP*(2*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                            OP_value=OPs_.value[index_OP];
+                                        }
+                                        else{
+                                            index_OP = SI_to_ind[row_OP + col_OP*(2*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                            OP_value= conj(OPs_.value[index_OP]);
+                                        }
+
+                                        Ham_(row_,col_) += -1.0*IntraCell_U(alpha, alpha_p)*OP_value;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if(Parameters_.FockType=="Onsite_Intra_Inter" ){
+
+                    for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+                        for(int spin=0;spin<2;spin++){
+                            for(int alpha_p=0;alpha_p<UnitCellSize_x*UnitCellSize_y;alpha_p++){
+                                for(int spin_p=0;spin_p<2;spin_p++){
+
+                                    row_ = alpha_p + spin_p*(UnitCellSize_x*UnitCellSize_y);
+                                    col_= alpha + spin*(UnitCellSize_x*UnitCellSize_y);
+
+                                    Ham_(row_,col_) += -1.0*V_fock(alpha,spin,alpha_p,spin_p,k1,k2);
+                                }
+                            }
+                        }
+                    }
+                }
+
+
+
+
+            }
+
+
+            char Dflag='V';
+            Diagonalize(Dflag);
+
+
+            for(int row=0;row<2*UnitCellSize_x*UnitCellSize_y;row++){
+                Eigenvalues_[2*UnitCellSize_x*UnitCellSize_y*k_index + row]=eigs_[row];
+                for(int col=0;col<2*UnitCellSize_x*UnitCellSize_y;col++){
+                    Eigvectors_[2*UnitCellSize_x*UnitCellSize_y*k_index + col][row]=Ham_(row,col);
+                }
+            }
+        }
+    }
+
+}
+
+
+
+
+
+
 void Kspace_calculation_TL::SelfConsistency(){
 
 
@@ -2149,8 +2822,10 @@ void Kspace_calculation_TL::SelfConsistency(){
         Get_Bands();
         Calculate_ChernNumbers();
         Create_Current_Oprs();
+
+
         //J_KE_X.print();
-        Hall_conductance();
+        //Hall_conductance();
         Arranging_spectrum();
         mu_=chemicalpotential(Parameters_.Total_Particles);
         cout<<"mu = "<<mu_<<endl;
@@ -2163,6 +2838,14 @@ void Kspace_calculation_TL::SelfConsistency(){
         Get_local_spins();
         Calculate_Nw();
 
+
+        for(int Ntimes=1;Ntimes<=4;Ntimes++){
+            cout<<"Ntimes = "<<Ntimes<<" Spectrum is being created"<<endl;
+         Create_Kspace_Spectrum_in_ntimes_brillouin_zone(Ntimes);
+            cout<<"Ntimes ="<<Ntimes<<" Spectrum done"<<endl;
+         Calculate_ChernNumbers_in_ntimes_brillouin_zone(Ntimes);
+         cout<<"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"<<endl;
+        }
 
 
         string File_Out_Local_OP = Parameters_.File_OPs_out + "_Temp"+string(temp_char) + ".txt";

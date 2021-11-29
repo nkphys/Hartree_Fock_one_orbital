@@ -29,6 +29,8 @@ public:
     void Print_Hopping_Snake3();
     void Print_Hopping_YCn();
     void Print_LongRangeInt_SNAKE3();
+    void Print_RingExchange();
+    void Print_RingExchange_YCn();
 
     void Print_LongRangeInt();
     void Print_Spin_resolved_OnsiteE();
@@ -816,6 +818,102 @@ void Connections_TL::Print_Hopping2(){
 }
 
 
+void Connections_TL::Print_RingExchange(){
+
+
+
+    int ix,iy, i1, i2, i3;
+    string fileout2= "Ring_Exchange_" + Parameters_.File_Hoppings;
+    ofstream file_Hopping_out2(fileout2.c_str());
+    bool Hit_boundary_x, Hit_boundary_y;
+
+    //file_Hopping_out<<"#site_i spin_i site_j spin_j Hopping[site_i,spin_i][site_j,spin_j]"<<endl;
+    for(int i=0;i<ncells_;i++){
+        ix=Coordinates_.indx_cellwise(i);
+        iy=Coordinates_.indy_cellwise(i);
+
+
+        //ring-1
+        i1=Coordinates_.getneigh(i,0);
+        Hit_boundary_x=Coordinates_.HIT_X_BC;
+        Hit_boundary_y=Coordinates_.HIT_Y_BC;
+
+        i2=Coordinates_.getneigh(i,8);
+        Hit_boundary_x= (Hit_boundary_x || Coordinates_.HIT_X_BC);
+        Hit_boundary_y= (Hit_boundary_y || Coordinates_.HIT_Y_BC);
+
+        i3=Coordinates_.getneigh(i,7);
+        Hit_boundary_x= (Hit_boundary_x || Coordinates_.HIT_X_BC);
+        Hit_boundary_y= (Hit_boundary_y || Coordinates_.HIT_Y_BC);
+
+        if( (!(Hit_boundary_x) || Parameters_.PBC_X)
+                &&
+                (!(Hit_boundary_y) || Parameters_.PBC_Y)
+                ){
+            file_Hopping_out2<<i<<" "<<i1<<" "<<i2<<" "<<i3<<"   VAL1"<<endl;
+            file_Hopping_out2<<i<<" "<<i3<<" "<<i1<<" "<<i2<<"   VAL1"<<endl;
+            file_Hopping_out2<<i<<" "<<i2<<" "<<i1<<" "<<i3<<"   VAL2"<<endl;
+
+
+        }
+
+
+        //ring-2
+        i1=Coordinates_.getneigh(i,2);
+        Hit_boundary_x=Coordinates_.HIT_X_BC;
+        Hit_boundary_y=Coordinates_.HIT_Y_BC;
+
+        i2=Coordinates_.getneigh(i,4);
+        Hit_boundary_x= (Hit_boundary_x || Coordinates_.HIT_X_BC);
+        Hit_boundary_y= (Hit_boundary_y || Coordinates_.HIT_Y_BC);
+
+        i3=Coordinates_.getneigh(i,0);
+        Hit_boundary_x= (Hit_boundary_x || Coordinates_.HIT_X_BC);
+        Hit_boundary_y= (Hit_boundary_y || Coordinates_.HIT_Y_BC);
+
+        if( (!(Hit_boundary_x) || Parameters_.PBC_X)
+                &&
+                (!(Hit_boundary_y) || Parameters_.PBC_Y)
+                ){
+            file_Hopping_out2<<i<<" "<<i1<<" "<<i2<<" "<<i3<<"   VAL1"<<endl;
+            file_Hopping_out2<<i<<" "<<i3<<" "<<i1<<" "<<i2<<"   VAL1"<<endl;
+            file_Hopping_out2<<i<<" "<<i2<<" "<<i1<<" "<<i3<<"   VAL2"<<endl;
+
+        }
+
+
+
+        //ring-3
+        i1=Coordinates_.getneigh(i,5);
+        Hit_boundary_x=Coordinates_.HIT_X_BC;
+        Hit_boundary_y=Coordinates_.HIT_Y_BC;
+
+        i2=Coordinates_.getneigh(i,9);
+        Hit_boundary_x= (Hit_boundary_x || Coordinates_.HIT_X_BC);
+        Hit_boundary_y= (Hit_boundary_y || Coordinates_.HIT_Y_BC);
+
+        i3=Coordinates_.getneigh(i,2);
+        Hit_boundary_x= (Hit_boundary_x || Coordinates_.HIT_X_BC);
+        Hit_boundary_y= (Hit_boundary_y || Coordinates_.HIT_Y_BC);
+
+        if( (!(Hit_boundary_x) || Parameters_.PBC_X)
+                &&
+                (!(Hit_boundary_y) || Parameters_.PBC_Y)
+                ){
+            file_Hopping_out2<<i<<" "<<i1<<" "<<i2<<" "<<i3<<"   VAL1"<<endl;
+            file_Hopping_out2<<i<<" "<<i3<<" "<<i1<<" "<<i2<<"   VAL1"<<endl;
+            file_Hopping_out2<<i<<" "<<i2<<" "<<i1<<" "<<i3<<"   VAL2"<<endl;
+
+        }
+
+
+
+    }
+
+
+
+}
+
 
 
 void Connections_TL::Print_Hopping3(){
@@ -859,9 +957,9 @@ void Connections_TL::Print_Hopping3(){
             index_j=j_new+spin_i*ncells_*n_orbs_;
 
             if(j>=i){
-            file_Hopping_out<<HTB_(index_i,index_j).real()<<"   ";}
+                file_Hopping_out<<HTB_(index_i,index_j).real()<<"   ";}
             else{
-            file_Hopping_out<<0.0<<"   ";
+                file_Hopping_out<<0.0<<"   ";
             }
         }
         file_Hopping_out<<endl;
@@ -905,10 +1003,10 @@ void Connections_TL::Print_Hopping_YCn(){
         //+x
         if(ix==(lx_-1)){
             if(Parameters_.PBC_X){
-            ix_neigh_ = (ix + 1)%lx_;
-            iy_neigh_ = iy;
-            ix_neigh.push_back(ix_neigh_);
-            iy_neigh.push_back(iy_neigh_);
+                ix_neigh_ = (ix + 1)%lx_;
+                iy_neigh_ = iy;
+                ix_neigh.push_back(ix_neigh_);
+                iy_neigh.push_back(iy_neigh_);
             }
         }
         else{
@@ -922,10 +1020,10 @@ void Connections_TL::Print_Hopping_YCn(){
         //+y
         if(iy==(ly_-1)){
             if(Parameters_.PBC_Y){
-            ix_neigh_ = ix;
-            iy_neigh_ = (iy+1)%ly_;
-            ix_neigh.push_back(ix_neigh_);
-            iy_neigh.push_back(iy_neigh_);
+                ix_neigh_ = ix;
+                iy_neigh_ = (iy+1)%ly_;
+                ix_neigh.push_back(ix_neigh_);
+                iy_neigh.push_back(iy_neigh_);
             }
         }
         else{
@@ -973,10 +1071,10 @@ void Connections_TL::Print_Hopping_YCn(){
 
 
         cout<<"--------- i = "<<i<<"("<<ix <<","<<iy<<")"<<"-----------"<<endl;
-            for(int neigh_no=0;neigh_no<ix_neigh.size();neigh_no++){
-                cout<< ix_neigh[neigh_no]<<"   "<<iy_neigh[neigh_no]<<"   "<<Coordinates_.Ncell(ix_neigh[neigh_no], iy_neigh[neigh_no])<<endl;
-            }
-         cout<<"================================"<<endl;
+        for(int neigh_no=0;neigh_no<ix_neigh.size();neigh_no++){
+            cout<< ix_neigh[neigh_no]<<"   "<<iy_neigh[neigh_no]<<"   "<<Coordinates_.Ncell(ix_neigh[neigh_no], iy_neigh[neigh_no])<<endl;
+        }
+        cout<<"================================"<<endl;
 
         for(int neigh_no=0;neigh_no<ix_neigh.size();neigh_no++){
             i_neigh = Coordinates_.Ncell(ix_neigh[neigh_no], iy_neigh[neigh_no]);
@@ -1066,17 +1164,17 @@ void Connections_TL::Print_Hopping_YCn(){
 
 
                     if(i>j){
-                    hopp_val = Hopp_mat(i_new,j_new);
+                        hopp_val = Hopp_mat(i_new,j_new);
                     }
                     else{
-                    hopp_val = Hopp_mat(j_new,i_new);
+                        hopp_val = Hopp_mat(j_new,i_new);
                     }
 
                     if(spin_j!=spin_i){
-                    hopp_val=0.0;
+                        hopp_val=0.0;
                     }
 
-                        file_Hopping_out_HF<<i<<"  "<<spin_i<<"  "<<j<<"  "<<spin_j<<"  "<<hopp_val<<endl;
+                    file_Hopping_out_HF<<i<<"  "<<spin_i<<"  "<<j<<"  "<<spin_j<<"  "<<hopp_val<<endl;
 
                 }
             }
@@ -1087,6 +1185,290 @@ void Connections_TL::Print_Hopping_YCn(){
 
 
 }
+
+
+
+void Connections_TL::Print_RingExchange_YCn(){
+
+
+    Matrix<double> Hopp_mat;
+    Hopp_mat.resize(ncells_*n_orbs_, ncells_*n_orbs_);
+    string fileout= "HoppMatrix_YCn_form_SPINUP" + Parameters_.File_Hoppings;
+    ofstream file_Hopping_out(fileout.c_str());
+
+    int index_i, index_j;
+    int ix, iy, ix_new, iy_new, i_new;
+    int jx, jy, jx_new, jy_new, j_new;
+    int ix_neigh_,iy_neigh_;
+
+
+    //Hopping mat in conventional notation------
+
+    for(int i=0;i<ncells_*n_orbs_;i++){
+        ix = Coordinates_.indx_cellwise(i);
+        iy = Coordinates_.indy_cellwise(i);
+
+
+        Mat_1_int ix_neigh, iy_neigh;
+        int i_neigh;
+
+        //+x
+        if(ix==(lx_-1)){
+            if(Parameters_.PBC_X){
+                ix_neigh_ = (ix + 1)%lx_;
+                iy_neigh_ = iy;
+                ix_neigh.push_back(ix_neigh_);
+                iy_neigh.push_back(iy_neigh_);
+            }
+        }
+        else{
+            ix_neigh_ = (ix + 1);
+            iy_neigh_ = iy;
+            ix_neigh.push_back(ix_neigh_);
+            iy_neigh.push_back(iy_neigh_);
+        }
+
+
+        //+y
+        if(iy==(ly_-1)){
+            if(Parameters_.PBC_Y){
+                ix_neigh_ = ix;
+                iy_neigh_ = (iy+1)%ly_;
+                ix_neigh.push_back(ix_neigh_);
+                iy_neigh.push_back(iy_neigh_);
+            }
+        }
+        else{
+            ix_neigh_ = ix;
+            iy_neigh_ = (iy+1)%ly_;
+            ix_neigh.push_back(ix_neigh_);
+            iy_neigh.push_back(iy_neigh_);
+        }
+
+        //diagonal
+        if(ix%2==0){
+            ix_neigh_ = (ix +1)%lx_;
+            iy_neigh_ = (iy+1)%ly_;
+        }
+        else{
+            ix_neigh_ = (ix+1)%lx_;
+            iy_neigh_ = (iy-1+ly_)%ly_;
+        }
+        if( (iy==(ly_-1)) && (ix==(lx_-1)) ){
+            if(Parameters_.PBC_Y && Parameters_.PBC_X){
+                ix_neigh.push_back(ix_neigh_);
+                iy_neigh.push_back(iy_neigh_);
+            }
+
+        }
+        if((iy==(ly_-1)) && (ix!=(lx_-1)) ){
+            if(Parameters_.PBC_Y){
+                ix_neigh.push_back(ix_neigh_);
+                iy_neigh.push_back(iy_neigh_);
+            }
+
+        }
+        if((iy!=(ly_-1)) && (ix==(lx_-1))  ){
+            if(Parameters_.PBC_X){
+                ix_neigh.push_back(ix_neigh_);
+                iy_neigh.push_back(iy_neigh_);
+            }
+
+        }
+        if((iy!=(ly_-1)) && (ix!=(lx_-1)) ){
+            ix_neigh.push_back(ix_neigh_);
+            iy_neigh.push_back(iy_neigh_);
+        }
+
+
+
+        cout<<"--------- i = "<<i<<"("<<ix <<","<<iy<<")"<<"-----------"<<endl;
+        for(int neigh_no=0;neigh_no<ix_neigh.size();neigh_no++){
+            cout<< ix_neigh[neigh_no]<<"   "<<iy_neigh[neigh_no]<<"   "<<Coordinates_.Ncell(ix_neigh[neigh_no], iy_neigh[neigh_no])<<endl;
+        }
+        cout<<"================================"<<endl;
+
+        for(int neigh_no=0;neigh_no<ix_neigh.size();neigh_no++){
+            i_neigh = Coordinates_.Ncell(ix_neigh[neigh_no], iy_neigh[neigh_no]);
+
+            Hopp_mat(i_neigh,i)=-1.0;
+            Hopp_mat(i,i_neigh)=-1.0;
+        }
+
+
+
+
+    }
+    //-------------------------------------------
+
+
+
+    //file_Hopping_out<<"#site_i spin_i site_j spin_j Hopping[site_i,spin_i][site_j,spin_j]"<<endl;
+
+
+    //Hopping for YC-n------used later in Lanczos----
+    for(int i=0;i<ncells_*n_orbs_;i++){
+        ix = Coordinates_.indx_cellwise(i);
+        iy = Coordinates_.indy_cellwise(i);
+        if(iy%2==0){
+            ix_new=ix;
+        }
+        else{
+            ix_new = (ix);
+        }
+        i_new = Coordinates_.Ncell(ix_new, iy);
+        //index_i=i_new+spin_i*ncells_*n_orbs_;
+
+        for(int j=0;j<ncells_*n_orbs_;j++){
+            jx = Coordinates_.indx_cellwise(j);
+            jy = Coordinates_.indy_cellwise(j);
+
+            if(jy%2==0){
+                jx_new=jx;
+            }
+            else{
+                jx_new = (jx);
+            }
+
+            j_new = Coordinates_.Ncell(jx_new, jy);
+            //index_j=j_new+spin_i*ncells_*n_orbs_;
+
+            file_Hopping_out<<Hopp_mat(i_new,j_new)<<"   ";
+        }
+        file_Hopping_out<<endl;
+    }
+    //----------------------------
+
+
+    //-------------------------------------------------------
+    int i1, i2, i3;
+    string fileout2= "Ring_Exchange_YCn_" + Parameters_.File_Hoppings;
+    ofstream file_Hopping_out2(fileout2.c_str());
+    bool Hit_boundary_x, Hit_boundary_y;
+
+    //file_Hopping_out<<"#site_i spin_i site_j spin_j Hopping[site_i,spin_i][site_j,spin_j]"<<endl;
+    for(int i=0;i<ncells_;i++){
+        ix=Coordinates_.indx_cellwise(i);
+        iy=Coordinates_.indy_cellwise(i);
+
+
+        //ring-1
+        if(ix%2==0){
+            i1=Coordinates_.getneigh(i,4);}
+        else{
+            i1=Coordinates_.getneigh(i,0);
+        }
+        Hit_boundary_x=Coordinates_.HIT_X_BC;
+        Hit_boundary_y=Coordinates_.HIT_Y_BC;
+
+        if(ix%2==0){
+            i2=Coordinates_.getneigh(i,0);}
+        else{
+            i2=Coordinates_.getneigh(i,7);
+        }
+        Hit_boundary_x= (Hit_boundary_x || Coordinates_.HIT_X_BC);
+        Hit_boundary_y= (Hit_boundary_y || Coordinates_.HIT_Y_BC);
+
+        if(ix%2==0){
+            i3=Coordinates_.getneigh(i,3);}
+        else{
+            i3=Coordinates_.getneigh(i,3);
+        }
+        Hit_boundary_x= (Hit_boundary_x || Coordinates_.HIT_X_BC);
+        Hit_boundary_y= (Hit_boundary_y || Coordinates_.HIT_Y_BC);
+
+        if( (!(Hit_boundary_x) || Parameters_.PBC_X)
+                &&
+                (!(Hit_boundary_y) || Parameters_.PBC_Y)
+                ){
+            file_Hopping_out2<<i<<" "<<i1<<" "<<i2<<" "<<i3<<"   VAL1"<<endl;
+            file_Hopping_out2<<i<<" "<<i3<<" "<<i1<<" "<<i2<<"   VAL1"<<endl;
+            file_Hopping_out2<<i<<" "<<i2<<" "<<i1<<" "<<i3<<"   VAL2"<<endl;
+
+
+        }
+
+
+        //ring-2
+        if(ix%2==0){
+            i1=Coordinates_.getneigh(i,2);}
+        else{
+            i1=Coordinates_.getneigh(i,2);
+        }
+        Hit_boundary_x=Coordinates_.HIT_X_BC;
+        Hit_boundary_y=Coordinates_.HIT_Y_BC;
+
+        if(ix%2==0){
+            i2=Coordinates_.getneigh(i,4);}
+        else{
+            i2=Coordinates_.getneigh(i,0);
+        }
+        Hit_boundary_x= (Hit_boundary_x || Coordinates_.HIT_X_BC);
+        Hit_boundary_y= (Hit_boundary_y || Coordinates_.HIT_Y_BC);
+
+        if(ix%2==0){
+            i3=Coordinates_.getneigh(i,0);}
+        else{
+            i3=Coordinates_.getneigh(i,7);
+        }
+        Hit_boundary_x= (Hit_boundary_x || Coordinates_.HIT_X_BC);
+        Hit_boundary_y= (Hit_boundary_y || Coordinates_.HIT_Y_BC);
+
+        if( (!(Hit_boundary_x) || Parameters_.PBC_X)
+                &&
+                (!(Hit_boundary_y) || Parameters_.PBC_Y)
+                ){
+            file_Hopping_out2<<i<<" "<<i1<<" "<<i2<<" "<<i3<<"   VAL1"<<endl;
+            file_Hopping_out2<<i<<" "<<i3<<" "<<i1<<" "<<i2<<"   VAL1"<<endl;
+            file_Hopping_out2<<i<<" "<<i2<<" "<<i1<<" "<<i3<<"   VAL2"<<endl;
+
+        }
+
+
+
+        //ring-3
+        if(ix%2==0){
+            i1=Coordinates_.getneigh(i,5);}
+        else{
+            i1=Coordinates_.getneigh(i,1);
+        }
+        Hit_boundary_x=Coordinates_.HIT_X_BC;
+        Hit_boundary_y=Coordinates_.HIT_Y_BC;
+
+        if(ix%2==0){
+            i2=Coordinates_.getneigh(i,2);}
+        else{
+            i2=Coordinates_.getneigh(i,2);
+        }
+        Hit_boundary_x= (Hit_boundary_x || Coordinates_.HIT_X_BC);
+        Hit_boundary_y= (Hit_boundary_y || Coordinates_.HIT_Y_BC);
+
+        if(ix%2==0){
+            i3=Coordinates_.getneigh(i,4);}
+        else{
+            i3=Coordinates_.getneigh(i,0);
+        }
+        Hit_boundary_x= (Hit_boundary_x || Coordinates_.HIT_X_BC);
+        Hit_boundary_y= (Hit_boundary_y || Coordinates_.HIT_Y_BC);
+
+        if( (!(Hit_boundary_x) || Parameters_.PBC_X)
+                &&
+                (!(Hit_boundary_y) || Parameters_.PBC_Y)
+                ){
+            file_Hopping_out2<<i<<" "<<i1<<" "<<i2<<" "<<i3<<"   VAL1"<<endl;
+            file_Hopping_out2<<i<<" "<<i3<<" "<<i1<<" "<<i2<<"   VAL1"<<endl;
+            file_Hopping_out2<<i<<" "<<i2<<" "<<i1<<" "<<i3<<"   VAL2"<<endl;
+
+        }
+
+
+
+    }
+
+
+
+}
+
 
 
 void Connections_TL::Print_Hopping_Snake3(){

@@ -1,9 +1,9 @@
 #false in X because of OBC in X
 #true in Y because just 2-siters in Y, otherwise OBC just overwrites the same connections with zeros 
 
-PBC=1
-Xsite=12
-Ysite=12
+PBC=0
+Xsite=4
+Ysite=4
 N_Orbs=1
 
 File_Onsite_Energies=TL_Onsite_E_12x12.txt
@@ -28,9 +28,9 @@ d_screening_in_Angstorm=600
 eps_DE=80.0
 
 U0=0
-U1=0.5
-U2=0.3
-U3=0.1
+U1=0
+U2=0
+U3=0
 
 OnSiteE_up0=0.0
 OnSiteE_dn0=0.0

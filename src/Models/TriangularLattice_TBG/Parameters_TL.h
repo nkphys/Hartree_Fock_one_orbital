@@ -30,6 +30,9 @@ public:
     int UnitCellSize_x, UnitCellSize_y;
     bool Just_Hartree;
 
+    bool Using_Initial_Ansatz;
+    string Initial_Ansatz_type;
+
     //For observse
     double beta, mus;
     double eta, domega;
@@ -107,6 +110,16 @@ void Parameters_TL::Initialize(string inputfile_)
     else{
         Just_Hartree=false;
         FockType = matchstring2(inputfile_,"Fock_type");
+    }
+
+    int Using_Initial_Ansatz_int;
+    Using_Initial_Ansatz_int = int(matchstring(inputfile_, "Using_Initial_Ansatz"));
+    if(Using_Initial_Ansatz_int==1){
+       Using_Initial_Ansatz=true;
+       Initial_Ansatz_type=matchstring2(inputfile_,"Initial_Ansatz_type");
+    }
+    else{
+       Using_Initial_Ansatz=false;
     }
 
 
