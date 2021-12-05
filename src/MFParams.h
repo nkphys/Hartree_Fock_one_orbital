@@ -506,7 +506,7 @@ void MFParams::initialize(){
             {
                 stringstream line_temp_ss(line_temp);
                 line_temp_ss >> alpha_i >> alpha_j >> val_OP;
-
+                //cout<<alpha_i<<"  "<<alpha_j<<"  "<<val_OP<<endl;
                 if(Parameters_.Just_Hartree){
                     if(alpha_i==alpha_j){
                         OParams_.value[SI_to_ind[alpha_i + (2*ns_*alpha_j)]]=val_OP;
@@ -517,6 +517,7 @@ void MFParams::initialize(){
                 }
                 else{
                     OParams_.value[SI_to_ind[alpha_i + (2*ns_*alpha_j)]]=val_OP;
+                    //cout<<SI_to_ind[alpha_i + (2*ns_*alpha_j)]<<endl;
                     assert(OParams_.rows[SI_to_ind[alpha_i + (2*ns_*alpha_j)]]==alpha_i);
                     assert(OParams_.columns[SI_to_ind[alpha_i + (2*ns_*alpha_j)]]==alpha_j);
                 }

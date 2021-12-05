@@ -6,7 +6,7 @@ PBC_Y=1
 
 Xsite=12
 Ysite=12
-N_Orbs=2
+N_Orbs=1
 UnitCellSize_x=12
 UnitCellSize_y=12
 

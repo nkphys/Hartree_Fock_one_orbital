@@ -65,7 +65,7 @@ double Hamiltonian::chemicalpotential(double muin,double Particles){
     {
         double n1,N;
         double dMubydN;
-        double nstate = eigs_.size();
+        int nstate = eigs_.size();
         dMubydN = 0.0005*(eigs_[nstate-1] - eigs_[0])/nstate;
         N=Particles;
         //temp=Parameters_.temp;
@@ -110,13 +110,13 @@ double Hamiltonian::chemicalpotential(double muin,double Particles){
         if(1==1){
             mu1=eigs_[0]- (5.0/Parameters_.beta);
             mu2=eigs_[nstate-1] + (5.0/Parameters_.beta);
-            for(int i=0;i<400000;i++){
+            for(int i=0;i<40000;i++){
                 n1=0.0;
                 for(int j=0;j<nstate;j++){
                     n1+=double(1.0/( exp( (eigs_[j]-mu_temp)*Parameters_.beta ) + 1.0));
                 }
                 //cout <<"i  "<< i << "  n1  " << n1 << "  mu  " << mu_out<< endl;
-                if(abs(N-n1)<double(0.000001)){
+                if(abs(N-n1)<double(0.00001)){
                     //cout<<abs(N-n1)<<endl;
                     converged=true;
                     break;

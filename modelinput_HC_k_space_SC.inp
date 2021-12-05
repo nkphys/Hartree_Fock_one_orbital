@@ -32,18 +32,18 @@ LongRange_interaction=1
 a_moire_in_Angstorm=60
 #46.98257888521417500876
 #37.5860
-d_screening_in_Angstorm=600
+d_screening_in_Angstorm=18
 eps_DE=300.0
 
-U0=8.0
-U0_interorb=2.0
-U1=0 2.0 0 0
+U0=16.0
+U0_interorb=7.2
+U1=0 2 0 0
 U2=0 0 0 0
 U3=0 0 0 0
 
 
 OP_only_finite_Int=1
-Truncating_Length_in_am=0.01
+Truncating_Length_in_am=1000
 
 #Only U0: 0*am
 #Upto U1: ~0.577 i.e. am/sqrt(3)
@@ -61,7 +61,7 @@ Fixing_mu=0
 Mu_value=100
 
 
-No_of_SelfConsistency_iters=1000
+No_of_SelfConsistency_iters=0
 Convergence_Error=0.00001
 RandomSeed=21
 alpha_OP=0.5

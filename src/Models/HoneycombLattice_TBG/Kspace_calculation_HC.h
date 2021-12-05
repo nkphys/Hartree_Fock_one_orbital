@@ -106,7 +106,6 @@ public:
     double kick_while_cooling;
 
     double Global_Eps;
-
     bool OP_only_finite_Int;
 
 

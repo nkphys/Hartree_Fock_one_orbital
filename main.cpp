@@ -135,6 +135,7 @@ int main(int argc, char *argv[]) {
             Connections_HC_.InteractionsCreate();
             Connections_HC_.Print_LongRangeInt();
             Connections_HC_.Print_Spin_resolved_OnsiteE();
+            Connections_HC_.Interactions_Sorting();
 
             Coordinates_HC Coordinates_HC_UC_(Parameters_HC_.lx/Parameters_HC_.UnitCellSize_x, Parameters_HC_.ly/Parameters_HC_.UnitCellSize_y, 1);
 

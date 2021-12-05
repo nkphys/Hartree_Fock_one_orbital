@@ -190,9 +190,11 @@ void Parameters_TL::Initialize(string inputfile_)
         double Read_OPs_double=double(matchstring(inputfile_,"Read_initial_OPvalues"));
         if(Read_OPs_double==1.0){
             Read_OPs=true;
+            cout<<"Reading initail OPs"<<endl;
         }
         else{
             Read_OPs=false;
+
         }
     }
     //------------------------------------------------

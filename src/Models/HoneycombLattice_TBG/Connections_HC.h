@@ -29,6 +29,7 @@ public:
     void Print_LongRangeInt();
     void Print_Spin_resolved_OnsiteE();
     void InteractionsCreate();                             //::DONE
+    void Interactions_Sorting();
     void Check_Hermiticity();                              //::DONE
     void Check_up_down_symmetry();                         //::DONE
     void HTBCreate();                                      //::DONE
@@ -630,18 +631,18 @@ void Connections_HC::InteractionsCreate()
                         //cout <<l<<"  "<<m<<"  "<<r1_<<"   "<<r2_<<"   "<<dis_<<endl;
                         //(14.3952)*( (1.0/(x*62.6434))  - (1.0/(sqrt( (x*x*62.6434*62.6434)  + d*d)))  )
 
-                       // U_val = ((14.3952*1000)/Parameters_.eps_DE)*( (1.0/(dis_*Parameters_.a_moire))  -
-                       //                                               (1.0/(sqrt( (dis_*dis_*Parameters_.a_moire*Parameters_.a_moire)
-                       //                                                           + Parameters_.d_screening*Parameters_.d_screening)))  );
+                        // U_val = ((14.3952*1000)/Parameters_.eps_DE)*( (1.0/(dis_*Parameters_.a_moire))  -
+                        //                                               (1.0/(sqrt( (dis_*dis_*Parameters_.a_moire*Parameters_.a_moire)
+                        //                                                           + Parameters_.d_screening*Parameters_.d_screening)))  );
 
 
                         if(dis_<=Parameters_.Truncating_Length_in_am){
-                        U_val = Parameters_.U0_interorb*( (1.0/(dis_*Parameters_.a_moire))  -
-                                             (1.0/(sqrt( (dis_*dis_*Parameters_.a_moire*Parameters_.a_moire)
-                                             + Parameters_.d_screening*Parameters_.d_screening)))  )*
-                                (1.0 /   (  ( (1.0/(dis_min*Parameters_.a_moire))  -
-                                              (1.0/(sqrt( (dis_min*dis_min*Parameters_.a_moire*Parameters_.a_moire)
-                                              + Parameters_.d_screening*Parameters_.d_screening)))  )  ));
+                            U_val = Parameters_.U0_interorb*( (1.0/(dis_*Parameters_.a_moire))  -
+                                                              (1.0/(sqrt( (dis_*dis_*Parameters_.a_moire*Parameters_.a_moire)
+                                                                          + Parameters_.d_screening*Parameters_.d_screening)))  )*
+                                    (1.0 /   (  ( (1.0/(dis_min*Parameters_.a_moire))  -
+                                                  (1.0/(sqrt( (dis_min*dis_min*Parameters_.a_moire*Parameters_.a_moire)
+                                                              + Parameters_.d_screening*Parameters_.d_screening)))  )  ));
                         }
                         else{
                             U_val=0.0;
@@ -665,6 +666,174 @@ void Connections_HC::InteractionsCreate()
             }
         }
     }
+
+
+} // ----------
+
+
+
+void Connections_HC::Interactions_Sorting()
+{
+
+    Mat_1_int U_neighs;
+    Mat_3_doub U_hoppings;
+    U_neighs.push_back(0);U_neighs.push_back(2);
+    U_hoppings.push_back(Parameters_.U1);U_hoppings.push_back(Parameters_.U1);
+
+
+    double U_val;
+
+    int l, m, a, b;
+    int l1_pos, l2_pos;
+    int m1_pos, m2_pos;
+
+    Mat_1_doub Int_val;
+    Mat_1_doub Dis_val;
+    Mat_1_int SiteInd_val;
+
+    if(Parameters_.LongRange_interaction){
+        cout <<"WARNING: ALWAYS ASSUMED PBC in Long range int, Sorting is performed for plotting U(r) vs r"<<endl;
+        int r1_, r2_;
+        double rx_, ry_;
+        double dis_;
+        double dis_min;
+        Get_minimum_distance_direction(0 ,0, 0, 1, r1_,r2_, dis_min);
+        l=0;
+        l1_pos = Coordinates_.indx_cellwise(l);
+        l2_pos = Coordinates_.indy_cellwise(l);
+        int gamma_l=0;
+
+        //For U[l][m]
+        for(m=0;m<nsites_;m++){
+            m1_pos = Coordinates_.indx_cellwise(m);
+            m2_pos = Coordinates_.indy_cellwise(m);
+
+            for(int gamma_m=0;gamma_m<n_orbs_;gamma_m++){
+
+                a = Coordinates_.Nbasis(l1_pos, l2_pos, gamma_l);
+                b = Coordinates_.Nbasis(m1_pos, m2_pos, gamma_m);
+
+                Get_minimum_distance_direction(l,gamma_l, m,gamma_m, r1_,r2_, dis_);
+
+                //a1 = (1,0) in (x,y)
+                //a2 = (1/2, (sqrt(3)/2)/2)
+                //                rx_ = ((1.0)*(r1_) +  (1.0/2.0)*(r2_));
+                //                ry_ =  (0.0*(r1_) + (sqrt(3.0)/2.0)*(r2_));
+                //                dis_= sqrt(rx_*rx_ + ry_*ry_);
+
+                //cout <<l<<"  "<<m<<"  "<<r1_<<"   "<<r2_<<"   "<<dis_<<endl;
+                //(14.3952)*( (1.0/(x*62.6434))  - (1.0/(sqrt( (x*x*62.6434*62.6434)  + d*d)))  )
+
+                // U_val = ((14.3952*1000)/Parameters_.eps_DE)*( (1.0/(dis_*Parameters_.a_moire))  -
+                //                                               (1.0/(sqrt( (dis_*dis_*Parameters_.a_moire*Parameters_.a_moire)
+                //                                                           + Parameters_.d_screening*Parameters_.d_screening)))  );
+
+
+                if(dis_<=Parameters_.Truncating_Length_in_am){
+
+                    U_val = Parameters_.U0_interorb*( (1.0/(dis_*Parameters_.a_moire))  -
+                                                      (1.0/(sqrt( (dis_*dis_*Parameters_.a_moire*Parameters_.a_moire)
+                                                                  + Parameters_.d_screening*Parameters_.d_screening)))  )*
+                            (1.0 /   (  ( (1.0/(dis_min*Parameters_.a_moire))  -
+                                          (1.0/(sqrt( (dis_min*dis_min*Parameters_.a_moire*Parameters_.a_moire)
+                                                      + Parameters_.d_screening*Parameters_.d_screening)))  )  ));
+                }
+                else{
+                    U_val=0.0;
+                }
+
+
+                // assert(l != m);
+                if (  (l!=m) || (gamma_l!=gamma_m)   )
+                {
+
+                    Int_val.push_back(U_val);
+                    SiteInd_val.push_back(b);
+                    Dis_val.push_back(dis_);
+
+                }
+
+            }
+
+        }
+    }
+
+
+
+
+    //Sorting
+    double large_val=100000;
+    int i_min;
+    double min_val;
+
+    Mat_1_doub Dis_val_sorted;
+    Mat_1_doub Int_val_sorted;
+    Mat_1_int SiteInd_val_sorted;
+
+    for(int j=0;j<Dis_val.size();j++){
+        min_val=large_val;
+        for(int i=0;i<Dis_val.size();i++){
+
+            if(Dis_val[i]<=min_val){
+                min_val=Dis_val[i];
+                i_min=i;
+            }
+        }
+        Dis_val_sorted.push_back(Dis_val[i_min]);
+        Int_val_sorted.push_back(Int_val[i_min]);
+        SiteInd_val_sorted.push_back(SiteInd_val[i_min]);
+
+        Dis_val[i_min]=large_val;
+
+    }
+
+
+    Dis_val.clear();
+    Int_val.clear();
+    SiteInd_val.clear();
+
+    Mat_1_int Degeneracy;
+    int deg_temp;
+
+    Dis_val.push_back(Dis_val_sorted[0]);
+    Int_val.push_back(Int_val_sorted[0]);
+    Degeneracy.resize(1);
+
+    deg_temp=1;
+    for(int i=1;i<Dis_val_sorted.size();i++){
+
+        if(abs(Int_val[Int_val.size()-1] - Int_val_sorted[i])>0.0000001){
+        Dis_val.push_back(Dis_val_sorted[i]);
+        Int_val.push_back(Int_val_sorted[i]);
+        Degeneracy[Degeneracy.size()-1]=deg_temp;
+        Degeneracy.resize(Degeneracy.size()+1);
+        deg_temp=1;
+        }
+        else{
+            deg_temp++;
+        }
+    }
+
+    Degeneracy[Degeneracy.size()-1]=deg_temp;
+
+    string fileout="Sorted_Ur_" + Parameters_.File_LongRange_Ints;
+    ofstream file_out(fileout.c_str());
+    file_out<<"#i r(i) U(r)"<<endl;
+    for(int i=0;i<Dis_val_sorted.size();i++){
+        file_out<<SiteInd_val_sorted[i]<<"   "<<Dis_val_sorted[i]<<"   "<<Int_val_sorted[i]<<endl;
+    }
+
+
+    string fileout2="Sorted2_Ur_" + Parameters_.File_LongRange_Ints;
+    ofstream file_out2(fileout2.c_str());
+    file_out2<<"#i    degeneracy(i)   r(i) U(r)"<<endl;
+    file_out2<<0<<"   "<< 1<<"     "<<0<<"   "<<Parameters_.U0<<endl;
+
+    for(int i=0;i<Dis_val.size();i++){
+        file_out2<<i+1<<"   "<< Degeneracy[i]<<"     "<<Dis_val[i]<<"   "<<Int_val[i]<<endl;
+    }
+
+
 
 
 } // ----------
