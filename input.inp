@@ -1,5 +1,5 @@
-Total_sites=144
-Total No. of particles=144
+Total_sites=48
+Total No. of particles=24
 FixingMu=false
 MuValueFixed=5.0
 RandomSeed=1
@@ -27,7 +27,7 @@ w_minus1=0.1
 wn=0.6
 BroydenSecondMethodCounter=10
 
-U_Onsite=15.0
+U_Onsite=0.0
 #191.816
 
 dw_dos=0.005
@@ -37,7 +37,7 @@ w_max=15.0
 
 No_of_SelfConsistency_iters=10
 Convergence_Error=0.00001
-Read_initial_OPvalues=1
+Read_initial_OPvalues=0
 Read_initial_OPvalues_file=Initial_OPs_ToUse_In_RealSpace.txt
 Write_Final_OPvalues_file=OrderParams_OUT_RS.txt
 

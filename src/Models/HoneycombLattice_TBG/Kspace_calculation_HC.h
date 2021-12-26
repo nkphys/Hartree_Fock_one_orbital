@@ -1168,7 +1168,7 @@ void Kspace_calculation_HC::Get_Energies(){
 
                                                 if( (!OP_only_finite_Int) ||  (abs(Connections_.Hint_(row_, col_)) > Global_Eps )){
 
-                                                E_class_temp +=0.5*Connections_.Hint_(row_,col_)*OP_value2*conj(OP_value2);
+                                                    E_class_temp +=0.5*Connections_.Hint_(row_,col_)*OP_value2*conj(OP_value2);
                                                 }
 
                                             }}
@@ -1701,9 +1701,10 @@ void Kspace_calculation_HC::Initialize()
     double temp_den;
 
     Parameters_.Create_OPs_Ansatz=false;
-    Parameters_.OP_Ansatz_type="120AFM_Wigner";
+    //Parameters_.OP_Ansatz_type="120AFM_Wigner";
     //Parameters_.OP_Ansatz_type="AFM_Wigner";
     //Parameters_.OP_Ansatz_type="NM_Wigner";
+    Parameters_.OP_Ansatz_type="Tetrahedron_n3by4";
 
     if(!Parameters_.Read_OPs){
 
@@ -1803,9 +1804,9 @@ void Kspace_calculation_HC::Initialize()
                                             }
 
                                             if(row_!=col_){
-                                            if( (OP_only_finite_Int) && (abs(Connections_.Hint_(row_, col_)) < Global_Eps )){
-                                                check_=false;
-                                            }
+                                                if( (OP_only_finite_Int) && (abs(Connections_.Hint_(row_, col_)) < Global_Eps )){
+                                                    check_=false;
+                                                }
                                             }
 
                                             if( check_ ){
@@ -2182,6 +2183,225 @@ void Kspace_calculation_HC::Initialize()
                 }
 
             }
+
+
+            //----------
+
+            if(Parameters_.OP_Ansatz_type=="Tetrahedron_n3by4"){
+
+                /*
+             1: (1.0/sqrt(3))*(1,1,1)=(Sx,Sy,Sz)
+             2: (1.0/sqrt(3))*(1,-1,-1)
+             3: (1.0/sqrt(3))*(-1,1,-1)
+             4: (1.0/sqrt(3))*(-1,-1,1)
+             <n>=0.75
+
+             <n_up>=0.5*<n> + Sz
+             <n_up>=0.5*<n> - Sz
+             <c_up^dag c_dn> = Sx + i*Sy
+            */
+
+
+                double den_,Sz_,Sx_,Sy_;
+                int alpha_1, alpha_2;
+                double value_temp;
+                // int Site_type;
+                den_=0.75;
+
+                //Hartree Terms
+                for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+                    alpha_1 = alpha % UnitCellSize_x; //a = a1 +a2*lx
+                    alpha_2 = (alpha - alpha_1)/UnitCellSize_x;
+
+                    for(int gamma=0;gamma<n_orbs_;gamma++){
+
+                        if(gamma==0){
+                            if( (alpha_1%2==0) && (alpha_2%2==0)){  //0
+                                Sx_=(1.0/sqrt(3.0));Sy_=(1.0/sqrt(3.0));Sz_=(1.0/sqrt(3.0));
+                            }
+                            if( (alpha_1%2==1) && (alpha_2%2==0)){   //1
+                                Sx_=(1.0/sqrt(3.0));Sy_=(-1.0/sqrt(3.0));Sz_=(-1.0/sqrt(3.0));
+                            }
+                            if( (alpha_1%2==0) && (alpha_2%2==1)){   //2
+                                Sx_=(-1.0/sqrt(3.0));Sy_=(1.0/sqrt(3.0));Sz_=(-1.0/sqrt(3.0));
+                            }
+                            if( (alpha_1%2==1) && (alpha_2%2==1)){   //3
+                                Sx_=(-1.0/sqrt(3.0));Sy_=(-1.0/sqrt(3.0));Sz_=(1.0/sqrt(3.0));
+                            }
+                        }
+                        else{
+                            assert(gamma==1);
+                            if( (alpha_1%2==0) && (alpha_2%2==0)){  //0
+                                Sx_=(-1.0/sqrt(3.0));Sy_=(-1.0/sqrt(3.0));Sz_=(1.0/sqrt(3.0));
+                            }
+                            if( (alpha_1%2==1) && (alpha_2%2==0)){   //1
+                                Sx_=(-1.0/sqrt(3.0));Sy_=(1.0/sqrt(3.0));Sz_=(-1.0/sqrt(3.0));
+                            }
+                            if( (alpha_1%2==0) && (alpha_2%2==1)){   //2
+                                Sx_=(1.0/sqrt(3.0));Sy_=(-1.0/sqrt(3.0));Sz_=(-1.0/sqrt(3.0));
+                            }
+                            if( (alpha_1%2==1) && (alpha_2%2==1)){  //3
+                                Sx_=(1.0/sqrt(3.0));Sy_=(1.0/sqrt(3.0));Sz_=(1.0/sqrt(3.0));
+                            }
+                        }
+
+                        for(int sigma=0;sigma<2;sigma++){
+
+                            value_temp = 0.5*den_ + (1.0 - (2.0*sigma))*Sz_;
+                            OPs_.value.push_back(complex<double> (value_temp,0.0));
+                            OPs_new_.value.push_back(0.0);
+
+                            row_temp=  alpha + gamma*(S_) +  sigma*(n_orbs_*S_) + 0*(2*n_orbs_*S_);
+                            col_temp=row_temp;
+
+                            OPs_.rows.push_back(row_temp);OPs_new_.rows.push_back(row_temp);
+                            OPs_.columns.push_back(col_temp);OPs_new_.columns.push_back(col_temp);
+                            SI_to_ind[col_temp + row_temp*(ncells_*2*n_orbs_*S_)] = OPs_.value.size()-1;
+
+                        }
+                    }
+                }
+
+
+                //Fock Terms
+                if(!Parameters_.Just_Hartree){
+                    bool check_;
+                    int alpha_p_1, alpha_p_2, d1_org, d2_org;
+                    int row_,col_;
+                    for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+                        alpha_1 = alpha % UnitCellSize_x; //a = a1 +a2*lx
+                        alpha_2 = (alpha - alpha_1)/UnitCellSize_x;
+                        for(int gamma=0;gamma<n_orbs_;gamma++){
+                            if(gamma==0){
+                                if( (alpha_1%2==0) && (alpha_2%2==0)){  //0
+                                    Sx_=(1.0/sqrt(3.0));Sy_=(1.0/sqrt(3.0));Sz_=(1.0/sqrt(3.0));
+                                }
+                                if( (alpha_1%2==1) && (alpha_2%2==0)){   //1
+                                    Sx_=(1.0/sqrt(3.0));Sy_=(-1.0/sqrt(3.0));Sz_=(-1.0/sqrt(3.0));
+                                }
+                                if( (alpha_1%2==0) && (alpha_2%2==1)){   //2
+                                    Sx_=(-1.0/sqrt(3.0));Sy_=(1.0/sqrt(3.0));Sz_=(-1.0/sqrt(3.0));
+                                }
+                                if( (alpha_1%2==1) && (alpha_2%2==1)){   //3
+                                    Sx_=(-1.0/sqrt(3.0));Sy_=(-1.0/sqrt(3.0));Sz_=(1.0/sqrt(3.0));
+                                }
+                            }
+                            else{
+                                assert(gamma==1);
+                                if( (alpha_1%2==0) && (alpha_2%2==0)){  //0
+                                    Sx_=(-1.0/sqrt(3.0));Sy_=(-1.0/sqrt(3.0));Sz_=(1.0/sqrt(3.0));
+                                }
+                                if( (alpha_1%2==1) && (alpha_2%2==0)){   //1
+                                    Sx_=(-1.0/sqrt(3.0));Sy_=(1.0/sqrt(3.0));Sz_=(-1.0/sqrt(3.0));
+                                }
+                                if( (alpha_1%2==0) && (alpha_2%2==1)){   //2
+                                    Sx_=(1.0/sqrt(3.0));Sy_=(-1.0/sqrt(3.0));Sz_=(-1.0/sqrt(3.0));
+                                }
+                                if( (alpha_1%2==1) && (alpha_2%2==1)){  //3
+                                    Sx_=(1.0/sqrt(3.0));Sy_=(1.0/sqrt(3.0));Sz_=(1.0/sqrt(3.0));
+                                }
+                            }
+
+                            for(int sigma=0;sigma<2;sigma++){
+
+                                for(int cell_=0;cell_<ncells_;cell_++){
+                                    for(int alpha_p=0;alpha_p<UnitCellSize_x*UnitCellSize_y;alpha_p++){
+                                        for(int gamma_p=0;gamma_p<n_orbs_;gamma_p++){
+
+
+
+                                            alpha_p_1 = alpha_p % UnitCellSize_x;
+                                            alpha_p_2 = (alpha_p - alpha_p_1)/UnitCellSize_x;
+                                            d1_org = Coordinates_.indx_cellwise(cell_);
+                                            d2_org = Coordinates_.indy_cellwise(cell_);
+                                            row_ = gamma + (0 + alpha_1)*n_orbs_ + (0 + alpha_2)*(n_orbs_*lx_);
+                                            col_ = gamma_p + ((d1_org*UnitCellSize_x) + alpha_p_1)*n_orbs_ + ((d2_org*UnitCellSize_y) + alpha_p_2)*(n_orbs_*lx_);
+
+
+
+
+                                            for(int sigma_p=0;sigma_p<2;sigma_p++){
+
+                                                if(Parameters_.FockType=="Onsite_Intra_Inter"){
+                                                    if(cell_==0){
+                                                        check_= ((alpha_p + gamma_p*(S_) +  sigma_p*(n_orbs_*S_)) > (alpha + gamma*(S_) +  sigma*(n_orbs_*S_)));
+                                                    }
+                                                    else{
+                                                        check_ = ((alpha_p + gamma_p*(S_) +  sigma_p*(n_orbs_*S_)) >= (alpha + gamma*(S_) +  sigma*(n_orbs_*S_)));
+                                                    }
+                                                }
+
+
+                                                if(Parameters_.FockType=="Onsite_Intra"){
+                                                    if(cell_==0){
+                                                        check_ = ((alpha_p + gamma_p*(S_) +  sigma_p*(n_orbs_*S_)) > (alpha + gamma*(S_) +  sigma*(n_orbs_*S_)));
+                                                    }
+                                                    else{ //cell_!=0
+                                                        check_=false;
+                                                    }
+                                                }
+
+                                                if(Parameters_.FockType=="Onsite"){
+                                                    if(cell_==0){
+                                                        if(alpha_p==alpha){
+                                                            check_ = ((alpha_p + gamma_p*(S_) +  sigma_p*(n_orbs_*S_)) > (alpha + gamma*(S_) +  sigma*(n_orbs_*S_)));
+                                                        }
+                                                        else{ //alpha !=alpha_p
+                                                            check_=false;
+                                                        }
+                                                    }
+                                                    else{ //cell_!=0
+                                                        check_=false;
+                                                    }
+                                                }
+
+                                                if(row_!=col_){
+                                                    if( (OP_only_finite_Int) && (abs(Connections_.Hint_(row_, col_)) < Global_Eps )){
+                                                        check_=false;
+                                                    }
+                                                }
+
+                                                if( check_ ){
+
+
+
+                                                    //--------------------
+                                                    row_temp = alpha + gamma*(S_) +  sigma*(n_orbs_*S_) + 0*(2*n_orbs_*S_);
+                                                    col_temp = alpha_p + gamma_p*(S_) +  sigma_p*(n_orbs_*S_) + cell_*(2*n_orbs_*S_);
+
+                                                    if(row_!=col_){
+                                                        OPs_.value.push_back(complex<double> (random1(),random1()));
+                                                    }
+                                                    else{
+                                                        OPs_.value.push_back(complex<double> (Sx_,Sy_));
+                                                    }
+
+                                                    OPs_new_.value.push_back(0.0);
+
+                                                    OPs_.rows.push_back(row_temp);OPs_new_.rows.push_back(row_temp);
+                                                    OPs_.columns.push_back(col_temp);OPs_new_.columns.push_back(col_temp);
+
+                                                    SI_to_ind[col_temp + row_temp*(ncells_*2*n_orbs_*S_)] = OPs_.value.size()-1;
+                                                    //-------------------
+
+
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                }
+
+            }
+
+            //-----------
+
+
+
         }
 
     }
@@ -2705,8 +2925,8 @@ complex<double> Kspace_calculation_HC::V_fock(int alpha, int gamma, int sigma, i
 
         if( (!OP_only_finite_Int) ||  (abs(Connections_.Hint_(row_, col_)) > Global_Eps )){
 
-        temp_val += Connections_.Hint_(row_, col_)*OPs_.value[index_OP]*
-                exp(iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_   ));
+            temp_val += Connections_.Hint_(row_, col_)*OPs_.value[index_OP]*
+                    exp(iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_   ));
         }
 
     }
@@ -2816,6 +3036,20 @@ void Kspace_calculation_HC::Create_Kspace_Spectrum(){
                 }
             }
             */
+
+
+            //Onsite Energies
+            //OnSiteE_up
+            for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+                for(int gamma=0;gamma<n_orbs_;gamma++){
+                    for(int spin1=0;spin1<2;spin1++){
+                        row_ = alpha + gamma*(UnitCellSize_x*UnitCellSize_y)
+                                + spin1*(n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                        col_=row_;
+                        Ham_(row_,col_) += Parameters_.OnSiteE[gamma][spin1];
+                    }
+                }
+            }
 
             //Interaction:Hartree
             //On-site, on same orbital
@@ -2987,7 +3221,7 @@ void Kspace_calculation_HC::Create_Kspace_Spectrum(){
                                     }
 
                                     if( (!OP_only_finite_Int) ||  (abs(Connections_.Hint_(row_U, col_U)) > Global_Eps )){
-                                    Ham_(row_,col_) += -1.0*Parameters_.U0_interorb*OP_value;
+                                        Ham_(row_,col_) += -1.0*Parameters_.U0_interorb*OP_value;
                                     }
 
                                 }
@@ -3039,7 +3273,7 @@ void Kspace_calculation_HC::Create_Kspace_Spectrum(){
 
                                                 if( (!OP_only_finite_Int) ||  (abs(Connections_.Hint_(row_U, col_U)) > Global_Eps )){
 
-                                                Ham_(row_,col_) += -1.0*IntraCell_U(alpha,gamma, alpha_p, gamma_p)*OP_value;
+                                                    Ham_(row_,col_) += -1.0*IntraCell_U(alpha,gamma, alpha_p, gamma_p)*OP_value;
                                                 }
                                             }
                                         }

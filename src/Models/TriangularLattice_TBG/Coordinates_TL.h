@@ -86,7 +86,7 @@ int Coordinates_TL::Ncell(int x, int y){
 
 
 int Coordinates_TL::neigh(int cell, int wneigh){
-    if(cell> (lx_*ly_)-1 || wneigh>=17){
+    if(cell> (lx_*ly_)-1 || wneigh>=18){
         cout<<cell<<"  "<<wneigh<<endl;
         perror("Coordinates_TL.h:getneigh -> ifstatement-10");}
     return neigh_(cell,wneigh);
@@ -113,7 +113,7 @@ void Coordinates_TL::Numbering(){
         }
     }
 
-    neigh_.resize(ncells_,17);
+    neigh_.resize(ncells_,18);
 
 
     //basis labeling
@@ -146,7 +146,7 @@ void Coordinates_TL::Numbering(){
 
     // Neighbors for each unit cell
     for(int i=0;i<ncells_;i++){ 	// ith site
-        for(int j=0;j<17;j++) {		// jth neighbor
+        for(int j=0;j<18;j++) {		// jth neighbor
             neigh_(i,j)=getneigh(i,j);
         }
     }
@@ -156,7 +156,7 @@ void Coordinates_TL::Numbering(){
 
 
 int Coordinates_TL::getneigh(int site,int wneigh){
-    if(site>ncells_-1 || wneigh>17){perror("Coordinates_TL.h:getneigh -> ifstatement-1");}
+    if(site>ncells_-1 || wneigh>18){perror("Coordinates_TL.h:getneigh -> ifstatement-1");}
     int nx=indx_cellwise(site);
     int ny=indy_cellwise(site);
     int mx=0;
@@ -240,6 +240,10 @@ int Coordinates_TL::getneigh(int site,int wneigh){
     if(wneigh==16){ //2MY
         mx=(nx);
         my=(ny-2);
+    }
+    if(wneigh==17){ //2PX PY
+        mx=(nx+2);
+        my=(ny+1);
     }
 
 

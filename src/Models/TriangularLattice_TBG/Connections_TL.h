@@ -41,6 +41,7 @@ public:
     void Print_Ansatz_LocalDen_CDW();
     void Get_minimum_distance_direction(int l,int m,int &r1_, int &r2_);
 
+    int Convert_to_snake3_coordinates_YCn(int i);
 
 
     Parameters_TL &Parameters_;
@@ -969,6 +970,26 @@ void Connections_TL::Print_Hopping3(){
 
 
 
+int Connections_TL::Convert_to_snake3_coordinates_YCn(int i){
+
+    int ix_new, iy_new;
+    int i_new;
+    int ix, iy;
+    ix = Coordinates_.indx_cellwise(i);
+    iy = Coordinates_.indy_cellwise(i);
+
+    if(iy%2==0){
+        ix_new=ix;
+    }
+    else{
+        ix_new = (lx_-1 - ix);
+    }
+    i_new = Coordinates_.Ncell(ix_new, iy);
+
+    return i_new;
+
+}
+
 void Connections_TL::Print_Hopping_YCn(){
 
 
@@ -1126,6 +1147,159 @@ void Connections_TL::Print_Hopping_YCn(){
         file_Hopping_out<<endl;
     }
     //----------------------------
+
+
+
+
+
+
+
+
+
+
+    //----------------------------------------------
+    //-------------------------------------------------------
+    int i1, i2, i3;
+    int i1_new, i2_new, i3_new;
+    string fileout2= "Ring_Exchange_YCn_Snake3_" + Parameters_.File_Hoppings;
+    ofstream file_Hopping_out2(fileout2.c_str());
+    bool Hit_boundary_x, Hit_boundary_y;
+
+    //file_Hopping_out<<"#site_i spin_i site_j spin_j Hopping[site_i,spin_i][site_j,spin_j]"<<endl;
+    for(int i=0;i<ncells_;i++){
+        ix=Coordinates_.indx_cellwise(i);
+        iy=Coordinates_.indy_cellwise(i);
+
+        //ring-1
+        if(iy%2==0){
+            i1=Coordinates_.getneigh(i,4);}
+        else{
+            i1=Coordinates_.getneigh(i,2);
+        }
+        Hit_boundary_x=Coordinates_.HIT_X_BC;
+        Hit_boundary_y=Coordinates_.HIT_Y_BC;
+
+        if(iy%2==0){
+            i2=Coordinates_.getneigh(i,11);}
+        else{
+            i2=Coordinates_.getneigh(i,11);
+        }
+        Hit_boundary_x= (Hit_boundary_x || Coordinates_.HIT_X_BC);
+        Hit_boundary_y= (Hit_boundary_y || Coordinates_.HIT_Y_BC);
+
+        if(iy%2==0){
+            i3=Coordinates_.getneigh(i,2);}
+        else{
+            i3=Coordinates_.getneigh(i,5);
+        }
+        Hit_boundary_x= (Hit_boundary_x || Coordinates_.HIT_X_BC);
+        Hit_boundary_y= (Hit_boundary_y || Coordinates_.HIT_Y_BC);
+
+        if( (!(Hit_boundary_x) || Parameters_.PBC_X)
+                &&
+                (!(Hit_boundary_y) || Parameters_.PBC_Y)
+                ){
+
+            i_new = Convert_to_snake3_coordinates_YCn(i);
+            i1_new = Convert_to_snake3_coordinates_YCn(i1);
+            i2_new = Convert_to_snake3_coordinates_YCn(i2);
+            i3_new = Convert_to_snake3_coordinates_YCn(i3);
+
+            file_Hopping_out2<<i_new<<" "<<i1_new<<" "<<i2_new<<" "<<i3_new<<"   VAL1"<<endl;
+            file_Hopping_out2<<i_new<<" "<<i3_new<<" "<<i1_new<<" "<<i2_new<<"   VAL1"<<endl;
+            file_Hopping_out2<<i_new<<" "<<i2_new<<" "<<i1_new<<" "<<i3_new<<"   VAL2"<<endl;
+
+
+        }
+
+
+        //ring-2
+        if(iy%2==0){
+            i1=Coordinates_.getneigh(i,0);}
+        else{
+            i1=Coordinates_.getneigh(i,0);
+        }
+        Hit_boundary_x=Coordinates_.HIT_X_BC;
+        Hit_boundary_y=Coordinates_.HIT_Y_BC;
+
+        if(iy%2==0){
+            i2=Coordinates_.getneigh(i,17);}
+        else{
+            i2=Coordinates_.getneigh(i,4);
+        }
+        Hit_boundary_x= (Hit_boundary_x || Coordinates_.HIT_X_BC);
+        Hit_boundary_y= (Hit_boundary_y || Coordinates_.HIT_Y_BC);
+
+        if(iy%2==0){
+            i3=Coordinates_.getneigh(i,4);}
+        else{
+            i3=Coordinates_.getneigh(i,2);
+        }
+        Hit_boundary_x= (Hit_boundary_x || Coordinates_.HIT_X_BC);
+        Hit_boundary_y= (Hit_boundary_y || Coordinates_.HIT_Y_BC);
+
+        if( (!(Hit_boundary_x) || Parameters_.PBC_X)
+                &&
+                (!(Hit_boundary_y) || Parameters_.PBC_Y)
+                ){
+            i_new = Convert_to_snake3_coordinates_YCn(i);
+            i1_new = Convert_to_snake3_coordinates_YCn(i1);
+            i2_new = Convert_to_snake3_coordinates_YCn(i2);
+            i3_new = Convert_to_snake3_coordinates_YCn(i3);
+
+            file_Hopping_out2<<i_new<<" "<<i1_new<<" "<<i2_new<<" "<<i3_new<<"   VAL1"<<endl;
+            file_Hopping_out2<<i_new<<" "<<i3_new<<" "<<i1_new<<" "<<i2_new<<"   VAL1"<<endl;
+            file_Hopping_out2<<i_new<<" "<<i2_new<<" "<<i1_new<<" "<<i3_new<<"   VAL2"<<endl;
+        }
+
+
+
+        //ring-3
+        if(iy%2==0){
+            i1=Coordinates_.getneigh(i,7);}
+        else{
+            i1=Coordinates_.getneigh(i,3);
+        }
+        Hit_boundary_x=Coordinates_.HIT_X_BC;
+        Hit_boundary_y=Coordinates_.HIT_Y_BC;
+
+        if(iy%2==0){
+            i2=Coordinates_.getneigh(i,8);}
+        else{
+            i2=Coordinates_.getneigh(i,7);
+        }
+        Hit_boundary_x= (Hit_boundary_x || Coordinates_.HIT_X_BC);
+        Hit_boundary_y= (Hit_boundary_y || Coordinates_.HIT_Y_BC);
+
+        if(iy%2==0){
+            i3=Coordinates_.getneigh(i,0);}
+        else{
+            i3=Coordinates_.getneigh(i,0);
+        }
+        Hit_boundary_x= (Hit_boundary_x || Coordinates_.HIT_X_BC);
+        Hit_boundary_y= (Hit_boundary_y || Coordinates_.HIT_Y_BC);
+
+        if( (!(Hit_boundary_x) || Parameters_.PBC_X)
+                &&
+                (!(Hit_boundary_y) || Parameters_.PBC_Y)
+                ){
+            i_new = Convert_to_snake3_coordinates_YCn(i);
+            i1_new = Convert_to_snake3_coordinates_YCn(i1);
+            i2_new = Convert_to_snake3_coordinates_YCn(i2);
+            i3_new = Convert_to_snake3_coordinates_YCn(i3);
+
+            file_Hopping_out2<<i_new<<" "<<i1_new<<" "<<i2_new<<" "<<i3_new<<"   VAL1"<<endl;
+            file_Hopping_out2<<i_new<<" "<<i3_new<<" "<<i1_new<<" "<<i2_new<<"   VAL1"<<endl;
+            file_Hopping_out2<<i_new<<" "<<i2_new<<" "<<i1_new<<" "<<i3_new<<"   VAL2"<<endl;
+
+        }
+
+
+
+    }
+
+
+    //-----------------------------------------
 
 
     //Hopping file for HF Run-----

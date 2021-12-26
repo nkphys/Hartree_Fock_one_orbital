@@ -2,13 +2,13 @@
 #true in Y because just 2-siters in Y, otherwise OBC just overwrites the same connections with zeros 
 
 PBC_X=1
-PBC_Y=1
+PBC_Y=0
 
-Xsite=12
-Ysite=12
+Xsite=6
+Ysite=8
 N_Orbs=1
-UnitCellSize_x=12
-UnitCellSize_y=12
+UnitCellSize_x=1
+UnitCellSize_y=1
 
 File_Onsite_Energies=TL_Onsite_E_12x12.txt
 File_Hopping_Connections=TL_Hoppings_12x12_OBCXOBC.txt
@@ -20,21 +20,21 @@ TBC_cellsX=1
 TBC_cellsY=1
 
 
-t1=(-3.1,0)
-t2=(0,0)
-t3=(0,0)
+t1=(-1.0,0)
+t2=(-0.0,0)
+t3=(-0.0,0)
 
 #1=(-6.09911,4.5193e-14)
 #2=(-0.226546,1.84609e-13)
 #3=(-0.927747,-5.37348e-14)
 
-LongRange_interaction=1
+LongRange_interaction=0
 a_moire_in_Angstorm=37.58606310817134000700
 #46.98257888521417500876
 #37.5860
 d_screening_in_Angstorm=600
 eps_DE=45.0
-U0=29.3333
+U0=0
 U1=0.0
 U2=0
 U3=0
@@ -73,9 +73,9 @@ OnSiteE_up0=0.0
 OnSiteE_dn0=0.0
 
 Self_consistency_kspace=1
-Total_particles=144
+Total_particles=24
 
-No_of_SelfConsistency_iters=10
+No_of_SelfConsistency_iters=1000
 Convergence_Error=0.000001
 RandomSeed=2
 alpha_OP=0.4
@@ -91,7 +91,7 @@ Just_Hartree=0
 Fock_type=Onsite_Intra_Inter
 #Onsite, Onsite_Intra, Onsite_Intra_Inter
 Read_initial_OPvalues=0
-Read_initial_OPvalues_file=U12_OPd.txt
+Read_initial_OPvalues_file=120_Neel_12x12_OP.txt
 #OUTPUT_OP_PiPi_alongZ.txt
 #OUTPUT_OP_0Pi_alongZ.txt
 #OUTPUT_OP_ZigZag_alongZ.txt

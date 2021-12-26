@@ -2456,6 +2456,8 @@ void Kspace_calculation_TL::Create_Kspace_Spectrum(){
             //            }
 
 
+
+
             //Interaction:Hartree
             //On-site Hartree
             for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
@@ -3021,9 +3023,9 @@ void Kspace_calculation_TL::SelfConsistency(){
 
 
         //Getting ready for next Temperature
-//        Parameters_.Read_OPs=true;
-//        Parameters_.File_OPs_in = Parameters_.File_OPs_out + "_Temp"+string(temp_char) + ".txt";
-//        Initialize();
+        //        Parameters_.Read_OPs=true;
+        //        Parameters_.File_OPs_in = Parameters_.File_OPs_out + "_Temp"+string(temp_char) + ".txt";
+        //        Initialize();
     }
 
 
