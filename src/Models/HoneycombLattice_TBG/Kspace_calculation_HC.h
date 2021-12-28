@@ -1700,11 +1700,12 @@ void Kspace_calculation_HC::Initialize()
 
     double temp_den;
 
-    Parameters_.Create_OPs_Ansatz=false;
+    Parameters_.Create_OPs_Ansatz=true;
     //Parameters_.OP_Ansatz_type="120AFM_Wigner";
     //Parameters_.OP_Ansatz_type="AFM_Wigner";
     //Parameters_.OP_Ansatz_type="NM_Wigner";
-    Parameters_.OP_Ansatz_type="Tetrahedron_n3by4";
+    //Parameters_.OP_Ansatz_type="Tetrahedron_n3by4";
+    Parameters_.OP_Ansatz_type="Tri_Prism_Wigner";
 
     if(!Parameters_.Read_OPs){
 
@@ -2179,6 +2180,222 @@ void Kspace_calculation_HC::Initialize()
                             }
                         }
                     }
+
+                }
+
+            }
+
+
+
+
+
+            //-----------
+            if(Parameters_.OP_Ansatz_type=="Tri_Prism_Wigner"){
+
+                // Using Trigonal Prism  with height=d and eq. triangle edge=a
+
+                /* n=1, s_max=n/2=0.5 for all 6 spins
+                   d/a is free parameter.
+                   "a" is fixed that |S_{i}|=s_max
+
+
+                1, A: (0,-a/sqrt(3), d/2) = (Sx,Sy,Sz)
+                2, B: (a/2,a/(2*sqrt(3)), d/2)
+                3, C: (-a/2, a/(2*sqrt(3)), d/2)
+                4, D: (0,-a/sqrt(3), -d/2)
+                5, E: (a/2,a/(2*sqrt(3)), -d/2)
+                6, F: (-a/2, a/(2*sqrt(3)), -d/2)
+                */
+
+                Mat_1_doub Sz_vals, Sx_vals, Sy_vals;
+                Sz_vals.resize(18);Sx_vals.resize(18);Sy_vals.resize(18);
+
+                double den_;
+                double s_max=0.5;
+                double d_by_a=1.0;
+                double a_;
+                double d_;
+                double Sz_, Sx_, Sy_;
+                int alpha_1, alpha_2;
+                int alpha_eff;
+                double value_temp;
+
+                a_= s_max/(sqrt( (1.0/3.0)  +  (d_by_a*d_by_a*0.25)   ));
+                d_ = a_*d_by_a;
+
+                for(int i_=0;i_<18;i_++){
+                    if(i_==1 || i_==6 || i_==14 ){ //A
+                        Sx_vals[i_]=0.0; Sy_vals[i_]=-1.0*a_*(1.0/sqrt(3.0));Sz_vals[i_]=0.5*d_;
+                    }
+                    if(i_==4 || i_==9 || i_==17 ){ //B
+                        Sx_vals[i_]=a_*0.5; Sy_vals[i_]=0.5*a_*(1.0/sqrt(3.0)); Sz_vals[i_]=0.5*d_;
+                    }
+                    if(i_==3 || i_==11 || i_==16 ){ //C
+                        Sx_vals[i_]=-0.5*a_; Sy_vals[i_]=0.5*a_*(1.0/sqrt(3.0));Sz_vals[i_]=0.5*d_;
+                    }
+
+                    if(i_==5 || i_==10 || i_==15 ){ //D
+                        Sx_vals[i_]=0.0; Sy_vals[i_]=-1.0*a_*(1.0/sqrt(3.0));Sz_vals[i_]=-0.5*d_;
+                    }
+                    if(i_==0 || i_==8 || i_==13 ){ //E
+                        Sx_vals[i_]=a_*0.5; Sy_vals[i_]=0.5*a_*(1.0/sqrt(3.0)); Sz_vals[i_]=-0.5*d_;
+                    }
+                    if(i_==2 || i_==7 || i_==12 ){ //F
+                        Sx_vals[i_]=-0.5*a_; Sy_vals[i_]=0.5*a_*(1.0/sqrt(3.0));Sz_vals[i_]=-0.5*d_;
+                    }
+
+                }
+
+
+                //Hartree Terms
+                for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+
+                    alpha_1 = alpha % UnitCellSize_x; //a = a1 +a2*lx
+                    alpha_2 = (alpha - alpha_1)/UnitCellSize_x;
+
+                    alpha_eff = (alpha_1%3) +  3*(alpha_2%6);
+
+                    for(int sigma=0;sigma<2;sigma++){
+                        for(int gamma=0;gamma<n_orbs_;gamma++){
+                            if(gamma==1){
+                                den_=1.0;
+                                Sz_=Sz_vals[alpha_eff];
+                                value_temp = 0.5*den_ + (1.0 - (2.0*sigma))*Sz_;
+                                OPs_.value.push_back(complex<double> (value_temp,0.0));
+                            }
+                            else{
+                                den_=0.0;
+                                OPs_.value.push_back(complex<double> (0.0,0.0));
+                            }
+
+
+                            OPs_new_.value.push_back(0.0);
+
+                            row_temp=  alpha + gamma*(S_) +  sigma*(n_orbs_*S_) + 0*(2*n_orbs_*S_);
+                            col_temp=row_temp;
+
+                            OPs_.rows.push_back(row_temp);OPs_new_.rows.push_back(row_temp);
+                            OPs_.columns.push_back(col_temp);OPs_new_.columns.push_back(col_temp);
+                            SI_to_ind[col_temp + row_temp*(ncells_*2*n_orbs_*S_)] = OPs_.value.size()-1;
+
+                        }
+                    }
+                }
+
+
+                //Fock Terms
+                if(!Parameters_.Just_Hartree){
+                    bool check_;
+
+                    int alpha_p_1, alpha_p_2, d1_org, d2_org;
+                    int row_,col_;
+                    for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+                        alpha_1 = alpha % UnitCellSize_x; //a = a1 +a2*lx
+                        alpha_2 = (alpha - alpha_1)/UnitCellSize_x;
+
+                        alpha_eff = (alpha_1%3) +  3*(alpha_2%6);
+
+                        for(int gamma=0;gamma<n_orbs_;gamma++){
+                            if(gamma==0){
+                                Sx_=0.0;Sy_=0.0;
+                            }
+                            else{
+                               Sx_=Sx_vals[alpha_eff];
+                               Sy_=Sy_vals[alpha_eff];
+                            }
+
+                            for(int sigma=0;sigma<2;sigma++){
+
+                                for(int cell_=0;cell_<ncells_;cell_++){
+                                    for(int alpha_p=0;alpha_p<UnitCellSize_x*UnitCellSize_y;alpha_p++){
+                                        for(int gamma_p=0;gamma_p<n_orbs_;gamma_p++){
+
+
+
+                                            alpha_p_1 = alpha_p % UnitCellSize_x;
+                                            alpha_p_2 = (alpha_p - alpha_p_1)/UnitCellSize_x;
+                                            d1_org = Coordinates_.indx_cellwise(cell_);
+                                            d2_org = Coordinates_.indy_cellwise(cell_);
+                                            row_ = gamma + (0 + alpha_1)*n_orbs_ + (0 + alpha_2)*(n_orbs_*lx_);
+                                            col_ = gamma_p + ((d1_org*UnitCellSize_x) + alpha_p_1)*n_orbs_ + ((d2_org*UnitCellSize_y) + alpha_p_2)*(n_orbs_*lx_);
+
+
+
+
+                                            for(int sigma_p=0;sigma_p<2;sigma_p++){
+
+                                                if(Parameters_.FockType=="Onsite_Intra_Inter"){
+                                                    if(cell_==0){
+                                                        check_= ((alpha_p + gamma_p*(S_) +  sigma_p*(n_orbs_*S_)) > (alpha + gamma*(S_) +  sigma*(n_orbs_*S_)));
+                                                    }
+                                                    else{
+                                                        check_ = ((alpha_p + gamma_p*(S_) +  sigma_p*(n_orbs_*S_)) >= (alpha + gamma*(S_) +  sigma*(n_orbs_*S_)));
+                                                    }
+                                                }
+
+
+                                                if(Parameters_.FockType=="Onsite_Intra"){
+                                                    if(cell_==0){
+                                                        check_ = ((alpha_p + gamma_p*(S_) +  sigma_p*(n_orbs_*S_)) > (alpha + gamma*(S_) +  sigma*(n_orbs_*S_)));
+                                                    }
+                                                    else{ //cell_!=0
+                                                        check_=false;
+                                                    }
+                                                }
+
+                                                if(Parameters_.FockType=="Onsite"){
+                                                    if(cell_==0){
+                                                        if(alpha_p==alpha){
+                                                            check_ = ((alpha_p + gamma_p*(S_) +  sigma_p*(n_orbs_*S_)) > (alpha + gamma*(S_) +  sigma*(n_orbs_*S_)));
+                                                        }
+                                                        else{ //alpha !=alpha_p
+                                                            check_=false;
+                                                        }
+                                                    }
+                                                    else{ //cell_!=0
+                                                        check_=false;
+                                                    }
+                                                }
+
+                                                if(row_!=col_){
+                                                    if( (OP_only_finite_Int) && (abs(Connections_.Hint_(row_, col_)) < Global_Eps )){
+                                                        check_=false;
+                                                    }
+                                                }
+
+                                                if( check_ ){
+
+
+
+                                                    //--------------------
+                                                    row_temp = alpha + gamma*(S_) +  sigma*(n_orbs_*S_) + 0*(2*n_orbs_*S_);
+                                                    col_temp = alpha_p + gamma_p*(S_) +  sigma_p*(n_orbs_*S_) + cell_*(2*n_orbs_*S_);
+
+                                                    if(row_!=col_){
+                                                        OPs_.value.push_back(complex<double> (0.05*random1(),0.05*random1()));
+                                                    }
+                                                    else{
+                                                        OPs_.value.push_back(complex<double> (Sx_,Sy_));
+                                                    }
+
+                                                    OPs_new_.value.push_back(0.0);
+
+                                                    OPs_.rows.push_back(row_temp);OPs_new_.rows.push_back(row_temp);
+                                                    OPs_.columns.push_back(col_temp);OPs_new_.columns.push_back(col_temp);
+
+                                                    SI_to_ind[col_temp + row_temp*(ncells_*2*n_orbs_*S_)] = OPs_.value.size()-1;
+                                                    //-------------------
+
+
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
 
                 }
 

@@ -8,7 +8,7 @@ Xsite=6
 Ysite=6
 N_Orbs=2
 UnitCellSize_x=3
-UnitCellSize_y=3
+UnitCellSize_y=6
 
 File_Onsite_Energies=TL_Onsite_E_12x12.txt
 File_Hopping_Connections=TL_Hoppings_12x12_OBCXOBC.txt
@@ -32,11 +32,11 @@ LongRange_interaction=1
 a_moire_in_Angstorm=60
 #46.98257888521417500876
 #37.5860
-d_screening_in_Angstorm=18
+d_screening_in_Angstorm=600
 eps_DE=300.0
 
-U0=16.0
-U0_interorb=8.0
+U0=9.0
+U0_interorb=4.5
 U1=0 0 0 0
 U2=0 0 0 0
 U3=0 0 0 0
@@ -59,8 +59,8 @@ Total_particles=36
 Fixing_mu=0
 Mu_value=100
 
-No_of_SelfConsistency_iters=4000
-Convergence_Error=0.00001
+No_of_SelfConsistency_iters=1600
+Convergence_Error=0.0001
 RandomSeed=21
 alpha_OP=0.5
 
@@ -74,9 +74,9 @@ Anderson_Mixing_m=5
 Just_Hartree=0
 Fock_type=Onsite_Intra_Inter
 #Onsite, Onsite_Intra, Onsite_Intra_Inter
-Read_initial_OPvalues=1
-Read_initial_OPvalues_UnitCellsType=3 3
-Read_initial_OPvalues_file=OP_OUTPUT_kspace_Temp0.0001000000.txt
+Read_initial_OPvalues=0
+Read_initial_OPvalues_UnitCellsType=6 6
+Read_initial_OPvalues_file=OUTPUT_ACF.txt
 #OUTPUT_OP_PiPi_alongZ.txt
 #OUTPUT_OP_0Pi_alongZ.txt
 #OUTPUT_OP_ZigZag_alongZ.txt
