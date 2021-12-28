@@ -1705,7 +1705,8 @@ void Kspace_calculation_HC::Initialize()
     //Parameters_.OP_Ansatz_type="AFM_Wigner";
     //Parameters_.OP_Ansatz_type="NM_Wigner";
     //Parameters_.OP_Ansatz_type="Tetrahedron_n3by4";
-    Parameters_.OP_Ansatz_type="Tri_Prism_Wigner";
+    //Parameters_.OP_Ansatz_type="Tri_Prism_Wigner";
+    Parameters_.OP_Ansatz_type="Vertices_12_NonCopl_State_Wigner";
 
     if(!Parameters_.Read_OPs){
 
@@ -2403,6 +2404,270 @@ void Kspace_calculation_HC::Initialize()
 
 
             //----------
+
+
+
+            //===================
+            if(Parameters_.OP_Ansatz_type=="Vertices_12_NonCopl_State_Wigner"){
+
+                // Using Trigonal Prism  with height=d and eq. triangle edge=a
+
+                /* n=1, s_max=n/2=0.5 for all 6 spins
+                   |S_{i}|=s_max
+                   a_=s_max
+
+                0=-5 : (-sqrt(3)/2 , -1/2, 0)a_ = (Sx,Sy,Sz)
+                1=-4 : (0 , 1, 0)a_
+                2=-3 : (sqrt(3)/2, -1/2, 0)a_
+                6=-10 : (sqrt(3)/2, 0 , -1/2)a_
+                7=-11 : (-sqrt(3)/2, 0 , -1/2 )a_
+                8=-9 : (0 ,0 ,1)a_
+                */
+
+
+                Mat_1_doub Sz_vals_unique, Sx_vals_unique, Sy_vals_unique;
+                Sz_vals_unique.resize(12); Sx_vals_unique.resize(12);Sy_vals_unique.resize(12);
+
+
+
+                Mat_1_doub Sz_vals, Sx_vals, Sy_vals;
+                Sz_vals.resize(36);Sx_vals.resize(36);Sy_vals.resize(36);
+
+                double den_;
+                double s_max=0.5;
+                double a_;
+                double Sz_, Sx_, Sy_;
+                int alpha_1, alpha_2;
+                int alpha_eff;
+                double value_temp;
+                a_= s_max;
+
+
+                Sx_vals_unique[0]=-0.5*sqrt(3.0)*a_;Sy_vals_unique[0]=-0.5*a_;Sz_vals_unique[0]=0.0; //0
+                Sx_vals_unique[5]=0.5*sqrt(3.0)*a_;Sy_vals_unique[5]=0.5*a_;Sz_vals_unique[5]=0.0; //5
+
+                Sx_vals_unique[1]=0.0;Sy_vals_unique[1]=1.0*a_;Sz_vals_unique[1]=0.0; //1
+                Sx_vals_unique[4]=0.0;Sy_vals_unique[4]=-1.0*a_;Sz_vals_unique[4]=0.0; //4
+
+                Sx_vals_unique[2]=0.5*sqrt(3.0)*a_;Sy_vals_unique[2]=-0.5*a_;Sz_vals_unique[2]=0.0; //2
+                Sx_vals_unique[3]=-0.5*sqrt(3.0)*a_;Sy_vals_unique[3]=0.5*a_;Sz_vals_unique[3]=0.0; //3
+
+
+                Sx_vals_unique[6]=0.5*sqrt(3.0)*a_;Sy_vals_unique[6]=0.0;Sz_vals_unique[6]=-0.5*a_; //6
+                Sx_vals_unique[10]=-0.5*sqrt(3.0)*a_;Sy_vals_unique[10]=0.0;Sz_vals_unique[10]=0.5*a_; //10
+
+                Sx_vals_unique[7]=-0.5*sqrt(3.0)*a_;Sy_vals_unique[7]=0.0;Sz_vals_unique[7]=-0.5*a_; //7
+                Sx_vals_unique[11]=0.5*sqrt(3.0)*a_;Sy_vals_unique[11]=0.0;Sz_vals_unique[11]=0.5*a_; //11
+
+                Sx_vals_unique[8]=0.0;Sy_vals_unique[8]=0.0;Sz_vals_unique[8]=1.0*a_; //8
+                Sx_vals_unique[9]=0.0;Sy_vals_unique[9]=0.0;Sz_vals_unique[9]=-1.0*a_; //9
+
+
+
+
+                for(int i_=0;i_<36;i_++){
+                    if(i_==0 || i_==14 || i_==28 ){ //0
+                        Sx_vals[i_]=Sx_vals_unique[0]; Sy_vals[i_]=Sy_vals_unique[0];Sz_vals[i_]=Sz_vals_unique[0];
+                    }
+                    if(i_==1 || i_==15 || i_==29 ){ //1
+                        Sx_vals[i_]=Sx_vals_unique[1]; Sy_vals[i_]=Sy_vals_unique[1];Sz_vals[i_]=Sz_vals_unique[1];
+                    }
+                    if(i_==2 || i_==16 || i_==24 ){ //2
+                        Sx_vals[i_]=Sx_vals_unique[2]; Sy_vals[i_]=Sy_vals_unique[2];Sz_vals[i_]=Sz_vals_unique[2];
+                    }
+                    if(i_==3 || i_==17 || i_==25 ){ //3
+                        Sx_vals[i_]=Sx_vals_unique[3]; Sy_vals[i_]=Sy_vals_unique[3];Sz_vals[i_]=Sz_vals_unique[3];
+                    }
+                    if(i_==4 || i_==12 || i_==26 ){ //4
+                        Sx_vals[i_]=Sx_vals_unique[4]; Sy_vals[i_]=Sy_vals_unique[4];Sz_vals[i_]=Sz_vals_unique[4];
+                    }
+                    if(i_==5 || i_==13 || i_==27 ){ //5
+                        Sx_vals[i_]=Sx_vals_unique[5]; Sy_vals[i_]=Sy_vals_unique[5];Sz_vals[i_]=Sz_vals_unique[5];
+                    }
+                    if(i_==6 || i_==20 || i_==34 ){ //6
+                        Sx_vals[i_]=Sx_vals_unique[6]; Sy_vals[i_]=Sy_vals_unique[6];Sz_vals[i_]=Sz_vals_unique[6];
+                    }
+                    if(i_==7 || i_==21 || i_==35 ){ //10
+                        Sx_vals[i_]=Sx_vals_unique[10]; Sy_vals[i_]=Sy_vals_unique[10];Sz_vals[i_]=Sz_vals_unique[10];
+                    }
+                    if(i_==8 || i_==22 || i_==30 ){ //9
+                        Sx_vals[i_]=Sx_vals_unique[9]; Sy_vals[i_]=Sy_vals_unique[9];Sz_vals[i_]=Sz_vals_unique[9];
+                    }
+                    if(i_==9 || i_==23 || i_==31 ){ //11
+                        Sx_vals[i_]=Sx_vals_unique[11]; Sy_vals[i_]=Sy_vals_unique[11];Sz_vals[i_]=Sz_vals_unique[11];
+                    }
+                    if(i_==10 || i_==18 || i_==32 ){ //7
+                        Sx_vals[i_]=Sx_vals_unique[7]; Sy_vals[i_]=Sy_vals_unique[7];Sz_vals[i_]=Sz_vals_unique[7];
+                    }
+                    if(i_==11 || i_==19 || i_==33 ){ //8
+                        Sx_vals[i_]=Sx_vals_unique[8]; Sy_vals[i_]=Sy_vals_unique[8];Sz_vals[i_]=Sz_vals_unique[8];
+                    }
+
+
+
+
+
+
+
+                }
+
+
+                //Hartree Terms
+                for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+
+                    alpha_1 = alpha % UnitCellSize_x; //a = a1 +a2*lx
+                    alpha_2 = (alpha - alpha_1)/UnitCellSize_x;
+
+                    alpha_eff = (alpha_1%6) +  3*(alpha_2%6);
+
+                    for(int sigma=0;sigma<2;sigma++){
+                        for(int gamma=0;gamma<n_orbs_;gamma++){
+                            if(gamma==1){
+                                den_=1.0;
+                                Sz_=Sz_vals[alpha_eff];
+                                value_temp = 0.5*den_ + (1.0 - (2.0*sigma))*Sz_;
+                                OPs_.value.push_back(complex<double> (value_temp,0.0));
+                            }
+                            else{
+                                den_=0.0;
+                                OPs_.value.push_back(complex<double> (0.0,0.0));
+                            }
+
+
+                            OPs_new_.value.push_back(0.0);
+
+                            row_temp=  alpha + gamma*(S_) +  sigma*(n_orbs_*S_) + 0*(2*n_orbs_*S_);
+                            col_temp=row_temp;
+
+                            OPs_.rows.push_back(row_temp);OPs_new_.rows.push_back(row_temp);
+                            OPs_.columns.push_back(col_temp);OPs_new_.columns.push_back(col_temp);
+                            SI_to_ind[col_temp + row_temp*(ncells_*2*n_orbs_*S_)] = OPs_.value.size()-1;
+
+                        }
+                    }
+                }
+
+
+                //Fock Terms
+                if(!Parameters_.Just_Hartree){
+                    bool check_;
+
+                    int alpha_p_1, alpha_p_2, d1_org, d2_org;
+                    int row_,col_;
+                    for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+                        alpha_1 = alpha % UnitCellSize_x; //a = a1 +a2*lx
+                        alpha_2 = (alpha - alpha_1)/UnitCellSize_x;
+
+                        alpha_eff = (alpha_1%6) +  3*(alpha_2%6);
+
+                        for(int gamma=0;gamma<n_orbs_;gamma++){
+                            if(gamma==0){
+                                Sx_=0.0;Sy_=0.0;
+                            }
+                            else{
+                               Sx_=Sx_vals[alpha_eff];
+                               Sy_=Sy_vals[alpha_eff];
+                            }
+
+                            for(int sigma=0;sigma<2;sigma++){
+
+                                for(int cell_=0;cell_<ncells_;cell_++){
+                                    for(int alpha_p=0;alpha_p<UnitCellSize_x*UnitCellSize_y;alpha_p++){
+                                        for(int gamma_p=0;gamma_p<n_orbs_;gamma_p++){
+
+
+
+                                            alpha_p_1 = alpha_p % UnitCellSize_x;
+                                            alpha_p_2 = (alpha_p - alpha_p_1)/UnitCellSize_x;
+                                            d1_org = Coordinates_.indx_cellwise(cell_);
+                                            d2_org = Coordinates_.indy_cellwise(cell_);
+                                            row_ = gamma + (0 + alpha_1)*n_orbs_ + (0 + alpha_2)*(n_orbs_*lx_);
+                                            col_ = gamma_p + ((d1_org*UnitCellSize_x) + alpha_p_1)*n_orbs_ + ((d2_org*UnitCellSize_y) + alpha_p_2)*(n_orbs_*lx_);
+
+
+
+
+                                            for(int sigma_p=0;sigma_p<2;sigma_p++){
+
+                                                if(Parameters_.FockType=="Onsite_Intra_Inter"){
+                                                    if(cell_==0){
+                                                        check_= ((alpha_p + gamma_p*(S_) +  sigma_p*(n_orbs_*S_)) > (alpha + gamma*(S_) +  sigma*(n_orbs_*S_)));
+                                                    }
+                                                    else{
+                                                        check_ = ((alpha_p + gamma_p*(S_) +  sigma_p*(n_orbs_*S_)) >= (alpha + gamma*(S_) +  sigma*(n_orbs_*S_)));
+                                                    }
+                                                }
+
+
+                                                if(Parameters_.FockType=="Onsite_Intra"){
+                                                    if(cell_==0){
+                                                        check_ = ((alpha_p + gamma_p*(S_) +  sigma_p*(n_orbs_*S_)) > (alpha + gamma*(S_) +  sigma*(n_orbs_*S_)));
+                                                    }
+                                                    else{ //cell_!=0
+                                                        check_=false;
+                                                    }
+                                                }
+
+                                                if(Parameters_.FockType=="Onsite"){
+                                                    if(cell_==0){
+                                                        if(alpha_p==alpha){
+                                                            check_ = ((alpha_p + gamma_p*(S_) +  sigma_p*(n_orbs_*S_)) > (alpha + gamma*(S_) +  sigma*(n_orbs_*S_)));
+                                                        }
+                                                        else{ //alpha !=alpha_p
+                                                            check_=false;
+                                                        }
+                                                    }
+                                                    else{ //cell_!=0
+                                                        check_=false;
+                                                    }
+                                                }
+
+                                                if(row_!=col_){
+                                                    if( (OP_only_finite_Int) && (abs(Connections_.Hint_(row_, col_)) < Global_Eps )){
+                                                        check_=false;
+                                                    }
+                                                }
+
+                                                if( check_ ){
+
+
+
+                                                    //--------------------
+                                                    row_temp = alpha + gamma*(S_) +  sigma*(n_orbs_*S_) + 0*(2*n_orbs_*S_);
+                                                    col_temp = alpha_p + gamma_p*(S_) +  sigma_p*(n_orbs_*S_) + cell_*(2*n_orbs_*S_);
+
+                                                    if(row_!=col_){
+                                                        OPs_.value.push_back(complex<double> (0.05*random1(),0.05*random1()));
+                                                    }
+                                                    else{
+                                                        OPs_.value.push_back(complex<double> (Sx_,Sy_));
+                                                    }
+
+                                                    OPs_new_.value.push_back(0.0);
+
+                                                    OPs_.rows.push_back(row_temp);OPs_new_.rows.push_back(row_temp);
+                                                    OPs_.columns.push_back(col_temp);OPs_new_.columns.push_back(col_temp);
+
+                                                    SI_to_ind[col_temp + row_temp*(ncells_*2*n_orbs_*S_)] = OPs_.value.size()-1;
+                                                    //-------------------
+
+
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+
+                }
+
+            }
+
+            //====================
+
 
             if(Parameters_.OP_Ansatz_type=="Tetrahedron_n3by4"){
 

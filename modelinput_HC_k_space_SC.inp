@@ -4,10 +4,10 @@
 PBC_X=1
 PBC_Y=1
 
-Xsite=6
-Ysite=6
+Xsite=12
+Ysite=12
 N_Orbs=2
-UnitCellSize_x=3
+UnitCellSize_x=6
 UnitCellSize_y=6
 
 File_Onsite_Energies=TL_Onsite_E_12x12.txt
@@ -36,7 +36,7 @@ d_screening_in_Angstorm=600
 eps_DE=300.0
 
 U0=9.0
-U0_interorb=4.5
+U0_interorb=3.15
 U1=0 0 0 0
 U2=0 0 0 0
 U3=0 0 0 0
@@ -55,11 +55,11 @@ OnSiteE_up1=0.0
 OnSiteE_dn1=-0.0
 
 Self_consistency_kspace=1
-Total_particles=36
+Total_particles=144
 Fixing_mu=0
 Mu_value=100
 
-No_of_SelfConsistency_iters=1600
+No_of_SelfConsistency_iters=1
 Convergence_Error=0.0001
 RandomSeed=21
 alpha_OP=0.5
