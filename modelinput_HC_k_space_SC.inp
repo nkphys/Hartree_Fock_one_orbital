@@ -19,9 +19,9 @@ TwistedBoundaryCond_my=0
 TBC_cellsX=1
 TBC_cellsY=1
 
-t0=(1.0,0)
-t1=(0,0) (1.0,0) (0,0) (0,0) 
-t2=(0,0) (0,0) (0,0) (0,0)
+t0=(1.00,0)
+t1=(0,0) (1.00,0) (0,0) (0,0) 
+t2=(0.00,0) (0,0) (0,0) (1.00,0)
 t3=(0,0) (0,0) (0,0) (0,0)
 
 #1=(-6.09911,4.5193e-14)
@@ -35,14 +35,14 @@ a_moire_in_Angstorm=60
 d_screening_in_Angstorm=600
 eps_DE=300.0
 
-U0=9.0
-U0_interorb=3.15
+U0=18.0
+U0_interorb=7.2
 U1=0 0 0 0
 U2=0 0 0 0
 U3=0 0 0 0
 
 OP_only_finite_Int=1
-Truncating_Length_in_am=1000000
+Truncating_Length_in_am=10000000
 
 #Only U0: 0*am
 #Upto U1: ~0.577 i.e. am/sqrt(3)
@@ -50,18 +50,18 @@ Truncating_Length_in_am=1000000
 
 AnisotropyZ=0.0
 OnSiteE_up0=0.0
-OnSiteE_dn0=-0.0
+OnSiteE_dn0=0.0
 OnSiteE_up1=0.0
-OnSiteE_dn1=-0.0
+OnSiteE_dn1=0.0
 
 Self_consistency_kspace=1
-Total_particles=144
+Total_particles=192
 Fixing_mu=0
 Mu_value=100
 
-No_of_SelfConsistency_iters=1
-Convergence_Error=0.0001
-RandomSeed=21
+No_of_SelfConsistency_iters=100
+Convergence_Error=0.000001
+RandomSeed=1
 alpha_OP=0.5
 
 Cooling=1
@@ -76,7 +76,7 @@ Fock_type=Onsite_Intra_Inter
 #Onsite, Onsite_Intra, Onsite_Intra_Inter
 Read_initial_OPvalues=0
 Read_initial_OPvalues_UnitCellsType=6 6
-Read_initial_OPvalues_file=OUTPUT_ACF.txt
+Read_initial_OPvalues_file=OP_U0_9_U1_0.44_UC6_Seed_6Vertices.txt
 #OUTPUT_OP_PiPi_alongZ.txt
 #OUTPUT_OP_0Pi_alongZ.txt
 #OUTPUT_OP_ZigZag_alongZ.txt
