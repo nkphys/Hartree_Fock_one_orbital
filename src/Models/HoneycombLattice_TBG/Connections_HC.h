@@ -803,11 +803,11 @@ void Connections_HC::Interactions_Sorting()
     for(int i=1;i<Dis_val_sorted.size();i++){
 
         if(abs(Int_val[Int_val.size()-1] - Int_val_sorted[i])>0.0000001){
-        Dis_val.push_back(Dis_val_sorted[i]);
-        Int_val.push_back(Int_val_sorted[i]);
-        Degeneracy[Degeneracy.size()-1]=deg_temp;
-        Degeneracy.resize(Degeneracy.size()+1);
-        deg_temp=1;
+            Dis_val.push_back(Dis_val_sorted[i]);
+            Int_val.push_back(Int_val_sorted[i]);
+            Degeneracy[Degeneracy.size()-1]=deg_temp;
+            Degeneracy.resize(Degeneracy.size()+1);
+            deg_temp=1;
         }
         else{
             deg_temp++;
@@ -887,16 +887,34 @@ void Connections_HC::HTBCreate()
     //orb=0=Blue  //See Cartoon in notes
     //orb=1=Red
 
-    Mat_1_int t_neighs;
-    Mat_3_Complex_doub t_hoppings;
-    //t1 hoppings
-    t_neighs.push_back(0);t_neighs.push_back(2);
-    //t_neighs.push_back(5);
-    t_hoppings.push_back(Parameters_.t1);t_hoppings.push_back(Parameters_.t1);
-    //t_hoppings.push_back(Parameters_.t1);
+    Mat_2_int t_neighs;
+    Mat_4_Complex_doub t_hoppings;
+    t_neighs.resize(2);// spins up and dn
+    t_hoppings.resize(2);
 
-    t_neighs.push_back(0);t_neighs.push_back(2);t_neighs.push_back(5);
-    t_hoppings.push_back(Parameters_.t2);t_hoppings.push_back(Parameters_.t2);t_hoppings.push_back(Parameters_.t2);
+
+    //For spin up
+    //t1 hoppings
+    t_neighs[0].push_back(0);t_neighs[0].push_back(3);
+    t_hoppings[0].push_back(Parameters_.t1_plus_a1_upup);t_hoppings[0].push_back(Parameters_.t1_minus_a2_upup);
+
+    //t2 hoppings
+    t_neighs[0].push_back(5);
+    t_hoppings[0].push_back(Parameters_.t2_upup);
+
+
+    //For Spin dn
+    //t1 hoppings
+    t_neighs[1].push_back(0);t_neighs[1].push_back(3);
+    t_hoppings[1].push_back(Parameters_.t1_plus_a1_dndn);t_hoppings[1].push_back(Parameters_.t1_minus_a2_dndn);
+
+    //t2 hoppings
+    t_neighs[1].push_back(5);
+    t_hoppings[1].push_back(Parameters_.t2_dndn);
+
+
+
+
 
     //    t_neighs.push_back(10);t_neighs.push_back(15);t_neighs.push_back(16);
     //    t_hoppings.push_back(Parameters_.t3);t_hoppings.push_back(Parameters_.t3);t_hoppings.push_back(Parameters_.t3);
@@ -952,11 +970,11 @@ void Connections_HC::HTBCreate()
             if (a != b)
             {
                 if(spin==0){
-                    HTB_(b, a) = -1.0*Parameters_.t0;
+                    HTB_(b, a) = -1.0*Parameters_.t0_upup;
                     HTB_(a, b) = conj(HTB_(b, a));
                 }
                 else{
-                    HTB_(b, a) = -1.0*Parameters_.t0;
+                    HTB_(b, a) = -1.0*(Parameters_.t0_dndn);
                     HTB_(a, b) = conj(HTB_(b, a));
                 }
             }
@@ -968,8 +986,12 @@ void Connections_HC::HTBCreate()
 
 
         //For t1,t2,t3 hoppings
-        for(int neigh=0;neigh<t_neighs.size();neigh++){
-            m = Coordinates_.getneigh(l, t_neighs[neigh]);
+        for (int spin = 0; spin < 2; spin++)
+        {
+        for(int neigh=0;neigh<t_neighs[spin].size();neigh++){
+
+
+            m = Coordinates_.getneigh(l, t_neighs[spin][neigh]);
 
             if( (!Coordinates_.HIT_X_BC) || Parameters_.PBC_X){
 
@@ -978,8 +1000,6 @@ void Connections_HC::HTBCreate()
                     mx_pos = Coordinates_.indx_cellwise(m);
                     my_pos = Coordinates_.indy_cellwise(m);
 
-                    for (int spin = 0; spin < 2; spin++)
-                    {
                         for (int orb1 = 0; orb1 < n_orbs_; orb1++)
                         {
                             for (int orb2 = 0; orb2 < n_orbs_; orb2++)
@@ -989,14 +1009,11 @@ void Connections_HC::HTBCreate()
                                 assert(a != b);
                                 if (a != b)
                                 {
-                                    if(spin==0){
-                                        HTB_(b, a) += -1.0*t_hoppings[neigh][orb2][orb1];
-                                        HTB_(a, b) = conj(HTB_(b, a));
-                                    }
-                                    else{
-                                        HTB_(b, a) += -1.0*conj(t_hoppings[neigh][orb2][orb1]);
-                                        HTB_(a, b) = conj(HTB_(b, a));
-                                    }
+
+                                    HTB_(b, a) += -1.0*t_hoppings[spin][neigh][orb2][orb1];
+                                    HTB_(a, b) = conj(HTB_(b, a));
+
+
                                 }
 
                             }

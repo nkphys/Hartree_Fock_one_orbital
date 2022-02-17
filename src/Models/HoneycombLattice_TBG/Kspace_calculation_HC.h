@@ -101,8 +101,8 @@ public:
     Matrix<double> X_mat, F_mat;
 
 
-    Matrix<complex<double>> J_KE_e1, J_KE_e2;
-    Matrix<complex<double>> J_KE_X, J_KE_Y;
+    vector< Matrix<complex<double>> > J_KE_e1, J_KE_e2;
+    vector< Matrix<complex<double>> > J_KE_X, J_KE_Y;
 
     double kick_while_cooling;
 
@@ -114,8 +114,13 @@ public:
 
 void Kspace_calculation_HC::Hall_conductance(){
 
-    double hall_cond=0.0;
-    double hall_cond_xy=0.0;
+    Mat_2_doub hall_cond, hall_cond_xy;
+    hall_cond.resize(2); hall_cond_xy.resize(2);
+    for(int spin_=0;spin_<2;spin_++){
+        hall_cond[spin_].resize(2);
+        hall_cond_xy[spin_].resize(2);
+    }
+
     double cond_11, cond_22;
     double eps_temp =0.00;
     Parameters_.eta=0.001;
@@ -126,32 +131,66 @@ void Kspace_calculation_HC::Hall_conductance(){
     string fileout_="sigmaxy_vs_mu.txt";
     ofstream fileout(fileout_.c_str());
 
-    for(int m=0;m<lx_*ly_*2*n_orbs_;m++){
-        for(int n=0;n<lx_*ly_*2*n_orbs_;n++){
-            if(abs(Eigenvalues_saved[m]-Eigenvalues_saved[n])>=eps_temp){
-                hall_cond += FACTOR_*((2.0*PI)/(lx_*ly_))*( (1.0/( exp((Eigenvalues_saved[m]-mu_)*Parameters_.beta ) + 1.0))-  (1.0/( exp((Eigenvalues_saved[n]-mu_)*Parameters_.beta ) + 1.0)) )*
-                        (1.0/( (Parameters_.eta*Parameters_.eta) + ((Eigenvalues_saved[n]-Eigenvalues_saved[m])*(Eigenvalues_saved[n]-Eigenvalues_saved[m]))   ))*
-                        ((1.0*J_KE_e1(m,n))*(1.0*J_KE_e2(n,m))).imag();
+
+    for(int spin_1=0;spin_1<2;spin_1++){
+        for(int spin_2=0;spin_2<2;spin_2++){
+            for(int m=0;m<lx_*ly_*2*n_orbs_;m++){
+                for(int n=0;n<lx_*ly_*2*n_orbs_;n++){
+                    if(abs(Eigenvalues_saved[m]-Eigenvalues_saved[n])>=eps_temp){
+                        hall_cond[spin_1][spin_2] += FACTOR_*((2.0*PI)/(lx_*ly_))*( (1.0/( exp((Eigenvalues_saved[m]-mu_)*Parameters_.beta ) + 1.0))-  (1.0/( exp((Eigenvalues_saved[n]-mu_)*Parameters_.beta ) + 1.0)) )*
+                                (1.0/( (Parameters_.eta*Parameters_.eta) + ((Eigenvalues_saved[n]-Eigenvalues_saved[m])*(Eigenvalues_saved[n]-Eigenvalues_saved[m]))   ))*
+                                ((1.0*J_KE_e1[spin_1](m,n))*(1.0*J_KE_e2[spin_2](n,m))).imag();
+                    }
+                }
             }
         }
     }
 
-    for(int m=0;m<lx_*ly_*2*n_orbs_;m++){
-        for(int n=0;n<lx_*ly_*2*n_orbs_;n++){
-            if(abs(Eigenvalues_saved[m]-Eigenvalues_saved[n])>=eps_temp){
-                hall_cond_xy += FACTOR_*((2.0*PI)/(lx_*ly_))*( (1.0/( exp((Eigenvalues_saved[m]-mu_)*Parameters_.beta ) + 1.0))-  (1.0/( exp((Eigenvalues_saved[n]-mu_)*Parameters_.beta ) + 1.0)) )*
-                        (1.0/( (Parameters_.eta*Parameters_.eta) + ((Eigenvalues_saved[n]-Eigenvalues_saved[m])*(Eigenvalues_saved[n]-Eigenvalues_saved[m]))   ))*
-                        ((1.0*J_KE_X(m,n))*(1.0*J_KE_Y(n,m))).imag();
+    for(int spin_1=0;spin_1<2;spin_1++){
+        for(int spin_2=0;spin_2<2;spin_2++){
+        for(int m=0;m<lx_*ly_*2*n_orbs_;m++){
+            for(int n=0;n<lx_*ly_*2*n_orbs_;n++){
+                if(abs(Eigenvalues_saved[m]-Eigenvalues_saved[n])>=eps_temp){
+                    hall_cond_xy[spin_1][spin_2] += FACTOR_*((2.0*PI)/(lx_*ly_))*( (1.0/( exp((Eigenvalues_saved[m]-mu_)*Parameters_.beta ) + 1.0))-  (1.0/( exp((Eigenvalues_saved[n]-mu_)*Parameters_.beta ) + 1.0)) )*
+                            (1.0/( (Parameters_.eta*Parameters_.eta) + ((Eigenvalues_saved[n]-Eigenvalues_saved[m])*(Eigenvalues_saved[n]-Eigenvalues_saved[m]))   ))*
+                            ((1.0*J_KE_X[spin_1](m,n))*(1.0*J_KE_Y[spin_2](n,m))).imag();
+                }
             }
         }
     }
+    }
 
-    cout<<"Hall Conductance_12 = "<<hall_cond<<endl;
-    cout<<"Hall Conductance_XY = "<<hall_cond_xy<<endl;
 
-    fileout<<"#mu  hall_cond    hall_cond_xy     cond_11    cond_22"<<endl;
-    double mu=Eigenvalues_saved[0]-1.0;
-    while(mu<Eigenvalues_saved[Eigenvalues_saved.size()-1]+1.0){
+    cout<<"========= Hall conductance_12 [s1][s2] =============="<<endl;
+    for(int spin_1=0;spin_1<2;spin_1++){
+        for(int spin_2=0;spin_2<2;spin_2++){
+          cout<<hall_cond[spin_1][spin_2]<<"   ";
+        }
+        cout<<endl;
+    }
+    cout<<endl;
+
+
+    cout<<"========= Hall conductance_XY[s1][s2] =============="<<endl;
+    for(int spin_1=0;spin_1<2;spin_1++){
+        for(int spin_2=0;spin_2<2;spin_2++){
+          cout<<hall_cond_xy[spin_1][spin_2]<<"   ";
+        }
+        cout<<endl;
+    }
+    cout<<endl;
+
+
+//    cout<<"Hall Conductance_12 upup = "<<hall_cond[0]<<endl;
+//    cout<<"Hall Conductance_12 dndn = "<<hall_cond[1]<<endl;
+//    cout<<"Hall Conductance_XY upup = "<<hall_cond_xy[0]<<endl;
+//    cout<<"Hall Conductance_XY dndn = "<<hall_cond_xy[1]<<endl;
+
+    fileout<<"#mu  hall_cond_upup    hall_cond_xy_upup     cond_11_upup    cond_22_upup"<<endl;
+    double mu=Eigenvalues_[0]-1.0;
+
+    /*
+    while(mu<Eigenvalues_[Eigenvalues_.size()-1]+1.0){
         hall_cond=0.0;
         hall_cond_xy=0.0;
         cond_11=0.0;
@@ -179,32 +218,22 @@ void Kspace_calculation_HC::Hall_conductance(){
         fileout<<mu<<"  "<<hall_cond<<"  "<<hall_cond_xy<<"  "<<cond_11<<"  "<<cond_22<<endl;
         mu=mu+0.05;
     }
+*/
+
 }
 
 
 void Kspace_calculation_HC::Create_Current_Oprs(){
-    J_KE_e1.resize(lx_*ly_*2*n_orbs_, lx_*ly_*2*n_orbs_);
-    J_KE_e2.resize(lx_*ly_*2*n_orbs_, lx_*ly_*2*n_orbs_);
+    /*
+
+    double spin_factor;
+
+
+    J_KE_e1[0].resize(lx_*ly_*2*n_orbs_, lx_*ly_*2*n_orbs_);
+    J_KE_e2[0].resize(lx_*ly_*2*n_orbs_, lx_*ly_*2*n_orbs_);
 
     J_KE_X.resize(lx_*ly_*2*n_orbs_, lx_*ly_*2*n_orbs_);
     J_KE_Y.resize(lx_*ly_*2*n_orbs_, lx_*ly_*2*n_orbs_);
-
-
-    //    c1 = alpha + UP_*(S_);
-    //    c2 = alpha + DOWN_*(S_);;
-    //    for(int n=0;n<2*S_;n++){ //band_index
-    //        for(int k1=0;k1<lx_cells;k1++){
-    //            for(int k2=0;k2<ly_cells;k2++){
-    //                k_index = Coordinates_.Ncell(k1,k2);
-    //                state = 2*S_*k_index + n;
-    //                val += (1.0/ncells_)*(
-    //                            (conj(Eigvectors_[state][c1])*Eigvectors_[state][c2])
-    //                            *(1.0/( exp((Eigenvalues_saved[state]-mu_)*Parameters_.beta ) + 1.0))
-    //                            );
-    //            }
-    //        }
-    //    }
-
 
 
     int row_, col_;
@@ -213,20 +242,6 @@ void Kspace_calculation_HC::Create_Current_Oprs(){
     int alpha_1, alpha_2, alpha_p_1, alpha_p_2;
     int c1, c2;
 
-
-    //    temp_val=0.0;
-    //    for(int cell_no=0;cell_no<ncells_;cell_no++){
-    //        d1_org = Coordinates_.indx_cellwise(cell_no);
-    //        d2_org = Coordinates_.indy_cellwise(cell_no);
-
-    //        row_ = ( (d1_org*UnitCellSize_x) + alpha_1) + ((d2_org*UnitCellSize_y) + alpha_2)*lx_ + sigma*(lx_*ly_);
-    //        col_ = (0 + alpha_p_1) + (0 + alpha_p_2)*lx_ + sigma_p*(lx_*ly_);
-
-    //        Get_minimum_distance_direction(0, cell_no, d1_, d2_);
-
-    //        temp_val += Connections_.HTB_(row_,col_)*exp(iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_   ));
-
-    //    }
 
 
     int S_ = UnitCellSize_x*UnitCellSize_y;
@@ -248,6 +263,7 @@ void Kspace_calculation_HC::Create_Current_Oprs(){
                     state_n = 2*n_orbs_*S_*k_index + m;
 
                     for(int sigma=0;sigma<2;sigma++){
+
 
                         for(int alpha=0;alpha<S_;alpha++){
                             for(int gamma=0;gamma<2;gamma++){
@@ -369,17 +385,24 @@ void Kspace_calculation_HC::Create_Current_Oprs(){
 
 
 
-
+*/
 }
 
 
 void Kspace_calculation_HC::Create_Current_Oprs_Faster(){
-    J_KE_e1.resize(lx_*ly_*2*n_orbs_, lx_*ly_*2*n_orbs_);
-    J_KE_e2.resize(lx_*ly_*2*n_orbs_, lx_*ly_*2*n_orbs_);
 
-    J_KE_X.resize(lx_*ly_*2*n_orbs_, lx_*ly_*2*n_orbs_);
-    J_KE_Y.resize(lx_*ly_*2*n_orbs_, lx_*ly_*2*n_orbs_);
 
+    J_KE_e1.resize(2);J_KE_e2.resize(2);
+    J_KE_X.resize(2); J_KE_Y.resize(2);
+
+
+    for(int sigma=0;sigma<2;sigma++){
+        J_KE_e1[sigma].resize(lx_*ly_*2*n_orbs_, lx_*ly_*2*n_orbs_);
+        J_KE_e2[sigma].resize(lx_*ly_*2*n_orbs_, lx_*ly_*2*n_orbs_);
+
+        J_KE_X[sigma].resize(lx_*ly_*2*n_orbs_, lx_*ly_*2*n_orbs_);
+        J_KE_Y[sigma].resize(lx_*ly_*2*n_orbs_, lx_*ly_*2*n_orbs_);
+    }
 
     //    c1 = alpha + UP_*(S_);
     //    c2 = alpha + DOWN_*(S_);;
@@ -405,6 +428,7 @@ void Kspace_calculation_HC::Create_Current_Oprs_Faster(){
     int c1, c2;
 
 
+    double spin_factor;
     //    temp_val=0.0;
     //    for(int cell_no=0;cell_no<ncells_;cell_no++){
     //        d1_org = Coordinates_.indx_cellwise(cell_no);
@@ -432,6 +456,13 @@ void Kspace_calculation_HC::Create_Current_Oprs_Faster(){
 
 
     for(int sigma=0;sigma<2;sigma++){
+        //spin_factor=((2.0*sigma) - 1.0)*1.0;
+        //spin_factor=(1-sigma);
+        spin_factor=1.0;
+        //cout<<"spin_factor for spin "<<  sigma <<   " = "<<spin_factor<<endl;
+        //     spin_factor=1.0;
+        //   spin_factor=abs(1-sigma);
+
         for(int alpha=0;alpha<S_;alpha++){
             for(int gamma=0;gamma<2;gamma++){
 
@@ -528,38 +559,38 @@ void Kspace_calculation_HC::Create_Current_Oprs_Faster(){
                                                 state_n = 2*n_orbs_*S_*k_index + m;
 
 
-                                                J_KE_X(state_p,state_n) += (0.5)*facx*iota_complex*(
+                                                J_KE_X[sigma](state_p,state_n) += spin_factor*(0.5)*facx*iota_complex*(
                                                             (Connections_.HTB_(row_,col_)*conj(Eigvectors_[state_p][c2])*Eigvectors_[state_n][c1]*exp(iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
                                                             -(Connections_.HTB_(col_,row_)*conj(Eigvectors_[state_p][c1])*Eigvectors_[state_n][c2]*exp(-1.0*iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
                                                             );
 
 
 
-                                                J_KE_Y(state_p,state_n) += (0.5)*facy*iota_complex*(
+                                                J_KE_Y[sigma](state_p,state_n) += (0.5)*facy*iota_complex*(
                                                             (Connections_.HTB_(row_,col_)*conj(Eigvectors_[state_p][c2])*Eigvectors_[state_n][c1]*exp(iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
                                                             -(Connections_.HTB_(col_,row_)*conj(Eigvectors_[state_p][c1])*Eigvectors_[state_n][c2]*exp(-1.0*iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
                                                             );
 
 
 
-                                                //                                                J_KE_e1(state_p,state_n) += (0.5)*fac1*iota_complex*(
-                                                //                                                            (Connections_.HTB_(row_,col_)*conj(Eigvectors_[state_p][c2])*Eigvectors_[state_n][c1]*exp(iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
-                                                //                                                            -(Connections_.HTB_(col_,row_)*conj(Eigvectors_[state_p][c1])*Eigvectors_[state_n][c2]*exp(-1.0*iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
-                                                //                                                            );
+                                                J_KE_e1[sigma](state_p,state_n) += spin_factor*(0.5)*fac1*iota_complex*(
+                                                            (Connections_.HTB_(row_,col_)*conj(Eigvectors_[state_p][c2])*Eigvectors_[state_n][c1]*exp(iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
+                                                            -(Connections_.HTB_(col_,row_)*conj(Eigvectors_[state_p][c1])*Eigvectors_[state_n][c2]*exp(-1.0*iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
+                                                            );
 
 
 
-                                                //                                                J_KE_e2(state_p,state_n) += (0.5)*fac2*iota_complex*(
-                                                //                                                            (Connections_.HTB_(row_,col_)*conj(Eigvectors_[state_p][c2])*Eigvectors_[state_n][c1]*exp(iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
-                                                //                                                            -(Connections_.HTB_(col_,row_)*conj(Eigvectors_[state_p][c1])*Eigvectors_[state_n][c2]*exp(-1.0*iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
-                                                //                                                            );
+                                                J_KE_e2[sigma](state_p,state_n) += (0.5)*fac2*iota_complex*(
+                                                            (Connections_.HTB_(row_,col_)*conj(Eigvectors_[state_p][c2])*Eigvectors_[state_n][c1]*exp(iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
+                                                            -(Connections_.HTB_(col_,row_)*conj(Eigvectors_[state_p][c1])*Eigvectors_[state_n][c2]*exp(-1.0*iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
+                                                            );
 
 
-                                                J_KE_e1(state_p,state_n) += 0.0;
+                                                //                                                J_KE_e1(state_p,state_n) += 0.0;
 
 
 
-                                                J_KE_e2(state_p,state_n) += 0.0;
+                                                //                                                J_KE_e2(state_p,state_n) += 0.0;
 
 
 
@@ -581,7 +612,7 @@ void Kspace_calculation_HC::Create_Current_Oprs_Faster(){
                     }
 
                 }
-                cout<<"gamma(2), alpha(" << S_ << "), gamma(2) = "<<sigma<<" "<<alpha<<" "<<gamma<<endl;
+                cout<<"sigma(2), alpha(" << S_ << "), gamma(2) = "<<sigma<<" "<<alpha<<" "<<gamma<<endl;
             }
         }
     }
@@ -598,19 +629,19 @@ void Kspace_calculation_HC::Calculate_ChernNumbers(){
 
 
     Matrix<complex<double>> F_mat; //F1, F2, F3, F4, F5;
-    F_mat.resize(2*UnitCellSize_x*UnitCellSize_y, lx_cells*ly_cells);
+    F_mat.resize(4*UnitCellSize_x*UnitCellSize_y, lx_cells*ly_cells);
 
     complex<double> Ux_k, Uy_k, Ux_kpy, Uy_kpx;
     vector<complex<double>> F_bands;
-    F_bands.resize(2*UnitCellSize_x*UnitCellSize_y);
+    F_bands.resize(4*UnitCellSize_x*UnitCellSize_y);
     vector<complex<double>> Chern_num;
-    Chern_num.resize(2*UnitCellSize_x*UnitCellSize_y);
+    Chern_num.resize(4*UnitCellSize_x*UnitCellSize_y);
 
     vector<complex<double>> F_bands_orgnl;
-    F_bands_orgnl.resize(2*UnitCellSize_x*UnitCellSize_y);
+    F_bands_orgnl.resize(4*UnitCellSize_x*UnitCellSize_y);
     vector<complex<double>> Chern_num_orgnl;
-    Chern_num_orgnl.resize(2*UnitCellSize_x*UnitCellSize_y);
-    for (int band = 0; band < 2*UnitCellSize_x*UnitCellSize_y; band++)
+    Chern_num_orgnl.resize(4*UnitCellSize_x*UnitCellSize_y);
+    for (int band = 0; band < 4*UnitCellSize_x*UnitCellSize_y; band++)
     {
         string file_Fk="Fk_band"+to_string(band)+".txt";
         ofstream fl_Fk_out(file_Fk.c_str());
@@ -636,11 +667,11 @@ void Kspace_calculation_HC::Calculate_ChernNumbers(){
                 nx_right = (nx + 1) % lx_cells;
                 ny_right = ny;
                 n_right = Coordinates_.Ncell(nx_right, ny_right);
-                for (int comp = 0; comp < 2*UnitCellSize_x*UnitCellSize_y; comp++)
+                for (int comp = 0; comp < 4*UnitCellSize_x*UnitCellSize_y; comp++)
                 {
                     Ux_k +=
-                            conj(Eigvectors_[2*UnitCellSize_x*UnitCellSize_y*n_left +  band][comp]) *
-                            Eigvectors_[2*UnitCellSize_x*UnitCellSize_y*n_right + band][comp];
+                            conj(Eigvectors_[4*UnitCellSize_x*UnitCellSize_y*n_left +  band][comp]) *
+                            Eigvectors_[4*UnitCellSize_x*UnitCellSize_y*n_right + band][comp];
                 }
                 Ux_k = Ux_k * (1.0 / abs(Ux_k));
 
@@ -652,11 +683,11 @@ void Kspace_calculation_HC::Calculate_ChernNumbers(){
                 nx_right = nx_left;
                 ny_right = (ny_left + 1) % ly_cells;
                 n_right = Coordinates_.Ncell(nx_right, ny_right);
-                for (int comp = 0; comp < 2*UnitCellSize_x*UnitCellSize_y; comp++)
+                for (int comp = 0; comp < 4*UnitCellSize_x*UnitCellSize_y; comp++)
                 {
                     Uy_kpx +=
-                            conj(Eigvectors_[2*UnitCellSize_x*UnitCellSize_y*n_left +  band][comp]) *
-                            Eigvectors_[2*UnitCellSize_x*UnitCellSize_y*n_right + band][comp];
+                            conj(Eigvectors_[4*UnitCellSize_x*UnitCellSize_y*n_left +  band][comp]) *
+                            Eigvectors_[4*UnitCellSize_x*UnitCellSize_y*n_right + band][comp];
                 }
                 Uy_kpx = Uy_kpx * (1.0 / abs(Uy_kpx));
 
@@ -668,11 +699,11 @@ void Kspace_calculation_HC::Calculate_ChernNumbers(){
                 nx_right = (nx_left + 1) % lx_cells;
                 ny_right = ny_left;
                 n_right = Coordinates_.Ncell(nx_right, ny_right);
-                for (int comp = 0; comp < 2*UnitCellSize_x*UnitCellSize_y; comp++)
+                for (int comp = 0; comp < 4*UnitCellSize_x*UnitCellSize_y; comp++)
                 {
                     Ux_kpy +=
-                            conj(Eigvectors_[2*UnitCellSize_x*UnitCellSize_y*n_left +  band][comp]) *
-                            Eigvectors_[2*UnitCellSize_x*UnitCellSize_y*n_right + band][comp];
+                            conj(Eigvectors_[4*UnitCellSize_x*UnitCellSize_y*n_left +  band][comp]) *
+                            Eigvectors_[4*UnitCellSize_x*UnitCellSize_y*n_right + band][comp];
                 }
                 Ux_kpy = Ux_kpy * (1.0 / abs(Ux_kpy));
 
@@ -684,11 +715,11 @@ void Kspace_calculation_HC::Calculate_ChernNumbers(){
                 nx_right = nx_left;
                 ny_right = (ny_left + 1) % ly_cells;
                 n_right = Coordinates_.Ncell(nx_right, ny_right);
-                for (int comp = 0; comp < 2*UnitCellSize_x*UnitCellSize_y; comp++)
+                for (int comp = 0; comp < 4*UnitCellSize_x*UnitCellSize_y; comp++)
                 {
                     Uy_k +=
-                            conj(Eigvectors_[2*UnitCellSize_x*UnitCellSize_y*n_left +  band][comp]) *
-                            Eigvectors_[2*UnitCellSize_x*UnitCellSize_y*n_right + band][comp];
+                            conj(Eigvectors_[4*UnitCellSize_x*UnitCellSize_y*n_left +  band][comp]) *
+                            Eigvectors_[4*UnitCellSize_x*UnitCellSize_y*n_right + band][comp];
                 }
                 Uy_k = Uy_k * (1.0 / abs(Uy_k));
 
@@ -765,7 +796,7 @@ void Kspace_calculation_HC::Calculate_Nw()
     //---------Read from input file-----------------------//
     string fileout = "Nw" + string(temp_char)+ ".txt";
     double omega_min, omega_max, d_omega;
-    double eta = 0.1;
+    double eta = 0.002;
     omega_min = Eigenvalues_[0]-10.0;
     omega_max = Eigenvalues_[ind_max-1] + 10.0;
     d_omega = 0.001;
@@ -779,7 +810,7 @@ void Kspace_calculation_HC::Calculate_Nw()
     double filling_counter;
     filling_counter=0.0;
     for (int omega_ind = 0; omega_ind < omega_index_max; omega_ind++)
-    {
+    { 
 
         temp_val = 0.0;
 
@@ -911,6 +942,11 @@ void Kspace_calculation_HC::Get_Bands(){
     File_Out_Bands2 = "Bands_Path2_" + string(temp_char) +".txt";
     ofstream file_out_bands2(File_Out_Bands2.c_str());
 
+
+    string File_Out_Bands4;
+    File_Out_Bands4 = "Bands_Path4_" + string(temp_char) +".txt";
+    ofstream file_out_bands4(File_Out_Bands4.c_str());
+
     int k_index;
     int kx_i, ky_i;
 
@@ -948,14 +984,83 @@ void Kspace_calculation_HC::Get_Bands(){
     ky_i = (ly_cells / 2) - 1;
     for (kx_i = (lx_cells / 2) - 1; kx_i >= 0; kx_i--)
     {
-        temp_pair.first = kx_i;
-        temp_pair.second = kx_i;
-        k_path.push_back(temp_pair);
+        ky_i=kx_i;
+        if(ky_i < ly_cells){
+            temp_pair.first = kx_i;
+            temp_pair.second = kx_i;
+            k_path.push_back(temp_pair);
+        }
     }
 
     temp_pair.first = 0;
     temp_pair.second = 0;
     k_path.push_back(temp_pair);
+
+
+
+
+
+    //----------------------------
+    int counter_Gamma1, counter_K,counter_Kprime, counter_Gamma2, counter_M;
+    Mat_1_intpair k_path4;
+    k_path4.clear();
+
+
+    counter_Gamma1=0;
+    //Gamma to K
+    kx_i = 0;
+    ky_i = 0;
+    for (ky_i = 0; ky_i <= ((ly_cells)/3); ky_i++)
+    {
+        temp_pair.first = kx_i;
+        temp_pair.second = ky_i;
+        kx_i = kx_i +2;
+        k_path4.push_back(temp_pair);
+    }
+    counter_K= k_path4.size()-1;
+
+
+    //K to K'
+    kx_i = ((2*lx_cells)/3) -1;
+    for (ky_i = ((ly_cells)/3)+1; ky_i <= ((2*ly_cells)/3); ky_i++)
+    {
+        temp_pair.first = kx_i;
+        temp_pair.second = ky_i;
+        kx_i = kx_i -1;
+        k_path4.push_back(temp_pair);
+    }
+    counter_Kprime = k_path4.size()-1;
+
+    //K' to Gamma
+    kx_i = ((lx_cells)/3) -1;
+    ky_i = ((2*ly_cells)/3) -2;
+    for (kx_i = ((lx_cells)/3)-1; kx_i >=0; kx_i--)
+    {
+        temp_pair.first = kx_i;
+        temp_pair.second = ky_i;
+        ky_i = ky_i -2;
+        k_path4.push_back(temp_pair);
+    }
+    counter_Gamma2= k_path4.size()-1;
+
+
+    //Gamma to mu(M)
+    kx_i = 1;
+    ky_i=1;
+    for (ky_i = 1; ky_i <= ((ly_cells)/2); ky_i++)
+    {
+        temp_pair.first = kx_i;
+        temp_pair.second = ky_i;
+        kx_i = kx_i +1;
+        k_path4.push_back(temp_pair);
+    }
+
+    counter_M= k_path4.size()-1;
+
+    //------------------------------
+
+
+
 
 
 
@@ -1048,6 +1153,19 @@ void Kspace_calculation_HC::Get_Bands(){
     }
 
 
+
+    for (int k_point = 0; k_point < k_path4.size(); k_point++)
+    {
+        k_index=Coordinates_.Ncell(k_path4[k_point].first, k_path4[k_point].second);
+
+        file_out_bands4<<k_point<<"   ";
+        for(int band=0;band<2*n_orbs_*UnitCellSize_x*UnitCellSize_y;band++){
+            file_out_bands4<<Eigenvalues_[2*n_orbs_*UnitCellSize_x*UnitCellSize_y*k_index + band]<<"   ";
+        }
+        file_out_bands4<<endl;
+    }
+
+    file_out_bands4<<"# Gamma(" <<counter_Gamma1<<")"<<"-->"<<"K(" <<counter_K<<")"<<"-->"<<"K_prime(" <<counter_Kprime<<")"<<"-->"<<"Gamma(" <<counter_Gamma2<<")"<<"-->"<<"M(" <<counter_M<<")"<<endl;
 
 
 
@@ -1946,15 +2064,15 @@ void Kspace_calculation_HC::Initialize()
 
     double temp_den;
 
-    Parameters_.Create_OPs_Ansatz=true;
+    Parameters_.Create_OPs_Ansatz=false;
     //Parameters_.OP_Ansatz_type="120AFM_Wigner";
     //Parameters_.OP_Ansatz_type="AFM_Wigner";
     //Parameters_.OP_Ansatz_type="NM_Wigner";
     //Parameters_.OP_Ansatz_type="Tetrahedron_n3by4";
     //Parameters_.OP_Ansatz_type="Tri_Prism_Wigner";
     //Parameters_.OP_Ansatz_type="Vertices_12_NonCopl_State_Wigner";
-    //Parameters_.OP_Ansatz_type = "Vertices_4_NonCopl_Tetrahedron_Wigner";
-    Parameters_.OP_Ansatz_type ="Vertices_10_NonCopl_State_Wigner_n2by3";
+    Parameters_.OP_Ansatz_type = "Vertices_4_NonCopl_Tetrahedron_Wigner";
+    //Parameters_.OP_Ansatz_type ="Vertices_10_NonCopl_State_Wigner_n2by3";
 
     if(!Parameters_.Read_OPs){
 
@@ -2920,7 +3038,7 @@ void Kspace_calculation_HC::Initialize()
                 for(int i_=0;i_<12;i_++){
                     for (int gamma_=0;gamma_<2;gamma_++){
                         if( (i_==0 && gamma_==0) || (i_==1 && gamma_==0) ||
-                            (i_==6 && gamma_==0) || (i_==7 && gamma_==0)  ){ //0
+                                (i_==6 && gamma_==0) || (i_==7 && gamma_==0)  ){ //0
                             Sx_vals[i_][gamma_]=Sx_vals_unique[0];
                             Sy_vals[i_][gamma_]=Sy_vals_unique[0];
                             Sz_vals[i_][gamma_]=Sz_vals_unique[0];
@@ -2939,7 +3057,7 @@ void Kspace_calculation_HC::Initialize()
                             den_vals[i_][gamma_]=1.0;
                         }
                         if( (i_==0 && gamma_==1) || (i_==1 && gamma_==1) ||
-                            (i_==6 && gamma_==1) || (i_==7 && gamma_==1)  ){ //3
+                                (i_==6 && gamma_==1) || (i_==7 && gamma_==1)  ){ //3
                             Sx_vals[i_][gamma_]=Sx_vals_unique[3];
                             Sy_vals[i_][gamma_]=Sy_vals_unique[3];
                             Sz_vals[i_][gamma_]=Sz_vals_unique[3];
@@ -3633,7 +3751,8 @@ void Kspace_calculation_HC::Initialize()
         //Fock Terms
         if(!Parameters_.Just_Hartree){
             bool check_;
-
+            int alpha_1, alpha_2, alpha_p_1, alpha_p_2, d1_org, d2_org;
+            int row_,col_;
             for(int cell_=0;cell_<ncells_;cell_++){
 
                 for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
@@ -3644,6 +3763,23 @@ void Kspace_calculation_HC::Initialize()
                             for(int alpha_p=0;alpha_p<UnitCellSize_x*UnitCellSize_y;alpha_p++){
                                 for(int gamma_p=0;gamma_p<n_orbs_;gamma_p++){
                                     for(int sigma_p=0;sigma_p<2;sigma_p++){
+
+
+
+                                        alpha_1 = alpha % UnitCellSize_x;
+                                        alpha_p_1 = alpha_p % UnitCellSize_x;
+
+                                        alpha_2 = (alpha - alpha_1)/UnitCellSize_x;
+                                        alpha_p_2 = (alpha_p - alpha_p_1)/UnitCellSize_x;
+
+                                        d1_org = Coordinates_.indx_cellwise(cell_);
+                                        d2_org = Coordinates_.indy_cellwise(cell_);
+                                        row_ = gamma + (0 + alpha_1)*n_orbs_ + (0 + alpha_2)*(n_orbs_*lx_);
+                                        col_ = gamma_p + ((d1_org*UnitCellSize_x) + alpha_p_1)*n_orbs_ + ((d2_org*UnitCellSize_y) + alpha_p_2)*(n_orbs_*lx_);
+
+
+
+
 
                                         if(Parameters_.FockType=="Onsite_Intra_Inter"){
                                             if(cell_==0){
@@ -3678,6 +3814,12 @@ void Kspace_calculation_HC::Initialize()
                                             }
                                         }
 
+                                        if(row_!=col_){
+                                            if( (OP_only_finite_Int) && (abs(Connections_.Hint_(row_, col_)) < Global_Eps )){
+                                                check_=false;
+                                            }
+                                        }
+
                                         if( check_ ){
 
                                             row_temp = alpha + gamma*(S_) +  sigma*(n_orbs_*S_) + 0*(2*n_orbs_*S_);
@@ -3706,15 +3848,27 @@ void Kspace_calculation_HC::Initialize()
         ifstream file_initial_OP_in(fl_initial_OP_in.c_str());
         string temp1, line_temp;
         int row_, col_;
+        int row_new, col_new;
         int index_;
         complex<double> val_OP;
+        int lx_old_, ly_old_, ncells_old_1;
 
         //#row col <c^{dagger}_{site_i,spin_i} c_{site_j, spin_j}>
         getline(file_initial_OP_in,temp1);
+        getline(file_initial_OP_in,line_temp);
+        stringstream line_temp_ss1(line_temp);
+        line_temp_ss1>>lx_old_>>ly_old_;
+
+        ncells_old_1 = (lx_old_/UnitCellSize_x);
 
 
         if((Parameters_.UnitCellType_intialOPs.first == UnitCellSize_x) &&
                 (Parameters_.UnitCellType_intialOPs.second == UnitCellSize_y)  ){
+
+            bool check_;
+            int alpha_1, alpha_2, alpha_p_1, alpha_p_2, d1_org, d2_org;
+            int row_int,col_int;
+
             if(file_initial_OP_in.is_open())
             {
                 while(getline(file_initial_OP_in,line_temp))
@@ -3733,10 +3887,62 @@ void Kspace_calculation_HC::Initialize()
                         }
                     }
                     else{
-                        index_ =  SI_to_ind[col_ + row_*(2*ncells_*n_orbs_*UnitCellSize_x*UnitCellSize_y)];
+                        row_new=row_;
+                        //col = alpha_p + gamma_p*(S_) +  sigma_p*(n_orbs_*S_) + cell_*(2*n_orbs_*S_);
+                        int alpha_gamma_sigma_old_col = col_%(2*n_orbs_*S_);
+                        int cell_old_col = (col_ - alpha_gamma_sigma_old_col)/(2*n_orbs_*S_);
+                        int alpha_gamma_old_col = alpha_gamma_sigma_old_col %(n_orbs_*S_);
+                        int sigma_old_col = (alpha_gamma_sigma_old_col -alpha_gamma_old_col)/(n_orbs_*S_);
+                        int alpha_old_col = alpha_gamma_old_col%(S_);
+                        int gamma_old_col = (alpha_gamma_old_col -alpha_old_col)/(S_);
+
+                        int cell_old_col_1 = cell_old_col % ncells_old_1;
+                        int cell_old_col_2 = (cell_old_col - cell_old_col_1)/(ncells_old_1);
+                        int cell_new_col = cell_old_col_1 + cell_old_col_2*((lx_/UnitCellSize_x));
+                        col_new = alpha_gamma_sigma_old_col + cell_new_col*(2*n_orbs_*S_);
+
+
+                        int alpha_gamma_sigma_old_row = row_;
+                        int cell_old_row = 0;
+                        int alpha_gamma_old_row= alpha_gamma_sigma_old_row %(n_orbs_*S_);
+                        int sigma_old_row = (alpha_gamma_sigma_old_row -alpha_gamma_old_row)/(n_orbs_*S_);
+                        int alpha_old_row = alpha_gamma_old_row%(S_);
+                        int gamma_old_row = (alpha_gamma_old_row -alpha_old_row)/(S_);
+
+
+                        alpha_1 = alpha_old_row % UnitCellSize_x;
+                        alpha_p_1 = alpha_old_col % UnitCellSize_x;
+
+                        alpha_2 = (alpha_old_row - alpha_1)/UnitCellSize_x;
+                        alpha_p_2 = (alpha_old_col - alpha_p_1)/UnitCellSize_x;
+
+                        d1_org = Coordinates_.indx_cellwise(cell_new_col);
+                        d2_org = Coordinates_.indy_cellwise(cell_new_col);
+                        row_int = gamma_old_row + (0 + alpha_1)*n_orbs_ + (0 + alpha_2)*(n_orbs_*lx_);
+                        col_int = gamma_old_col + ((d1_org*UnitCellSize_x) + alpha_p_1)*n_orbs_ + ((d2_org*UnitCellSize_y) + alpha_p_2)*(n_orbs_*lx_);
+
+
+                        check_=true;
+                        if(row_new!=col_new){
+                            if( (OP_only_finite_Int) && (abs(Connections_.Hint_(row_int, col_int)) < Global_Eps )){
+                                check_=false;
+                            }
+                        }
+
+
+                        if(check_){
+                        index_ =  SI_to_ind[col_new + row_new*(2*ncells_*n_orbs_*UnitCellSize_x*UnitCellSize_y)];
                         OPs_.value[index_]=val_OP + kick_while_cooling;
-                        assert(OPs_.rows[index_]==row_);
-                        assert(OPs_.columns[index_]==col_);
+                        assert(OPs_.rows[index_]==row_new);
+
+                        if(OPs_.columns[index_]!=col_new){
+                        cout<<"ERROR : "<<col_<<"  "<<col_new<<"  "<<OPs_.columns[index_]<<endl;
+                        }
+
+                        assert(OPs_.columns[index_]==col_new);
+                        }
+
+
                     }
 
                 }
@@ -4715,7 +4921,7 @@ void Kspace_calculation_HC::SelfConsistency(){
         Create_Kspace_Spectrum();
         Get_Bands();
 
-        //        Calculate_ChernNumbers();
+        Calculate_ChernNumbers();
 
         Arranging_spectrum();
         if(Parameters_.Fixing_mu){
@@ -4726,7 +4932,7 @@ void Kspace_calculation_HC::SelfConsistency(){
             mu_=chemicalpotential(Parameters_.Total_Particles);
         }
 
-        //Create_Current_Oprs_Faster();
+        Create_Current_Oprs_Faster();
         //        J_KE_e1.print();
         //        cout<<"============ PRINT EIGVECS ============================="<<endl;
         //        for(int r_=0;r_<Eigvectors_.size();r_++){
@@ -4737,7 +4943,7 @@ void Kspace_calculation_HC::SelfConsistency(){
         //        }
         //        cout<<"=========================================================="<<endl;
         //Create_Current_Oprs();
-        //Hall_conductance();
+        Hall_conductance();
 
         cout<<"mu = "<<mu_<<endl;
         cout<<"energies shown below , Eclass and Equant:"<<endl;
@@ -4761,6 +4967,7 @@ void Kspace_calculation_HC::SelfConsistency(){
         string File_Out_Local_OP = Parameters_.File_OPs_out + "_Temp"+string(temp_char) + ".txt";
         ofstream file_out_Local_OP(File_Out_Local_OP.c_str());
         file_out_Local_OP<<"#row col OParams_[row][col]"<<endl;
+        file_out_Local_OP<<lx_<<  "  "<<ly_<<endl;
 
         for(int alpha=0;alpha<OPs_.value.size();alpha++){
             file_out_Local_OP<<OPs_new_.rows[alpha]<<setw(15)<<OPs_new_.columns[alpha]<<setw(15)<<"  "<<OPs_new_.value[alpha]<<endl;

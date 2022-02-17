@@ -22,8 +22,8 @@ public:
     double a_moire;
     double eps_DE;
 
-    complex<double> t0;
-    Mat_2_Complex_doub t1, t2, t3;
+    complex<double> t0_upup, t0_dndn;
+    Mat_2_Complex_doub t1_plus_a1_upup, t1_minus_a2_upup, t1_plus_a1_dndn, t1_minus_a2_dndn,  t2_upup, t2_dndn, t3;
     double U0;
     double U0_interorb;
     Mat_2_doub U1, U2, U3;
@@ -88,51 +88,121 @@ void Parameters_HC::Initialize(string inputfile_)
     n_orbs = int(matchstring(inputfile_, "N_Orbs"));
     assert(n_orbs==2);
 
-    t1.resize(n_orbs);
-    t2.resize(n_orbs);
+    t1_plus_a1_upup.resize(n_orbs);
+    t1_minus_a2_upup.resize(n_orbs);
+    t1_plus_a1_dndn.resize(n_orbs);
+    t1_minus_a2_dndn.resize(n_orbs);
+    t2_upup.resize(n_orbs);
+    t2_dndn.resize(n_orbs);
     t3.resize(n_orbs);
     for(int i=0;i<n_orbs;i++){
-        t1[i].resize(n_orbs);
-        t2[i].resize(n_orbs);
+        t1_plus_a1_upup[i].resize(n_orbs);
+        t1_minus_a2_upup[i].resize(n_orbs);
+        t1_plus_a1_dndn[i].resize(n_orbs);
+        t1_minus_a2_dndn[i].resize(n_orbs);
+        t2_upup[i].resize(n_orbs);
+        t2_dndn[i].resize(n_orbs);
         t3[i].resize(n_orbs);
     }
 
-    string string_t0 = matchstring2(inputfile_, "t0");
-    string string_t1 = matchstring2(inputfile_, "t1");
-    string string_t2 = matchstring2(inputfile_, "t2");
+    string string_t0_upup = matchstring2(inputfile_, "t0_upup");
+    string string_t0_dndn = matchstring2(inputfile_, "t0_dndn");
+
+    string string_t1_plus_a1_upup = matchstring2(inputfile_, "t1_plus_a1_upup");
+    string string_t1_minus_a2_upup = matchstring2(inputfile_, "t1_minus_a2_upup");
+    string string_t1_plus_a1_dndn= matchstring2(inputfile_, "t1_plus_a1_dndn");
+    string string_t1_minus_a2_dndn = matchstring2(inputfile_, "t1_minus_a2_dndn");
+
+    string string_t2_upup = matchstring2(inputfile_, "t2_upup");
+    string string_t2_dndn = matchstring2(inputfile_, "t2_dndn");
     string string_t3 = matchstring2(inputfile_, "t3");
-    stringstream t0_ss(string_t0);
-    stringstream t1_ss(string_t1);
-    stringstream t2_ss(string_t2);
+    stringstream t0_upup_ss(string_t0_upup);
+    stringstream t0_dndn_ss(string_t0_dndn);
+    stringstream t1_plus_a1_upup_ss(string_t1_plus_a1_upup);
+    stringstream t1_minus_a2_upup_ss(string_t1_minus_a2_upup);
+    stringstream t1_plus_a1_dndn_ss(string_t1_plus_a1_dndn);
+    stringstream t1_minus_a2_dndn_ss(string_t1_minus_a2_dndn);
+    stringstream t2_upup_ss(string_t2_upup);
+    stringstream t2_dndn_ss(string_t2_dndn);
     stringstream t3_ss(string_t3);
 
-    t0_ss >> t0;
+    t0_upup_ss >> t0_upup;
+    t0_dndn_ss >> t0_dndn;
 
     for(int i=0;i<n_orbs;i++){
         for(int j=0;j<n_orbs;j++){
-            t1_ss >> t1[i][j];
-            t2_ss >> t2[i][j];
+            t1_plus_a1_upup_ss >> t1_plus_a1_upup[i][j];
+            t1_minus_a2_upup_ss >> t1_minus_a2_upup[i][j];
+            t1_plus_a1_dndn_ss >> t1_plus_a1_dndn[i][j];
+            t1_minus_a2_dndn_ss >> t1_minus_a2_dndn[i][j];
+            t2_upup_ss >> t2_upup[i][j];
+            t2_dndn_ss >> t2_dndn[i][j];
             t3_ss >> t3[i][j];
         }
     }
 
 
-    cout<<"t0 = "<< t0<<endl;
+    cout<<"t0_upup = "<< t0_upup<<endl;
     cout<<endl;
 
-    cout<<"t1 matrix:-----------------"<<endl;
+    cout<<"t0_dndn = "<< t0_dndn<<endl;
+    cout<<endl;
+
+
+    cout<<"t1 plus a1 upup matrix:-----------------"<<endl;
     for(int i=0;i<n_orbs;i++){
         for(int j=0;j<n_orbs;j++){
-            cout<< t1[i][j]<<" ";
+            cout<< t1_plus_a1_upup[i][j]<<" ";
         }
         cout<<endl;
     }
     cout<<endl;
 
-    cout<<"t2 matrix:-----------------"<<endl;
+    cout<<"t1 plus a1 dndn matrix:-----------------"<<endl;
     for(int i=0;i<n_orbs;i++){
         for(int j=0;j<n_orbs;j++){
-            cout<< t2[i][j]<<" ";
+            cout<< t1_plus_a1_dndn[i][j]<<" ";
+        }
+        cout<<endl;
+    }
+    cout<<endl;
+
+
+
+    cout<<"t1 minus a2 upup matrix:-----------------"<<endl;
+    for(int i=0;i<n_orbs;i++){
+        for(int j=0;j<n_orbs;j++){
+            cout<< t1_minus_a2_upup[i][j]<<" ";
+        }
+        cout<<endl;
+    }
+    cout<<endl;
+
+
+    cout<<"t1 minus a2 dndn matrix:-----------------"<<endl;
+    for(int i=0;i<n_orbs;i++){
+        for(int j=0;j<n_orbs;j++){
+            cout<< t1_minus_a2_dndn[i][j]<<" ";
+        }
+        cout<<endl;
+    }
+    cout<<endl;
+
+
+    cout<<"t2 matrix up:-----------------"<<endl;
+    for(int i=0;i<n_orbs;i++){
+        for(int j=0;j<n_orbs;j++){
+            cout<< t2_upup[i][j]<<" ";
+        }
+        cout<<endl;
+    }
+    cout<<endl;
+
+
+    cout<<"t2 matrix dn:-----------------"<<endl;
+    for(int i=0;i<n_orbs;i++){
+        for(int j=0;j<n_orbs;j++){
+            cout<< t2_dndn[i][j]<<" ";
         }
         cout<<endl;
     }

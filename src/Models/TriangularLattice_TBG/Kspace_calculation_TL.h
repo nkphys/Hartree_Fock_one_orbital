@@ -100,8 +100,8 @@ public:
     Matrix<double> X_mat, F_mat;
 
 
-    Matrix<complex<double>> J_KE_e1, J_KE_e2;
-    Matrix<complex<double>> J_KE_X, J_KE_Y;
+    vector<Matrix<complex<double>>> J_KE_e1, J_KE_e2;
+    vector<Matrix<complex<double>>> J_KE_X, J_KE_Y;
 
 
     double Global_Eps;
@@ -112,8 +112,14 @@ public:
 
 void Kspace_calculation_TL::Hall_conductance(){
 
-    double hall_cond=0.0;
-    double hall_cond_xy=0.0;
+    Mat_2_doub hall_cond, hall_cond_xy;
+    hall_cond.resize(2); hall_cond_xy.resize(2);
+    for(int spin_=0;spin_<2;spin_++){
+        hall_cond[spin_].resize(2);
+        hall_cond_xy[spin_].resize(2);
+    }
+
+
     double cond_11, cond_22;
     double eps_temp =0.00000001;
     Parameters_.eta=0.01;
@@ -121,29 +127,57 @@ void Kspace_calculation_TL::Hall_conductance(){
     string fileout_="sigmaxy_vs_mu.txt";
     ofstream fileout(fileout_.c_str());
 
+
+    for(int spin_1=0;spin_1<2;spin_1++){
+        for(int spin_2=0;spin_2<2;spin_2++){
+            hall_cond[spin_1][spin_2]=0.0;
     for(int m=0;m<lx_*ly_*2;m++){
         for(int n=0;n<lx_*ly_*2;n++){
-            if(abs(Eigenvalues_saved[m]-Eigenvalues_saved[n])>=eps_temp){
-                hall_cond += ((2.0*PI)/(lx_*ly_))*( (1.0/( exp((Eigenvalues_saved[m]-mu_)*Parameters_.beta ) + 1.0))-  (1.0/( exp((Eigenvalues_saved[n]-mu_)*Parameters_.beta ) + 1.0)) )*
+            //1if(abs(Eigenvalues_saved[m]-Eigenvalues_saved[n])>=-eps_temp){
+                hall_cond[spin_1][spin_2] += ((2.0*PI)/(lx_*ly_))*( (1.0/( exp((Eigenvalues_saved[m]-mu_)*Parameters_.beta ) + 1.0))-  (1.0/( exp((Eigenvalues_saved[n]-mu_)*Parameters_.beta ) + 1.0)) )*
                         (1.0/( (Parameters_.eta*Parameters_.eta) + ((Eigenvalues_saved[n]-Eigenvalues_saved[m])*(Eigenvalues_saved[n]-Eigenvalues_saved[m]))   ))*
-                        ((1.0*J_KE_e1(m,n))*(1.0*J_KE_e2(n,m))).imag();
-            }
+                        ((1.0*J_KE_e1[spin_1](m,n))*(1.0*J_KE_e2[spin_2](n,m))).imag();
+            //}
+        }
+    }
         }
     }
 
+    for(int spin_1=0;spin_1<2;spin_1++){
+        for(int spin_2=0;spin_2<2;spin_2++){
+            hall_cond_xy[spin_1][spin_2]=0.0;
     for(int m=0;m<lx_*ly_*2;m++){
         for(int n=0;n<lx_*ly_*2;n++){
-            if(abs(Eigenvalues_saved[m]-Eigenvalues_saved[n])>=eps_temp){
-                hall_cond_xy += ((2.0*PI)/(lx_*ly_))*( (1.0/( exp((Eigenvalues_saved[m]-mu_)*Parameters_.beta ) + 1.0))-  (1.0/( exp((Eigenvalues_saved[n]-mu_)*Parameters_.beta ) + 1.0)) )*
+            if(abs(Eigenvalues_saved[m]-Eigenvalues_saved[n])>=-eps_temp){
+                hall_cond_xy[spin_1][spin_2] += ((2.0*PI)/(lx_*ly_))*( (1.0/( exp((Eigenvalues_saved[m]-mu_)*Parameters_.beta ) + 1.0))-  (1.0/( exp((Eigenvalues_saved[n]-mu_)*Parameters_.beta ) + 1.0)) )*
                         (1.0/( (Parameters_.eta*Parameters_.eta) + ((Eigenvalues_saved[n]-Eigenvalues_saved[m])*(Eigenvalues_saved[n]-Eigenvalues_saved[m]))   ))*
-                        ((1.0*J_KE_X(m,n))*(1.0*J_KE_Y(n,m))).imag();
+                        ((1.0*J_KE_X[spin_1](m,n))*(1.0*J_KE_Y[spin_2](n,m))).imag();
             }
         }
     }
+        }
+    }
 
-    cout<<"Hall Conductance_12 = "<<hall_cond<<endl;
-    cout<<"Hall Conductance_XY = "<<hall_cond_xy<<endl;
+    cout<<"========= Hall conductance_12 [s1][s2] =============="<<endl;
+    for(int spin_1=0;spin_1<2;spin_1++){
+        for(int spin_2=0;spin_2<2;spin_2++){
+          cout<<hall_cond[spin_1][spin_2]<<"   ";
+        }
+        cout<<endl;
+    }
+    cout<<endl;
 
+
+    cout<<"========= Hall conductance_XY[s1][s2] =============="<<endl;
+    for(int spin_1=0;spin_1<2;spin_1++){
+        for(int spin_2=0;spin_2<2;spin_2++){
+          cout<<hall_cond_xy[spin_1][spin_2]<<"   ";
+        }
+        cout<<endl;
+    }
+    cout<<endl;
+
+    /*
     double mu=Eigenvalues_saved[0]-1.0;
     while(mu<Eigenvalues_saved[Eigenvalues_saved.size()-1]+1.0){
         hall_cond=0.0;
@@ -173,15 +207,28 @@ void Kspace_calculation_TL::Hall_conductance(){
         fileout<<mu<<"  "<<hall_cond<<"  "<<hall_cond_xy<<"  "<<cond_11<<"  "<<cond_22<<endl;
         mu=mu+0.05;
     }
+
+    */
+
 }
 
 
 void Kspace_calculation_TL::Create_Current_Oprs(){
-    J_KE_e1.resize(lx_*ly_*2, lx_*ly_*2);
-    J_KE_e2.resize(lx_*ly_*2, lx_*ly_*2);
 
-    J_KE_X.resize(lx_*ly_*2, lx_*ly_*2);
-    J_KE_Y.resize(lx_*ly_*2, lx_*ly_*2);
+
+
+    J_KE_e1.resize(2);J_KE_e2.resize(2);
+    J_KE_X.resize(2); J_KE_Y.resize(2);
+
+
+    for(int sigma=0;sigma<2;sigma++){
+        J_KE_e1[sigma].resize(lx_*ly_*2, lx_*ly_*2);
+        J_KE_e2[sigma].resize(lx_*ly_*2, lx_*ly_*2);
+
+        J_KE_X[sigma].resize(lx_*ly_*2, lx_*ly_*2);
+        J_KE_Y[sigma].resize(lx_*ly_*2, lx_*ly_*2);
+    }
+
 
 
     //    c1 = alpha + UP_*(S_);
@@ -231,6 +278,9 @@ void Kspace_calculation_TL::Create_Current_Oprs(){
     int d1_net, d2_net;
     double fac1, fac2, facx, facy, dx_, dy_;
 
+
+     for(int sigma=0;sigma<2;sigma++){
+
     for(int l=0;l<2*S_;l++){
         for(int m=0;m<2*S_;m++){
 
@@ -240,7 +290,7 @@ void Kspace_calculation_TL::Create_Current_Oprs(){
                     state_p = 2*S_*k_index + l;
                     state_n = 2*S_*k_index + m;
 
-                    for(int sigma=0;sigma<2;sigma++){
+
 
                         for(int alpha=0;alpha<S_;alpha++){
                             for(int alpha_p=0;alpha_p<S_;alpha_p++){
@@ -304,22 +354,22 @@ void Kspace_calculation_TL::Create_Current_Oprs(){
                                     }
 
                                     if(abs(Connections_.HTB_(row_,col_)) > 0.0000001){
-                                        J_KE_X(state_p,state_n) += (1.0)*facx*iota_complex*(
+                                        J_KE_X[sigma](state_p,state_n) += (1.0)*facx*iota_complex*(
                                                     (Connections_.HTB_(row_,col_)*conj(Eigvectors_[state_p][c2])*Eigvectors_[state_n][c1]*exp(iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
                                                     -(Connections_.HTB_(col_,row_)*conj(Eigvectors_[state_p][c1])*Eigvectors_[state_n][c2]*exp(-1.0*iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
                                                     );
 
-                                        J_KE_Y(state_p,state_n) += (1.0)*facy*iota_complex*(
+                                        J_KE_Y[sigma](state_p,state_n) += (1.0)*facy*iota_complex*(
                                                     (Connections_.HTB_(row_,col_)*conj(Eigvectors_[state_p][c2])*Eigvectors_[state_n][c1]*exp(iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
                                                     -(Connections_.HTB_(col_,row_)*conj(Eigvectors_[state_p][c1])*Eigvectors_[state_n][c2]*exp(-1.0*iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
                                                     );
 
-                                        J_KE_e1(state_p,state_n) += (1.0)*fac1*iota_complex*(
+                                        J_KE_e1[sigma](state_p,state_n) += (1.0)*fac1*iota_complex*(
                                                     (Connections_.HTB_(row_,col_)*conj(Eigvectors_[state_p][c2])*Eigvectors_[state_n][c1]*exp(iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
                                                     -(Connections_.HTB_(col_,row_)*conj(Eigvectors_[state_p][c1])*Eigvectors_[state_n][c2]*exp(-1.0*iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
                                                     );
 
-                                        J_KE_e2(state_p,state_n) += (1.0)*fac2*iota_complex*(
+                                        J_KE_e2[sigma](state_p,state_n) += (1.0)*fac2*iota_complex*(
                                                     (Connections_.HTB_(row_,col_)*conj(Eigvectors_[state_p][c2])*Eigvectors_[state_n][c1]*exp(iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
                                                     -(Connections_.HTB_(col_,row_)*conj(Eigvectors_[state_p][c1])*Eigvectors_[state_n][c2]*exp(-1.0*iota_complex* ( ((2.0*PI*k1)/(1.0*lx_cells))*d1_   +   ((2.0*PI*k2)/(1.0*ly_cells))*d2_ )))
                                                     );
@@ -1824,6 +1874,7 @@ void Kspace_calculation_TL::Initialize()
         else{
 
             if(Parameters_.Initial_Ansatz_type=="Tetrahedron"){
+            cout<<"Using Tetrahedron Ansatz"<<endl;
 
                 /*
              1: (1.0/sqrt(3))*(1,1,1)=(Sx,Sy,Sz)
@@ -1977,6 +2028,223 @@ void Kspace_calculation_TL::Initialize()
 
 
             }
+
+
+            //-----------
+            if(Parameters_.Initial_Ansatz_type=="Tri_Prism"){
+
+                // Using Trigonal Prism  with height=d and eq. triangle edge=a
+
+                /* n=1, s_max=n/2=0.5 for all 6 spins
+                   d/a is free parameter.
+                   "a" is fixed that |S_{i}|=s_max
+
+
+                1, A: (0,-a/sqrt(3), d/2) = (Sx,Sy,Sz)
+                2, B: (a/2,a/(2*sqrt(3)), d/2)
+                3, C: (-a/2, a/(2*sqrt(3)), d/2)
+                4, D: (0,-a/sqrt(3), -d/2)
+                5, E: (a/2,a/(2*sqrt(3)), -d/2)
+                6, F: (-a/2, a/(2*sqrt(3)), -d/2)
+                */
+
+                Mat_1_doub Sz_vals, Sx_vals, Sy_vals;
+                Sz_vals.resize(18);Sx_vals.resize(18);Sy_vals.resize(18);
+
+                double den_;
+                double s_max=0.5;
+                double d_by_a=0.5;
+                double a_;
+                double d_;
+                double Sz_, Sx_, Sy_;
+                int alpha_1, alpha_2;
+                int alpha_eff;
+                double value_temp;
+
+                a_= s_max/(sqrt( (1.0/3.0)  +  (d_by_a*d_by_a*0.25)   ));
+                d_ = a_*d_by_a;
+
+                for(int i_=0;i_<18;i_++){
+                    if(i_==1 || i_==6 || i_==14 ){ //A
+                        Sx_vals[i_]=0.0; Sy_vals[i_]=-1.0*a_*(1.0/sqrt(3.0));Sz_vals[i_]=0.5*d_;
+                    }
+                    if(i_==4 || i_==9 || i_==17 ){ //B
+                        Sx_vals[i_]=a_*0.5; Sy_vals[i_]=0.5*a_*(1.0/sqrt(3.0)); Sz_vals[i_]=0.5*d_;
+                    }
+                    if(i_==3 || i_==11 || i_==16 ){ //C
+                        Sx_vals[i_]=-0.5*a_; Sy_vals[i_]=0.5*a_*(1.0/sqrt(3.0));Sz_vals[i_]=0.5*d_;
+                    }
+
+                    if(i_==5 || i_==10 || i_==15 ){ //D
+                        Sx_vals[i_]=0.0; Sy_vals[i_]=-1.0*a_*(1.0/sqrt(3.0));Sz_vals[i_]=-0.5*d_;
+                    }
+                    if(i_==0 || i_==8 || i_==13 ){ //E
+                        Sx_vals[i_]=a_*0.5; Sy_vals[i_]=0.5*a_*(1.0/sqrt(3.0)); Sz_vals[i_]=-0.5*d_;
+                    }
+                    if(i_==2 || i_==7 || i_==12 ){ //F
+                        Sx_vals[i_]=-0.5*a_; Sy_vals[i_]=0.5*a_*(1.0/sqrt(3.0));Sz_vals[i_]=-0.5*d_;
+                    }
+
+                }
+
+
+                //Hartree Terms
+                for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+
+                    alpha_1 = alpha % UnitCellSize_x; //a = a1 +a2*lx
+                    alpha_2 = (alpha - alpha_1)/UnitCellSize_x;
+
+                    alpha_eff = (alpha_1%3) +  3*(alpha_2%6);
+
+                    for(int sigma=0;sigma<2;sigma++){
+                        for(int gamma=0;gamma<n_orbs_;gamma++){
+                            if(gamma==0){
+                                den_=1.0;
+                                Sz_=Sz_vals[alpha_eff];
+                                value_temp = 0.5*den_ + (1.0 - (2.0*sigma))*Sz_;
+                                OPs_.value.push_back(complex<double> (value_temp,0.0));
+                            }
+                            else{
+                                den_=0.0;
+                                OPs_.value.push_back(complex<double> (0.0,0.0));
+                            }
+
+
+                            OPs_new_.value.push_back(0.0);
+
+                            row_temp=  alpha + gamma*(S_) +  sigma*(n_orbs_*S_) + 0*(2*n_orbs_*S_);
+                            col_temp=row_temp;
+
+                            OPs_.rows.push_back(row_temp);OPs_new_.rows.push_back(row_temp);
+                            OPs_.columns.push_back(col_temp);OPs_new_.columns.push_back(col_temp);
+                            SI_to_ind[col_temp + row_temp*(ncells_*2*n_orbs_*S_)] = OPs_.value.size()-1;
+
+                        }
+                    }
+                }
+
+
+                //Fock Terms
+                if(!Parameters_.Just_Hartree){
+                    bool check_;
+
+                    int alpha_p_1, alpha_p_2, d1_org, d2_org;
+                    int row_,col_;
+                    for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+                        alpha_1 = alpha % UnitCellSize_x; //a = a1 +a2*lx
+                        alpha_2 = (alpha - alpha_1)/UnitCellSize_x;
+
+                        alpha_eff = (alpha_1%3) +  3*(alpha_2%6);
+
+                        for(int gamma=0;gamma<n_orbs_;gamma++){
+                            if(gamma==1){
+                                Sx_=0.0;Sy_=0.0;
+                            }
+                            else{
+                                Sx_=Sx_vals[alpha_eff];
+                                Sy_=Sy_vals[alpha_eff];
+                            }
+
+                            for(int sigma=0;sigma<2;sigma++){
+
+                                for(int cell_=0;cell_<ncells_;cell_++){
+                                    for(int alpha_p=0;alpha_p<UnitCellSize_x*UnitCellSize_y;alpha_p++){
+                                        for(int gamma_p=0;gamma_p<n_orbs_;gamma_p++){
+
+
+
+                                            alpha_p_1 = alpha_p % UnitCellSize_x;
+                                            alpha_p_2 = (alpha_p - alpha_p_1)/UnitCellSize_x;
+                                            d1_org = Coordinates_.indx_cellwise(cell_);
+                                            d2_org = Coordinates_.indy_cellwise(cell_);
+                                            row_ = gamma + (0 + alpha_1)*n_orbs_ + (0 + alpha_2)*(n_orbs_*lx_);
+                                            col_ = gamma_p + ((d1_org*UnitCellSize_x) + alpha_p_1)*n_orbs_ + ((d2_org*UnitCellSize_y) + alpha_p_2)*(n_orbs_*lx_);
+
+
+
+
+                                            for(int sigma_p=0;sigma_p<2;sigma_p++){
+
+                                                if(Parameters_.FockType=="Onsite_Intra_Inter"){
+                                                    if(cell_==0){
+                                                        check_= ((alpha_p + gamma_p*(S_) +  sigma_p*(n_orbs_*S_)) > (alpha + gamma*(S_) +  sigma*(n_orbs_*S_)));
+                                                    }
+                                                    else{
+                                                        check_ = ((alpha_p + gamma_p*(S_) +  sigma_p*(n_orbs_*S_)) >= (alpha + gamma*(S_) +  sigma*(n_orbs_*S_)));
+                                                    }
+                                                }
+
+
+                                                if(Parameters_.FockType=="Onsite_Intra"){
+                                                    if(cell_==0){
+                                                        check_ = ((alpha_p + gamma_p*(S_) +  sigma_p*(n_orbs_*S_)) > (alpha + gamma*(S_) +  sigma*(n_orbs_*S_)));
+                                                    }
+                                                    else{ //cell_!=0
+                                                        check_=false;
+                                                    }
+                                                }
+
+                                                if(Parameters_.FockType=="Onsite"){
+                                                    if(cell_==0){
+                                                        if(alpha_p==alpha){
+                                                            check_ = ((alpha_p + gamma_p*(S_) +  sigma_p*(n_orbs_*S_)) > (alpha + gamma*(S_) +  sigma*(n_orbs_*S_)));
+                                                        }
+                                                        else{ //alpha !=alpha_p
+                                                            check_=false;
+                                                        }
+                                                    }
+                                                    else{ //cell_!=0
+                                                        check_=false;
+                                                    }
+                                                }
+
+                                                if(row_!=col_){
+                                                    if( (OP_only_finite_Int) && (abs(Connections_.Hint_(row_, col_)) < Global_Eps )){
+                                                        check_=false;
+                                                    }
+                                                }
+
+                                                if( check_ ){
+
+
+
+                                                    //--------------------
+                                                    row_temp = alpha + gamma*(S_) +  sigma*(n_orbs_*S_) + 0*(2*n_orbs_*S_);
+                                                    col_temp = alpha_p + gamma_p*(S_) +  sigma_p*(n_orbs_*S_) + cell_*(2*n_orbs_*S_);
+
+                                                    if(row_!=col_){
+                                                        OPs_.value.push_back(complex<double> (0.05*random1(),0.05*random1()));
+                                                    }
+                                                    else{
+                                                        OPs_.value.push_back(complex<double> (1*Sx_,1*Sy_));
+                                                    }
+
+                                                    OPs_new_.value.push_back(0.0);
+
+                                                    OPs_.rows.push_back(row_temp);OPs_new_.rows.push_back(row_temp);
+                                                    OPs_.columns.push_back(col_temp);OPs_new_.columns.push_back(col_temp);
+
+                                                    SI_to_ind[col_temp + row_temp*(ncells_*2*n_orbs_*S_)] = OPs_.value.size()-1;
+                                                    //-------------------
+
+
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+
+                }
+
+            }
+
+
+            //----------
+
 
 
 
@@ -2410,50 +2678,50 @@ void Kspace_calculation_TL::Create_Kspace_Spectrum(){
 
 
             //Onsite Energy: Tetrahedron, temporary
-            //            for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
-            //                int alpha_1 = alpha % UnitCellSize_x; //a = a1 +a2*lx
-            //                int alpha_2 = (alpha - alpha_1)/UnitCellSize_x;
-            //                double val_temp;
-            //                if( (alpha_1%2==0) && (alpha_2%2==0)){
-            //                    val_temp=0.01;
-            //                }
-            //                if( (alpha_1%2==1) && (alpha_2%2==0)){
-            //                    val_temp=0.02;
-            //                }
-            //                if( (alpha_1%2==0) && (alpha_2%2==1)){
-            //                    val_temp=0.03;
-            //                }
-            //                if( (alpha_1%2==1) && (alpha_2%2==1)){
-            //                    val_temp=0.04;
-            //                }
+//                        for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+//                            int alpha_1 = alpha % UnitCellSize_x; //a = a1 +a2*lx
+//                            int alpha_2 = (alpha - alpha_1)/UnitCellSize_x;
+//                            double val_temp;
+//                            if( (alpha_1%2==0) && (alpha_2%2==0)){
+//                                val_temp=0.05;
+//                            }
+//                            if( (alpha_1%2==1) && (alpha_2%2==0)){
+//                                val_temp=0.02;
+//                            }
+//                            if( (alpha_1%2==0) && (alpha_2%2==1)){
+//                                val_temp=0.03;
+//                            }
+//                            if( (alpha_1%2==1) && (alpha_2%2==1)){
+//                                val_temp=0.04;
+//                            }
 
-            //                for(int spin1=0;spin1<2;spin1++){
-            //                    row_ = alpha + spin1*(UnitCellSize_x*UnitCellSize_y);
-            //                    col_=row_;
+//                            for(int spin1=0;spin1<2;spin1++){
+//                                row_ = alpha + spin1*(UnitCellSize_x*UnitCellSize_y);
+//                                col_=row_;
 
-            //                    row_OP = 0*(2*UnitCellSize_x*UnitCellSize_y) + alpha + spin1*(UnitCellSize_x*UnitCellSize_y);
-            //                    col_OP = 0*(2*UnitCellSize_x*UnitCellSize_y) + alpha + spin1*(UnitCellSize_x*UnitCellSize_y);
-            //                    index_OP = SI_to_ind[col_OP + row_OP*(2*ncells_*UnitCellSize_x*UnitCellSize_y)];
+//                                row_OP = 0*(2*UnitCellSize_x*UnitCellSize_y) + alpha + spin1*(UnitCellSize_x*UnitCellSize_y);
+//                                col_OP = 0*(2*UnitCellSize_x*UnitCellSize_y) + alpha + spin1*(UnitCellSize_x*UnitCellSize_y);
+//                                index_OP = SI_to_ind[col_OP + row_OP*(2*ncells_*UnitCellSize_x*UnitCellSize_y)];
 
-            //                    Ham_(row_,col_) += val_temp;
+//                                Ham_(row_,col_) += val_temp;
 
-            //                }
-            //            }
+//                            }
+//                        }
 
 
 
 
             //Magnetic field: Tetrahedron, temporary
-            //            for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+//                        for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
 
-            //                for(int spin1=0;spin1<2;spin1++){
-            //                        row_ = alpha + spin1*(UnitCellSize_x*UnitCellSize_y);
-            //                        col_=row_;
+//                            for(int spin1=0;spin1<2;spin1++){
+//                                    row_ = alpha + spin1*(UnitCellSize_x*UnitCellSize_y);
+//                                    col_=row_;
 
-            //                        Ham_(row_,col_) += 0.05*(1.0 - (2.0*spin1));
+//                                    Ham_(row_,col_) += 0.01*(1.0 - (2.0*spin1));
 
-            //                }
-            //            }
+//                            }
+//                        }
 
 
 
@@ -2978,12 +3246,13 @@ void Kspace_calculation_TL::SelfConsistency(){
 
         Create_Kspace_Spectrum();
         Get_Bands();
-        //Calculate_ChernNumbers();
-        //Create_Current_Oprs();
+        Calculate_ChernNumbers();
+        Create_Current_Oprs();
 
 
-        //J_KE_X.print();
-        //Hall_conductance();
+        //J_KE_e1[0].print();
+        //J_KE_e1[1].print();
+        Hall_conductance();
         Arranging_spectrum();
         mu_=chemicalpotential(Parameters_.Total_Particles);
         cout<<"mu = "<<mu_<<endl;

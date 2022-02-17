@@ -4,11 +4,11 @@
 PBC_X=1
 PBC_Y=1
 
-Xsite=12
-Ysite=12
+Xsite=36
+Ysite=36
 N_Orbs=2
-UnitCellSize_x=6
-UnitCellSize_y=6
+UnitCellSize_x=1
+UnitCellSize_y=1
 
 File_Onsite_Energies=TL_Onsite_E_12x12.txt
 File_Hopping_Connections=TL_Hoppings_12x12_OBCXOBC.txt
@@ -19,10 +19,20 @@ TwistedBoundaryCond_my=0
 TBC_cellsX=1
 TBC_cellsY=1
 
-t0=(1.00,0)
-t1=(0,0) (1.00,0) (0,0) (0,0) 
-t2=(0.00,0) (0,0) (0,0) (1.00,0)
+
+t0_upup=(1,0.0)
+t0_dndn=(1,0.0)
+t1_plus_a1_upup=(0,0.0) (1.0,0.0) (0,0) (0,0.0)
+t1_minus_a2_upup=(0,0.0) (0.0,0.0) (1,0) (0,0.0)
+t1_plus_a1_dndn=(0,0.0) (1.0,0.0) (0,0) (0,0.0)
+t1_minus_a2_dndn=(0,0.0) (0.0,0.0) (1,0) (0,0.0)
+t2_upup=(0,0.0) (0.0,0.0) (0,0) (0.0,0.0)
+t2_dndn=(0,0.0) (0.0,0.0) (0,0) (0.0,0.0)
 t3=(0,0) (0,0) (0,0) (0,0)
+
+
+
+
 
 #1=(-6.09911,4.5193e-14)
 #2=(-0.226546,1.84609e-13)
@@ -35,14 +45,14 @@ a_moire_in_Angstorm=60
 d_screening_in_Angstorm=600
 eps_DE=300.0
 
-U0=18.0
-U0_interorb=7.2
+U0=16.0
+U0_interorb=0.5
 U1=0 0 0 0
 U2=0 0 0 0
 U3=0 0 0 0
 
 OP_only_finite_Int=1
-Truncating_Length_in_am=10000000
+Truncating_Length_in_am=0.578
 
 #Only U0: 0*am
 #Upto U1: ~0.577 i.e. am/sqrt(3)
@@ -55,14 +65,14 @@ OnSiteE_up1=0.0
 OnSiteE_dn1=0.0
 
 Self_consistency_kspace=1
-Total_particles=192
+Total_particles=1296
 Fixing_mu=0
 Mu_value=100
 
-No_of_SelfConsistency_iters=100
-Convergence_Error=0.000001
-RandomSeed=1
-alpha_OP=0.5
+No_of_SelfConsistency_iters=1000
+Convergence_Error=0.00001
+RandomSeed=101
+alpha_OP=0.4
 
 Cooling=1
 Temperature=1 0.0001
@@ -75,8 +85,8 @@ Just_Hartree=0
 Fock_type=Onsite_Intra_Inter
 #Onsite, Onsite_Intra, Onsite_Intra_Inter
 Read_initial_OPvalues=0
-Read_initial_OPvalues_UnitCellsType=6 6
-Read_initial_OPvalues_file=OP_U0_9_U1_0.44_UC6_Seed_6Vertices.txt
+Read_initial_OPvalues_UnitCellsType=2 2
+Read_initial_OPvalues_file=OP_OUTPUT_kspace_Temp0.0001000000_6x6_2x2.txt
 #OUTPUT_OP_PiPi_alongZ.txt
 #OUTPUT_OP_0Pi_alongZ.txt
 #OUTPUT_OP_ZigZag_alongZ.txt
