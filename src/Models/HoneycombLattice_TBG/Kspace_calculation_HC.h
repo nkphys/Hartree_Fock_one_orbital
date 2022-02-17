@@ -90,6 +90,9 @@ public:
     double OP_error_;
     double E_quant, E_class;
 
+    double E_class_onsite_U0_Hartree, E_class_longrange_Hartree;
+    double E_class_onsite_U0_Fock, E_class_longrange_Fock;
+
     Mat_1_intpair OP_Dcell;
     Mat_1_intpair OP_alpha;
     Mat_1_intpair OP_sigma;
@@ -1194,6 +1197,9 @@ void Kspace_calculation_HC::Get_Energies(){
     complex<double> E_class_temp=0.0;
     E_class= 0.0;
 
+    E_class_onsite_U0_Hartree=0.0; E_class_longrange_Hartree=0.0;
+    E_class_onsite_U0_Fock=0.0; E_class_longrange_Fock=0.0;
+
 
     int row_, col_, index;
     int row_OP, col_OP, index_OP;
@@ -1240,6 +1246,8 @@ void Kspace_calculation_HC::Get_Energies(){
 
                         index_OP = SI_to_ind[col_OP + row_OP*(2*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
                         E_class_temp += -0.5*Parameters_.U0*OPs_.value[index_OP]*OPs_.value[index];
+
+                        E_class_onsite_U0_Hartree += (-0.5*Parameters_.U0*OPs_.value[index_OP]*OPs_.value[index]).real();
                     }
                 }
             }
@@ -1263,6 +1271,9 @@ void Kspace_calculation_HC::Get_Energies(){
 
                             index_OP = SI_to_ind[col_OP + row_OP*(2*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
                             E_class_temp += -0.5*Parameters_.U0_interorb*OPs_.value[index_OP]*OPs_.value[index];
+
+                            E_class_longrange_Hartree += (-0.5*Parameters_.U0_interorb*OPs_.value[index_OP]*OPs_.value[index]).real();
+
                         }
                     }
                 }
@@ -1292,6 +1303,9 @@ void Kspace_calculation_HC::Get_Energies(){
                                         col_OP = row_OP;
                                         index_OP = SI_to_ind[col_OP + row_OP*(2*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
                                         E_class_temp += -0.5*IntraCell_U(alpha, gamma, alpha_p, gamma_p)*OPs_.value[index_OP]*OPs_.value[index];
+
+                                         E_class_longrange_Hartree += (-0.5*IntraCell_U(alpha, gamma, alpha_p, gamma_p)*OPs_.value[index_OP]*OPs_.value[index]).real();
+
                                     }
                                 }
                             }
@@ -1320,6 +1334,8 @@ void Kspace_calculation_HC::Get_Energies(){
                                     col_OP = row_OP;
                                     index_OP = SI_to_ind[col_OP + row_OP*(2*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
                                     E_class_temp += -0.5*U_Bar(alpha,gamma, alpha_p, gamma_p)*OPs_.value[index_OP]*OPs_.value[index];
+
+                                    E_class_longrange_Hartree += (-0.5*U_Bar(alpha,gamma, alpha_p, gamma_p)*OPs_.value[index_OP]*OPs_.value[index]).real();
                                 }
                             }
                         }
@@ -1363,6 +1379,9 @@ void Kspace_calculation_HC::Get_Energies(){
 
 
                                 E_class_temp += 0.5*Parameters_.U0*OP_value*OP_value2;
+
+                                E_class_onsite_U0_Fock += (0.5*Parameters_.U0*OP_value*OP_value2).real();
+
 
 
                             }
@@ -1417,6 +1436,8 @@ void Kspace_calculation_HC::Get_Energies(){
                                     if( (!OP_only_finite_Int) ||  (abs(Connections_.Hint_(row_U, col_U)) > Global_Eps )){
 
                                         E_class_temp += 0.5*Parameters_.U0_interorb*OP_value*OP_value2;
+
+                                        E_class_longrange_Fock += (0.5*Parameters_.U0_interorb*OP_value*OP_value2).real();
                                     }
 
                                 }
@@ -1479,6 +1500,8 @@ void Kspace_calculation_HC::Get_Energies(){
                                                 if( (!OP_only_finite_Int) ||  (abs(Connections_.Hint_(row_U, col_U)) > Global_Eps )){
 
                                                     E_class_temp += 0.5*IntraCell_U(alpha,gamma, alpha_p, gamma_p)*OP_value*conj(OP_value);//conj(OP_value);//*OP_value2;
+
+                                                    E_class_longrange_Fock +=(0.5*IntraCell_U(alpha,gamma, alpha_p, gamma_p)*OP_value*conj(OP_value)).real();
                                                 }
                                             }
                                         }
@@ -1533,6 +1556,8 @@ void Kspace_calculation_HC::Get_Energies(){
                                                 if( (!OP_only_finite_Int) ||  (abs(Connections_.Hint_(row_, col_)) > Global_Eps )){
 
                                                     E_class_temp +=0.5*Connections_.Hint_(row_,col_)*OP_value2*conj(OP_value2);
+
+                                                    E_class_longrange_Fock += (0.5*Connections_.Hint_(row_,col_)*OP_value2*conj(OP_value2)).real();
                                                 }
 
                                             }}
@@ -4921,7 +4946,7 @@ void Kspace_calculation_HC::SelfConsistency(){
         Create_Kspace_Spectrum();
         Get_Bands();
 
-        Calculate_ChernNumbers();
+        //Calculate_ChernNumbers();
 
         Arranging_spectrum();
         if(Parameters_.Fixing_mu){
@@ -4932,7 +4957,7 @@ void Kspace_calculation_HC::SelfConsistency(){
             mu_=chemicalpotential(Parameters_.Total_Particles);
         }
 
-        Create_Current_Oprs_Faster();
+        //Create_Current_Oprs_Faster();
         //        J_KE_e1.print();
         //        cout<<"============ PRINT EIGVECS ============================="<<endl;
         //        for(int r_=0;r_<Eigvectors_.size();r_++){
@@ -4943,13 +4968,21 @@ void Kspace_calculation_HC::SelfConsistency(){
         //        }
         //        cout<<"=========================================================="<<endl;
         //Create_Current_Oprs();
-        Hall_conductance();
+        //Hall_conductance();
 
         cout<<"mu = "<<mu_<<endl;
         cout<<"energies shown below , Eclass and Equant:"<<endl;
         Get_new_OPs_and_error();
         Get_Energies();
         cout<<E_class<<"   "<<E_quant<<"    "<<endl;
+
+
+        cout<<"================== Classical Energies by parts ====================="<<endl;
+        cout<<"E_class_onsite_U0_Hartree = "<<E_class_onsite_U0_Hartree <<endl;
+        cout<<"E_class_longrange_Hartree = "<<E_class_longrange_Hartree<<endl;
+        cout<<"E_class_onsite_U0_Fock = "<<E_class_onsite_U0_Fock<<endl;
+        cout<<"E_class_longrange_Fock = "<<E_class_longrange_Fock<<endl;
+        cout<<"===================================================================="<<endl;
 
         Get_spin_resolved_local_densities();
         Get_local_spins();
@@ -4960,6 +4993,9 @@ void Kspace_calculation_HC::SelfConsistency(){
         for(int ie=0;ie<Eigenvalues_.size();ie++){
             Eigenvalues_file_out<<ie<<"  "<<Eigenvalues_[ie]<<endl;
         }
+
+
+
 
 
 

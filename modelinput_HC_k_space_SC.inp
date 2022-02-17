@@ -4,8 +4,8 @@
 PBC_X=1
 PBC_Y=1
 
-Xsite=36
-Ysite=36
+Xsite=12
+Ysite=12
 N_Orbs=2
 UnitCellSize_x=1
 UnitCellSize_y=1
@@ -20,12 +20,12 @@ TBC_cellsX=1
 TBC_cellsY=1
 
 
-t0_upup=(1,0.0)
-t0_dndn=(1,0.0)
-t1_plus_a1_upup=(0,0.0) (1.0,0.0) (0,0) (0,0.0)
-t1_minus_a2_upup=(0,0.0) (0.0,0.0) (1,0) (0,0.0)
-t1_plus_a1_dndn=(0,0.0) (1.0,0.0) (0,0) (0,0.0)
-t1_minus_a2_dndn=(0,0.0) (0.0,0.0) (1,0) (0,0.0)
+t0_upup=(0.0001,0.0)
+t0_dndn=(0.0001,0.0)
+t1_plus_a1_upup=(0,0.0) (0.0001,0.0) (0,0) (0,0.0)
+t1_minus_a2_upup=(0,0.0) (0.0,0.0) (0.0001,0) (0,0.0)
+t1_plus_a1_dndn=(0,0.0) (0.0001,0.0) (0,0) (0,0.0)
+t1_minus_a2_dndn=(0,0.0) (0.0,0.0) (0.0001,0) (0,0.0)
 t2_upup=(0,0.0) (0.0,0.0) (0,0) (0.0,0.0)
 t2_dndn=(0,0.0) (0.0,0.0) (0,0) (0.0,0.0)
 t3=(0,0) (0,0) (0,0) (0,0)
@@ -46,7 +46,7 @@ d_screening_in_Angstorm=600
 eps_DE=300.0
 
 U0=16.0
-U0_interorb=0.5
+U0_interorb=1.0
 U1=0 0 0 0
 U2=0 0 0 0
 U3=0 0 0 0
@@ -65,12 +65,12 @@ OnSiteE_up1=0.0
 OnSiteE_dn1=0.0
 
 Self_consistency_kspace=1
-Total_particles=1296
+Total_particles=290
 Fixing_mu=0
 Mu_value=100
 
 No_of_SelfConsistency_iters=1000
-Convergence_Error=0.00001
+Convergence_Error=0.0000001
 RandomSeed=101
 alpha_OP=0.4
 
