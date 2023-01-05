@@ -799,7 +799,7 @@ void Kspace_calculation_HC::Calculate_Nw()
     //---------Read from input file-----------------------//
     string fileout = "Nw" + string(temp_char)+ ".txt";
     double omega_min, omega_max, d_omega;
-    double eta = 0.002;
+    double eta = 0.05;
     omega_min = Eigenvalues_[0]-10.0;
     omega_max = Eigenvalues_[ind_max-1] + 10.0;
     d_omega = 0.001;
@@ -3948,7 +3948,7 @@ void Kspace_calculation_HC::Initialize()
 
 
                         check_=true;
-                        if(row_new!=col_new){
+                        if(row_int!=col_int){
                             if( (OP_only_finite_Int) && (abs(Connections_.Hint_(row_int, col_int)) < Global_Eps )){
                                 check_=false;
                             }

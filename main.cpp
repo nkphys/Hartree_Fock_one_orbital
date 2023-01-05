@@ -49,6 +49,13 @@ using namespace std;
 #include "src/Models/HoneycombLattice_TBG/Connections_HC.h"
 #include "src/Models/HoneycombLattice_TBG/Observables_HC.h"
 #include "src/Models/HoneycombLattice_TBG/Kspace_calculation_HC.h"
+
+#include "src/Models/HoneycombLattice_MultiOrb/Parameters_HC_MO.h"
+#include "src/Models/HoneycombLattice_MultiOrb/Coordinates_HC_MO.h"
+#include "src/Models/HoneycombLattice_MultiOrb/Connections_HC_MO.h"
+#include "src/Models/HoneycombLattice_MultiOrb/Observables_HC_MO.h"
+#include "src/Models/HoneycombLattice_MultiOrb/Kspace_calculation_HC_MO.h"
+
 #include "random"
 
 
@@ -142,6 +149,28 @@ int main(int argc, char *argv[]) {
 
             mt19937_64 Generator_(Parameters_HC_.RandomSeed);
             Kspace_calculation_HC Kspace_calculation_HC_(Parameters_HC_, Coordinates_HC_UC_, Connections_HC_, Generator_);
+            Kspace_calculation_HC_.SelfConsistency();
+
+        }
+
+         if(ModelType=="HoneycombLattice_MO"){
+
+            Parameters_HC_MO Parameters_HC_;
+            Parameters_HC_.Initialize(model_inputfile);
+
+            Coordinates_HC_MO Coordinates_HC_(Parameters_HC_.lx, Parameters_HC_.ly, Parameters_HC_.n_orbs, Parameters_HC_.n_atoms);
+            Connections_HC_MO Connections_HC_(Parameters_HC_, Coordinates_HC_);
+            Connections_HC_.Print_Hopping();                                       //::DONE
+            Connections_HC_.InteractionsCreate();
+            Connections_HC_.Print_LongRangeInt();
+            //Connections_HC_.Print_Spin_resolved_OnsiteE();
+            Connections_HC_.Interactions_Sorting();
+
+            Coordinates_HC_MO Coordinates_HC_UC_(Parameters_HC_.lx/Parameters_HC_.UnitCellSize_x, Parameters_HC_.ly/Parameters_HC_.UnitCellSize_y, 1, 1);
+
+
+            mt19937_64 Generator_(Parameters_HC_.RandomSeed);
+            Kspace_calculation_HC_MO Kspace_calculation_HC_(Parameters_HC_, Coordinates_HC_UC_, Connections_HC_, Generator_);
             Kspace_calculation_HC_.SelfConsistency();
 
         }

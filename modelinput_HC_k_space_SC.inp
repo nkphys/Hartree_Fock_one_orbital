@@ -4,8 +4,8 @@
 PBC_X=1
 PBC_Y=1
 
-Xsite=12
-Ysite=12
+Xsite=60
+Ysite=60
 N_Orbs=2
 UnitCellSize_x=1
 UnitCellSize_y=1
@@ -45,8 +45,8 @@ a_moire_in_Angstorm=60
 d_screening_in_Angstorm=600
 eps_DE=300.0
 
-U0=16.0
-U0_interorb=1.0
+U0=0.0
+U0_interorb=0.0
 U1=0 0 0 0
 U2=0 0 0 0
 U3=0 0 0 0

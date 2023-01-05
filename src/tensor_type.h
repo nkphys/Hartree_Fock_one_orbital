@@ -171,6 +171,15 @@ struct Matrix_COO_Complex{
     };
 
 
+struct Matrix_COO_doub_tensor{
+
+        Mat_1_doub value;
+        Mat_1_int  indx1;
+        Mat_1_int  indx2;
+		Mat_1_int  indx3;
+        Mat_1_int  indx4;
+    };
+
 
 
 

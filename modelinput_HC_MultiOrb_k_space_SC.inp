@@ -1,0 +1,104 @@
+#false in X because of OBC in X
+#true in Y because just 2-siters in Y, otherwise OBC just overwrites the same connections with zeros 
+
+PBC_X=1
+PBC_Y=1
+
+Xsite=12
+Ysite=12
+N_Orbs=2
+UnitCellSize_x=1
+UnitCellSize_y=1
+ 
+
+File_Onsite_Interactions_input=Onsite_interactions.txt
+File_pa1_ma2_Interactions_input=NearestNeighbour_pa1_ma2_interactions.txt
+File_ma2_Interactions_input=NearestNeighbour_ma2_interactions.txt
+
+
+File_Onsite_Energies=TL_Onsite_E_12x12.txt
+File_Hopping_Connections=TL_Hoppings_12x12_OBCXOBC.txt
+File_NonLocal_Int_Connections=TL_Interactions_12x12.txt
+
+TwistedBoundaryCond_mx=0
+TwistedBoundaryCond_my=0
+TBC_cellsX=1
+TBC_cellsY=1
+
+
+//In following files: columns hops electron to row dof at neighbouring site
+t0_mat_file=t0_mat_hop.txt
+t1_plus_a1_file=t1_plus_a1_hop.txt
+t1_minus_a2_file=t1_minus_a2_hop.txt
+t1_plus_a1_minus_a2_mat_file=t1_plus_a1_minus_a2_hop.txt
+t1_plus_a1_minus_2a2_mat_file=t1_plus_a1_minus_2a2_hop.txt
+t3_mat_file=t3_mat.txt
+
+
+#1=(-6.09911,4.5193e-14)
+#2=(-0.226546,1.84609e-13)
+#3=(-0.927747,-5.37348e-14)
+
+LongRange_interaction=1
+a_moire_in_Angstorm=60
+#46.98257888521417500876
+#37.5860
+d_screening_in_Angstorm=600
+eps_DE=100
+
+U0=0.0
+U0_interatom=0.0
+U1=0 0 0 0
+U2=0 0 0 0
+U3=0 0 0 0
+
+OP_only_finite_Int=1
+Truncating_Length_in_am=0.578
+
+#Only U0: 0*am
+#Upto U1: ~0.577 i.e. am/sqrt(3)
+#Upyo U2: 1.0 i.e. am
+
+AnisotropyZ=0.0
+OnSiteE_up0=0.0
+OnSiteE_dn0=0.0
+OnSiteE_up1=0.0
+OnSiteE_dn1=0.0
+OnSiteE_up2=0.0
+OnSiteE_dn2=0.0
+OnSiteE_up3=0.0
+OnSiteE_dn3=0.0
+
+
+
+Self_consistency_kspace=1
+Total_particles=16
+Fixing_mu=0
+Mu_value=100
+
+No_of_SelfConsistency_iters=1
+Convergence_Error=0.0001
+RandomSeed=1
+alpha_OP=0.7
+
+Cooling=1
+Temperature=1 0.0001
+#17 0.001 1.0 0.001 1.0 0.001 1.0 0.001 1.0 0.001 1.0 0.001 1.0 0.001 1.0 2.0 1.0 0.001
+
+Anderson_Mixing=1
+Anderson_Mixing_m=13
+
+Just_Hartree=0
+Fock_type=Onsite_Intra_Inter
+#Onsite, Onsite_Intra, Onsite_Intra_Inter
+Read_initial_OPvalues=0
+Read_initial_OPvalues_UnitCellsType=2 2
+Read_initial_OPvalues_file=OP_OUTPUT_kspace_Temp0.0001000000_6x6_2x2.txt
+#OUTPUT_OP_PiPi_alongZ.txt
+#OUTPUT_OP_0Pi_alongZ.txt
+#OUTPUT_OP_ZigZag_alongZ.txt
+#OUTPUT_OP_XZ120.txt
+#OUTPUT_OP_ZX120.txt
+Write_Final_OPvalues_file=OP_OUTPUT_kspace
+#58933.219393228 FM_HC
+

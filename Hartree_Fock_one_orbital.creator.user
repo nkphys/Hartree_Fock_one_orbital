@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 3.5.1, 2022-02-07T22:03:10. -->
+<!-- Written by QtCreator 3.5.1, 2022-03-09T22:44:00. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -159,7 +159,7 @@
     </valuelist>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
-    <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.Arguments">TriangularLattice modelinput_TL_k_space_SC.inp</value>
+    <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.Arguments">HoneycombLattice_MO modelinput_HC_MultiOrb_k_space_SC.inp</value>
     <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.Executable">/home/nitin/Documents/Codes/Hartree_Fock_one_orbital/k_space_SelfConsistency</value>
     <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.WorkingDirectory">%{buildDir}</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">Run /home/nitin/Documents/Codes/Hartree_Fock_one_orbital/k_space_SelfConsistency</value>

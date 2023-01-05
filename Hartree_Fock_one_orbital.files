@@ -34,4 +34,9 @@ src/Models/HoneycombLattice_TBG/Connections_HC.h
 src/Models/HoneycombLattice_TBG/Kspace_calculation_HC.h
 src/Models/HoneycombLattice_TBG/Coordinates_HC.h
 src/Models/HoneycombLattice_TBG/Observables_HC.h
+src/Models/HoneycombLattice_MultiOrb/Parameters_HC_MO.h
+src/Models/HoneycombLattice_MultiOrb/Connections_HC_MO.h
+src/Models/HoneycombLattice_MultiOrb/Kspace_calculation_HC_MO.h
+src/Models/HoneycombLattice_MultiOrb/Coordinates_HC_MO.h
+src/Models/HoneycombLattice_MultiOrb/Observables_HC_MO.h
 main.cpp

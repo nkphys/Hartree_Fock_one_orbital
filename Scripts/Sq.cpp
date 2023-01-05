@@ -18,7 +18,6 @@ typedef vector<Mat_1_doub> Mat_2_doub;
 
 int main (){
 
-
 int Length=16;
 
 Mat_2_doub Sz, Sx, Sy;

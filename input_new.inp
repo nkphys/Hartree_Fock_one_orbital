@@ -30,6 +30,11 @@ BroydenSecondMethodCounter=10
 
 U_Onsite=8.0
 
+File_Onsite_Interactions=Onsite_interactions.txt
+File_pa1_ma2_Interactions=NearestNeighbour_pa1_ma2_interactions.txt
+File_ma2_Interactions=NearestNeighbour_ma2_interactions.txt
+
+
 dw_dos=0.001
 eta_dos=0.05
 w_min=-5.0
