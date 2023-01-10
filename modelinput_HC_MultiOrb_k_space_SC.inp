@@ -44,7 +44,7 @@ a_moire_in_Angstorm=60
 #46.98257888521417500876
 #37.5860
 d_screening_in_Angstorm=600
-eps_DE=100
+eps_DE=1000000
 
 U0=0.0
 U0_interatom=0.0
@@ -72,14 +72,14 @@ OnSiteE_dn3=0.0
 
 
 Self_consistency_kspace=1
-Total_particles=16
+Total_particles=64
 Fixing_mu=0
 Mu_value=100
 
 No_of_SelfConsistency_iters=1
 Convergence_Error=0.0001
 RandomSeed=1
-alpha_OP=0.7
+alpha_OP=0.6
 
 Cooling=1
 Temperature=1 0.0001

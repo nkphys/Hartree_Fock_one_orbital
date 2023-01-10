@@ -2283,6 +2283,7 @@ void Kspace_calculation_HC_MO::Initialize()
 
 
 
+    kick_while_cooling=0.0;
     
     NOT_AVAIL_INT=-1000;
 
@@ -2397,9 +2398,16 @@ void Kspace_calculation_HC_MO::Initialize()
                             OPs_.value.push_back(complex<double> (temp_den,0.0));
                         }
                         else{
-                            temp_den = (1.0*Parameters_.Total_Particles)/(1.0*2*n_atoms_*n_orbs_*lx_*ly_);//filling given
-                            temp_den += (random1()-0.5)*0.5;
+                            //temp_den = (1.0*Parameters_.Total_Particles)/(1.0*2*n_atoms_*n_orbs_*lx_*ly_);//filling given
+                            //temp_den += (random1()-0.5)*1.0;
+                            temp_den = random1();
+                            /*if(gamma==0 || gamma==2){
+                            temp_den = 1.0;}
+                            else{
+                            temp_den=0.0;
+                            }*/
                             OPs_.value.push_back(complex<double> (temp_den,0.0));
+                            //cout<<"temp_den = "<<temp_den<<endl;
                         }
 
                         SI_to_ind[col_temp + row_temp*(ncells_*2*n_atoms_*n_orbs_*S_)] = OPs_.value.size()-1;
@@ -2510,7 +2518,7 @@ void Kspace_calculation_HC_MO::Initialize()
 
         }
         else{
-        cout<<"State working right now"<<endl;
+        cout<<"Ansatz State not working right now"<<endl;
         assert(false);
         }
 
@@ -2598,9 +2606,9 @@ void Kspace_calculation_HC_MO::Initialize()
                                         }
 
                                         if(row_!=col_){
-                                            if( (OP_only_finite_Int) && (abs(Connections_.Hint_(row_, col_)) < Global_Eps )){
-                                                check_=false;
-                                            }
+                                            if( ( abs(V_int_OP_check(row_, col_)) < Global_Eps )){
+                                                    check_=false;
+                                                }
                                         }
 
                                         if( check_ ){
@@ -2707,7 +2715,7 @@ void Kspace_calculation_HC_MO::Initialize()
 
                         check_=true;
                         if(row_int!=col_int){
-                            if( (OP_only_finite_Int) && (abs(Connections_.Hint_(row_int, col_int)) < Global_Eps )){
+                            if(  ( abs(V_int_OP_check(row_int, col_int)) < Global_Eps ) ){
                                 check_=false;
                             }
                         }
@@ -2913,6 +2921,13 @@ void Kspace_calculation_HC_MO::Initialize()
 
     }
 
+
+
+    string fl_initial_OP_out = "OP_initial.txt";
+    ofstream file_initial_OP_out(fl_initial_OP_out.c_str());
+    for(int i=0;i<OPs_.value.size();i++){
+        file_initial_OP_out<<i<<"  "<<OPs_.rows[i]<<"  "<<OPs_.columns[i]<<"  "<<OPs_.value[i]<<endl;
+    }
 
 
 
@@ -4366,7 +4381,7 @@ void Kspace_calculation_HC_MO::SelfConsistency(){
 
 
         //Getting ready for next Temperature
-        kick_while_cooling=0.01;
+        kick_while_cooling=0.0;
         Parameters_.Read_OPs=true;
         Parameters_.UnitCellType_intialOPs.first=Parameters_.UnitCellSize_x;
         Parameters_.UnitCellType_intialOPs.second=Parameters_.UnitCellSize_y;
