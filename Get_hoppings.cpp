@@ -108,7 +108,7 @@ getline(in_file,line_str);
 
 
 
-double Dis_max=1.16;
+double Dis_max=0.58;
  //in units of a_m 0.58 for only HC nearest neighbour, 1.001 for upto Next-nearest neighbout on Honeycomb lattice
 // 1.16 for Next to Next-nearest neighbour (NNNN)
 double dis_1x, dis_1y, dis_2x, dis_2y, dis_;

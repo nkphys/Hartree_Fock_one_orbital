@@ -2512,8 +2512,8 @@ void Kspace_calculation_HC_MO::Initialize()
 
             
 
-
-
+        // cout<<"No. of OPS (if randomizing) : "<<OPs_.value.size()<<endl;
+        // assert(false);
 
 
         }
@@ -2540,17 +2540,17 @@ void Kspace_calculation_HC_MO::Initialize()
             }
         }
         //Fock Terms
-        if(!Parameters_.Just_Hartree){
+        if(true){
             bool check_;
             int alpha_1, alpha_2, alpha_p_1, alpha_p_2, d1_org, d2_org;
             int row_,col_;
-            for(int cell_=0;cell_<ncells_;cell_++){
+           
 
                 for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
                     for(int gamma=0;gamma<n_atoms_*n_orbs_;gamma++){
                         for(int sigma=0;sigma<2;sigma++){
 
-
+                            for(int cell_=0;cell_<ncells_;cell_++){
                             for(int alpha_p=0;alpha_p<UnitCellSize_x*UnitCellSize_y;alpha_p++){
                                 for(int gamma_p=0;gamma_p<n_atoms_*n_orbs_;gamma_p++){
                                     for(int sigma_p=0;sigma_p<2;sigma_p++){
@@ -2565,45 +2565,22 @@ void Kspace_calculation_HC_MO::Initialize()
 
                                         d1_org = Coordinates_.indx_cellwise(cell_);
                                         d2_org = Coordinates_.indy_cellwise(cell_);
-                                        row_ = gamma + (0 + alpha_1)*n_atoms_*n_orbs_ + (0 + alpha_2)*(n_atoms_*n_orbs_*lx_);
-                                        col_ = gamma_p + ((d1_org*UnitCellSize_x) + alpha_p_1)*n_atoms_*n_orbs_ + ((d2_org*UnitCellSize_y) + alpha_p_2)*(n_atoms_*n_orbs_*lx_);
+
+                                        row_ = gamma + (0 )*n_atoms_*n_orbs_ + (0)*(n_atoms_*n_orbs_*lx_);
+                                        col_ = gamma_p 
+                                                  + (((d1_org*UnitCellSize_x) + (alpha_p_1 - alpha_1) + lx_)%lx_)  *n_atoms_*n_orbs_ 
+                                                  + (((d2_org*UnitCellSize_y) + (alpha_p_2 - alpha_2) + ly_)%ly_)*(n_atoms_*n_orbs_*lx_);
 
 
 
 
-
-                                        if(Parameters_.FockType=="Onsite_Intra_Inter"){
                                             if(cell_==0){
                                                 check_= ((alpha_p + gamma_p*(S_) +  sigma_p*(n_atoms_*n_orbs_*S_)) > (alpha + gamma*(S_) +  sigma*(n_atoms_*n_orbs_*S_)));
                                             }
                                             else{
                                                 check_ =  ((alpha_p + gamma_p*(S_) +  sigma_p*(n_atoms_*n_orbs_*S_)) >= (alpha + gamma*(S_) +  sigma*(n_atoms_*n_orbs_*S_)));
                                             }
-                                        }
-
-
-                                        if(Parameters_.FockType=="Onsite_Intra"){
-                                            if(cell_==0){
-                                                check_ =  ((alpha_p + gamma_p*(S_) +  sigma_p*(n_atoms_*n_orbs_*S_)) > (alpha + gamma*(S_) +  sigma*(n_atoms_*n_orbs_*S_)));
-                                            }
-                                            else{ //cell_!=0
-                                                check_=false;
-                                            }
-                                        }
-
-                                        if(Parameters_.FockType=="Onsite"){
-                                            if(cell_==0){
-                                                if((alpha_p==alpha) && (gamma_p==gamma)){
-                                                    check_ =  ((alpha_p + gamma_p*(S_) +  sigma_p*(n_atoms_*n_orbs_*S_)) > (alpha + gamma*(S_) +  sigma*(n_atoms_*n_orbs_*S_)));
-                                                }
-                                                else{ //alpha !=alpha_p
-                                                    check_=false;
-                                                }
-                                            }
-                                            else{ //cell_!=0
-                                                check_=false;
-                                            }
-                                        }
+                                        
 
                                         if(row_!=col_){
                                             if( ( abs(V_int_OP_check(row_, col_)) < Global_Eps )){
@@ -2634,6 +2611,9 @@ void Kspace_calculation_HC_MO::Initialize()
             }
         }
 
+
+        // cout<<"No. of OPS (if reading) : "<<OPs_.value.size()<<endl;
+        // assert(false);
 
         string fl_initial_OP_in = Parameters_.File_OPs_in;
         ifstream file_initial_OP_in(fl_initial_OP_in.c_str());
@@ -2709,8 +2689,11 @@ void Kspace_calculation_HC_MO::Initialize()
 
                         d1_org = Coordinates_.indx_cellwise(cell_new_col);
                         d2_org = Coordinates_.indy_cellwise(cell_new_col);
-                        row_int = gamma_old_row + (0 + alpha_1)*n_atoms_*n_orbs_ + (0 + alpha_2)*(n_atoms_*n_orbs_*lx_);
-                        col_int = gamma_old_col + ((d1_org*UnitCellSize_x) + alpha_p_1)*n_atoms_*n_orbs_ + ((d2_org*UnitCellSize_y) + alpha_p_2)*(n_atoms_*n_orbs_*lx_);
+                        
+                        row_int = gamma_old_row + (0)*n_atoms_*n_orbs_ + (0)*(n_atoms_*n_orbs_*lx_);
+                        col_int = gamma_old_col 
+                                + (((d1_org*UnitCellSize_x) + (alpha_p_1-alpha_1) + lx_)%lx_)*n_atoms_*n_orbs_ 
+                                + (((d2_org*UnitCellSize_y) + (alpha_p_2-alpha_2) + ly_)%ly_)*(n_atoms_*n_orbs_*lx_);
 
 
                         check_=true;
