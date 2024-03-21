@@ -2,8 +2,8 @@
 #true in Y because just 2-siters in Y, otherwise OBC just overwrites the same connections with zeros 
 
 PBC=0
-Xsite=4
-Ysite=4
+Xsite=12
+Ysite=3
 N_Orbs=1
 
 File_Onsite_Energies=TL_Onsite_E_12x12.txt
@@ -41,7 +41,7 @@ Self_consistency_kspace=0
 Onsite_U=0.0
 Total_particles=6912
 
-No_of_SelfConsistency_iters=100000
+No_of_SelfConsistency_iters=1
 Convergence_Error=0.00001
 RandomSeed=10
 alpha_OP=0.0

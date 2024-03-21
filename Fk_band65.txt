@@ -1,0 +1,8 @@
+#nx  ny  tilde_F(nx,ny).real()  tilde_F(nx,ny).imag()  ArgofLog.real()  ArgofLog.imag()
+#Extra momentum point for pm3d corners2color c1
+0  0  0  0  1  0
+0  0  0  0  1  0
+
+0  0  0  0  1  0
+
+#Chern no*2pi*Iota= 0  0

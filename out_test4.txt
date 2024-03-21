@@ -1,0 +1,109 @@
+'./k_space_SelfConsistency'
+'tency'
+____________________________________
+Reading the inputfile for specific model: modelinput_HC_MultiOrb_k_space_SC_1orb.inp
+____________________________________
+File_Hopping_Connections= TL_Hoppings_12x12_OBCXOBC.txt
+File_Onsite_Energies= TL_Onsite_E_12x12.txt
+File_NonLocal_Int_Connections= TL_Interactions_12x12.txt
+File_Onsite_Interactions_input= Onsite_interactions.txt
+File_pa1_ma2_Interactions_input= NearestNeighbour_pa1_ma2_interactions.txt
+File_ma2_Interactions_input= NearestNeighbour_ma2_interactions.txt
+N_Orbs = 1
+t0_mat_file= t0_mat_hop.txt
+t1_plus_a1_file= t1_plus_a1_hop.txt
+t1_minus_a2_file= t1_minus_a2_hop.txt
+t1_plus_a1_minus_a2_mat_file= t1_plus_a1_minus_a2_hop.txt
+t1_plus_a1_minus_2a2_mat_file= t1_plus_a1_minus_2a2_hop.txt
+t3_mat_file= t3_mat.txt
+LongRange_interaction = 1
+a_moire_in_Angstorm = 60
+d_screening_in_Angstorm = 600
+eps_DE = 10
+U0 = 0
+U0_interatom = 0
+U1= 0 0 0 0
+U2= 0 0 0 0
+U3= 0 0 0 0
+U1 matrix:-----------------
+0 0 
+0 0 
+
+U2 matrix:-----------------
+0 0 
+0 0 
+
+U3 matrix:-----------------
+0 0 
+0 0 
+
+AnisotropyZ = 0
+Xsite = 12
+Ysite = 12
+UnitCellSize_x = 3
+UnitCellSize_y = 3
+Just_Hartree = 0
+Fock_type= Onsite_Intra_Inter
+Fixing_mu = 0
+TwistedBoundaryCond_mx = 0
+TwistedBoundaryCond_my = 0
+TBC_cellsX = 1
+TBC_cellsY = 1
+PBC_X = 1
+PBC_Y = 1
+TotalNumberOf Unit cells = 144
+OnSiteE_up0 = 0
+OnSiteE_dn0 = 0
+OnSiteE_up1 = 0
+OnSiteE_dn1 = 0
+Self_consistency_kspace = 1
+Total_particles = 144
+TotalNumberOfParticles = 144
+No_of_SelfConsistency_iters = 100
+Convergence_Error = 1e-06
+RandomSeed = 1
+alpha_OP = 0.6
+Read_initial_OPvalues = 0
+OP_only_finite_Int = 1
+Truncating_Length_in_am = 0.578
+Anderson_Mixing = 1
+Anderson_Mixing_m = 13
+Cooling = 1
+Temperature= 1 0.0001
+Read_initial_OPvalues_file= OP_CDW_1x1.txt
+Write_Final_OPvalues_file= OP_OUTPUT_kspace
+____________________________________
+WARNING: ALWAYS ASSUMED PBC in Long range int
+WARNING: ALWAYS ASSUMED PBC in Long range int, Sorting is performed for plotting U(r) vs r
+Parameters_.FockType = 'Onsite_Intra_Inter'
+------------------------
+---------------------
+----------------------
+Total no. of OP's = 162
+Onsite U = 0
+U_nn = 0
+Long Range interactions are calculated using screening, see notes
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+Temperature = 0.0001
+error targetted = 1e-06
+Max iterations = 100
+mu = 305.433
+energies shown below , Eclass and Equant:
+-94.7774   36143.9    
+================== Classical Energies by parts =====================
+E_class_onsite_U0_Hartree = 0
+E_class_longrange_Hartree = 0
+E_class_onsite_U0_Fock = 0
+E_class_longrange_Fock = 0
+====================================================================
+Total electrons in Lattice, UP = 71.0092
+Total electrons in Lattice, DOWN = 72.9908
+Total Sz = -0.990754
+Total Sx = 47.2337
+Total Sy = 49.0631
+Parameters_.FockType = 'Onsite_Intra_Inter'
+------------------------
+---------------------
+----------------------
+Total no. of OP's = 162
+--------THE END--------

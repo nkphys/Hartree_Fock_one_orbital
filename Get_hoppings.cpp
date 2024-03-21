@@ -60,7 +60,13 @@ int main(int argc, char *argv[]){
 string file_name=argv[1];
 cout<<"file used : \""<<file_name<<"\""<<endl;
 
+
+
+//int N_dofs=2;
+
+
 ifstream in_file(file_name.c_str());
+
 
 string hopp_type="Tij[0][0][center][neigh]";
 int line_no=matchstring_and_linenumber(file_name, hopp_type);

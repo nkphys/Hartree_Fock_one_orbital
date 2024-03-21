@@ -4,11 +4,11 @@
 PBC_X=1
 PBC_Y=1
 
-Xsite=12
-Ysite=12
+Xsite=4
+Ysite=4
 N_Orbs=1
-UnitCellSize_x=6
-UnitCellSize_y=6
+UnitCellSize_x=4
+UnitCellSize_y=4
 
 File_Onsite_Energies=TL_Onsite_E_12x12.txt
 File_Hopping_Connections=TL_Hoppings_12x12_OBCXOBC.txt
@@ -33,16 +33,17 @@ a_moire_in_Angstorm=37.58606310817134000700
 #46.98257888521417500876
 #37.5860
 d_screening_in_Angstorm=600
-eps_DE=45.0
-U0=15.0
-U1=0.0
-U2=0
+eps_DE=10.0
+U0=132.00
+U1=36.00
+U2=16.70
 U3=0
 
-#U0=0
-#U1=0
-#U2=0
-#U3=0
+#eps=1.0
+#U0=1320.0
+#U1=360
+#U2=167
+#U3=0.0
 
 #eps_DE=45.0
 #U0=29.33333
@@ -73,22 +74,22 @@ OnSiteE_up0=0.0
 OnSiteE_dn0=0.0
 
 Self_consistency_kspace=1
-Total_particles=144
+Total_particles=8.0
 
-No_of_SelfConsistency_iters=1
-Convergence_Error=0.000001
+No_of_SelfConsistency_iters=100000
+Convergence_Error=0.00001
 RandomSeed=2
 alpha_OP=0.4
 
 Cooling=1
-Temperature=1 0.0001
+Temperature=21 1000.0 100.0 80.0 60.0 40.0 30.0 29.5 29.0 28.0 26.0 24.0 22.0 20.0 15.0 10.0 1.0 0.5 0.1 0.01 0.005 0.0001
 #17 0.001 1.0 0.001 1.0 0.001 1.0 0.001 1.0 0.001 1.0 0.001 1.0 0.001 1.0 2.0 1.0 0.001
 
 Anderson_Mixing=1
 Anderson_Mixing_m=10
 
 Just_Hartree=0
-Fock_type=Onsite
+Fock_type=Onsite_Intra_Inter
 #Onsite, Onsite_Intra, Onsite_Intra_Inter
 Read_initial_OPvalues=0
 Read_initial_OPvalues_file=THD_TriLat.txt
@@ -99,7 +100,7 @@ Read_initial_OPvalues_file=THD_TriLat.txt
 #OUTPUT_OP_ZX120.txt
 Write_Final_OPvalues_file=OUTPUT_OP_OUT
 
-Using_Initial_Ansatz=1
+Using_Initial_Ansatz=0
 Initial_Ansatz_type=Tri_Prism
 #58933.219393228 FM_HC
 #Tri_Prism_Wigner

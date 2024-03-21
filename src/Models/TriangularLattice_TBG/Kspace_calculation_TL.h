@@ -1497,7 +1497,7 @@ void Kspace_calculation_TL::Get_local_spins(){
     Total_Sy=0.0;
     double rx_, ry_;
     complex<double> splus_val;
-    double sz_val, sx_val, sy_val;
+    double sz_val, sx_val, sy_val, n_val;
     int site_x, site_y, alpha, site;
     for(int alpha_1=0;alpha_1<UnitCellSize_x;alpha_1++){
         for(int cell_1=0;cell_1<lx_cells;cell_1++){
@@ -1560,7 +1560,30 @@ void Kspace_calculation_TL::Get_local_spins(){
                     sz_val=val.real();
 
 
-                    file_out_Local_orb_densities<<sz_val<<"    "<<sx_val<<"   "<<sy_val<<"    ";
+                    //Local n
+                    val=0.0;
+                    //double fac_;
+                    for(int sigma=0;sigma<2;sigma++){
+                        fac_=1.0;// - (2.0*sigma);
+                        c1 = alpha + sigma*(S_);
+                        c2=c1;
+                        for(int n=0;n<2*S_;n++){ //band_index
+                            for(int k1=0;k1<lx_cells;k1++){
+                                for(int k2=0;k2<ly_cells;k2++){
+                                    k_index = Coordinates_.Ncell(k1,k2);
+                                    state = 2*S_*k_index + n;
+
+                                    val += 1.0*(fac_/ncells_)*(
+                                                (conj(Eigvectors_[state][c1])*Eigvectors_[state][c2])
+                                                *(1.0/( exp((Eigenvalues_saved[state]-mu_)*Parameters_.beta ) + 1.0))
+                                                );
+                                }
+                            }
+                        }
+                    }
+                    n_val=val.real();
+
+                    file_out_Local_orb_densities<<sz_val<<"    "<<sx_val<<"   "<<sy_val<<"    "<<n_val;
 
 
                     Total_Sz +=sz_val;
@@ -3246,14 +3269,14 @@ void Kspace_calculation_TL::SelfConsistency(){
 
         Create_Kspace_Spectrum();
         Get_Bands();
-        Calculate_ChernNumbers();
-        Create_Current_Oprs();
+        //Calculate_ChernNumbers();
+        //Create_Current_Oprs();
 
 
         //J_KE_e1[0].print();
         //J_KE_e1[1].print();
-        Hall_conductance();
-        Arranging_spectrum();
+        //Hall_conductance();
+        //Arranging_spectrum();
         mu_=chemicalpotential(Parameters_.Total_Particles);
         cout<<"mu = "<<mu_<<endl;
         cout<<"energies shown below , Eclass and Equant:"<<endl;
@@ -3292,9 +3315,9 @@ void Kspace_calculation_TL::SelfConsistency(){
 
 
         //Getting ready for next Temperature
-        //        Parameters_.Read_OPs=true;
-        //        Parameters_.File_OPs_in = Parameters_.File_OPs_out + "_Temp"+string(temp_char) + ".txt";
-        //        Initialize();
+               Parameters_.Read_OPs=true;
+                Parameters_.File_OPs_in = Parameters_.File_OPs_out + "_Temp"+string(temp_char) + ".txt";
+                Initialize();
     }
 
 

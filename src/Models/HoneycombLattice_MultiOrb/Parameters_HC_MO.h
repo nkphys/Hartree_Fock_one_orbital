@@ -233,6 +233,15 @@ void Parameters_HC_MO::Initialize(string inputfile_)
     }
 
 
+    int Create_OPs_Ansatz_int;
+    Create_OPs_Ansatz_int = int(matchstring(inputfile_,"Create_OPs_Ansatz"));
+    if(Create_OPs_Ansatz_int==1){
+        Create_OPs_Ansatz=true;
+        OP_Ansatz_type=matchstring2(inputfile_,"OP_Ansatz_type");
+    }
+    else{
+        Create_OPs_Ansatz=false;
+    }
 
     int Fixing_mu_int;
     Fixing_mu_int = int(matchstring(inputfile_, "Fixing_mu"));

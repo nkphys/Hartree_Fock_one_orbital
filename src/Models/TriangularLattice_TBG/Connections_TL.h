@@ -723,11 +723,11 @@ void Connections_TL::HTBCreate()
                                 if (a != b)
                                 {
                                     if(spin==0){
-                                        HTB_(b, a) = -1.0*t_hoppings[neigh];
+                                        HTB_(b, a) = 1.0*t_hoppings[neigh];
                                         HTB_(a, b) = conj(HTB_(b, a));
                                     }
                                     else{
-                                        HTB_(b, a) = -1.0*conj(t_hoppings[neigh]);
+                                        HTB_(b, a) = 1.0*conj(t_hoppings[neigh]);
                                         HTB_(a, b) = conj(HTB_(b, a));
                                     }
                                 }
@@ -776,7 +776,7 @@ void Connections_TL::Print_Hopping(){
 
 void Connections_TL::Print_Hopping2(){
 
-    string fileout= "REALMatrixUPPERTRIANGLE_form_SPINUP" + Parameters_.File_Hoppings;
+    string fileout= "XCn_ZZ_REALMatrixUPPERTRIANGLE_form_SPINUP" + Parameters_.File_Hoppings;
     ofstream file_Hopping_out(fileout.c_str());
 
     //file_Hopping_out<<"#site_i spin_i site_j spin_j Hopping[site_i,spin_i][site_j,spin_j]"<<endl;
@@ -1005,6 +1005,10 @@ void Connections_TL::Print_Hopping_YCn(){
     string fileout= "REALMatrix_YCn_Snake3_form_SPINUP" + Parameters_.File_Hoppings;
     ofstream file_Hopping_out(fileout.c_str());
 
+    string fileout3= "YCn_ZZ_REALMatrixUPPERTRIANGLE_form_SPINUP" + Parameters_.File_Hoppings;
+    ofstream file_Hopping_out3(fileout3.c_str());
+
+
     int index_i, index_j;
     int ix, iy, ix_new, iy_new, i_new;
     int jx, jy, jx_new, jy_new, j_new;
@@ -1055,60 +1059,84 @@ void Connections_TL::Print_Hopping_YCn(){
         }
 
         //diagonal
+        bool allowed_=true;
         if(iy%2==0){
             ix_neigh_ = (ix +1)%lx_;
             iy_neigh_ = (iy+1)%ly_;
+
+            if( ix==(lx_-1)){
+                if(Parameters_.PBC_X){
+            allowed_= allowed_ && true;}
+                else{
+            allowed_=allowed_ && false;
+                }
+            }
+
+            if( iy==(ly_-1)){
+                if(Parameters_.PBC_Y){
+            allowed_=allowed_ && true;}
+                else{
+            allowed_=allowed_ && false;
+                }
+            }
+
+
         }
-        else{
+        else{ //iy%2 !=0
             ix_neigh_ = (ix-1+lx_)%lx_;
             iy_neigh_ = (iy+1)%ly_;
-        }
-        if( (iy==(ly_-1)) && (ix==(lx_-1)) ){
-            if(Parameters_.PBC_Y && Parameters_.PBC_X){
-                ix_neigh.push_back(ix_neigh_);
-                iy_neigh.push_back(iy_neigh_);
+
+            if( ix==0){
+                if(Parameters_.PBC_X){
+            allowed_= allowed_ && true;}
+                else{
+            allowed_=allowed_ && false;
+                }
             }
 
-        }
-        if((iy==(ly_-1)) && (ix!=(lx_-1)) ){
-            if(Parameters_.PBC_Y){
-                ix_neigh.push_back(ix_neigh_);
-                iy_neigh.push_back(iy_neigh_);
+            if( iy==(ly_-1)){
+                if(Parameters_.PBC_Y){
+            allowed_=allowed_ && true;}
+                else{
+            allowed_=allowed_ && false;
+                }
             }
-
         }
-        if((iy!=(ly_-1)) && (ix==(lx_-1))  ){
-            if(Parameters_.PBC_X){
-                ix_neigh.push_back(ix_neigh_);
-                iy_neigh.push_back(iy_neigh_);
-            }
-
-        }
-        if((iy!=(ly_-1)) && (ix!=(lx_-1)) ){
-            ix_neigh.push_back(ix_neigh_);
-            iy_neigh.push_back(iy_neigh_);
+        if(allowed_){
+        ix_neigh.push_back(ix_neigh_);
+        iy_neigh.push_back(iy_neigh_);
         }
 
-
-
-        cout<<"--------- i = "<<i<<"("<<ix <<","<<iy<<")"<<"-----------"<<endl;
-        for(int neigh_no=0;neigh_no<ix_neigh.size();neigh_no++){
-            cout<< ix_neigh[neigh_no]<<"   "<<iy_neigh[neigh_no]<<"   "<<Coordinates_.Ncell(ix_neigh[neigh_no], iy_neigh[neigh_no])<<endl;
-        }
-        cout<<"================================"<<endl;
+       
+        // cout<<"--------- i = "<<i<<"("<<ix <<","<<iy<<")"<<"-----------"<<endl;
+        // for(int neigh_no=0;neigh_no<ix_neigh.size();neigh_no++){
+        //     cout<< ix_neigh[neigh_no]<<"   "<<iy_neigh[neigh_no]<<"   "<<Coordinates_.Ncell(ix_neigh[neigh_no], iy_neigh[neigh_no])<<endl;
+        // }
+        // cout<<"================================"<<endl;
 
         for(int neigh_no=0;neigh_no<ix_neigh.size();neigh_no++){
             i_neigh = Coordinates_.Ncell(ix_neigh[neigh_no], iy_neigh[neigh_no]);
-
             Hopp_mat(i_neigh,i)=-1.0;
             Hopp_mat(i,i_neigh)=-1.0;
         }
 
-
-
-
     }
     //-------------------------------------------
+
+
+    double val_temp;
+     for(int i=0;i<ncells_*n_orbs_;i++){
+        for(int j=0;j<ncells_*n_orbs_;j++){
+         if(j>=i){
+            val_temp=Hopp_mat(i,j);
+         }
+         else{
+            val_temp=0;
+         }
+        file_Hopping_out3<<val_temp<<"   ";
+        }
+        file_Hopping_out3<<endl;
+    }
 
 
 

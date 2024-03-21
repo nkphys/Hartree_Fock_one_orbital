@@ -1,1 +1,7 @@
 src
+src/Models/DiceLattice
+src/Models/HoneycombLattice_MultiOrb
+src/Models/HoneycombLattice_TBG
+src/Models/LiebLattice
+src/Models/SquareLattice
+src/Models/TriangularLattice_TBG

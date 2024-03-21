@@ -158,7 +158,7 @@ int main(int argc, char *argv[]) {
             Parameters_HC_MO Parameters_HC_;
             Parameters_HC_.Initialize(model_inputfile);
 
-            Coordinates_HC_MO Coordinates_HC_(Parameters_HC_.lx, Parameters_HC_.ly, Parameters_HC_.n_orbs, Parameters_HC_.n_atoms);
+            Coordinates_HC_MO Coordinates_HC_(Parameters_HC_.lx, Parameters_HC_.ly, Parameters_HC_.n_atoms, Parameters_HC_.n_orbs);
             Connections_HC_MO Connections_HC_(Parameters_HC_, Coordinates_HC_);
             Connections_HC_.Print_Hopping();                                       //::DONE
             Connections_HC_.InteractionsCreate();

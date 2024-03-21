@@ -620,7 +620,7 @@ for(l=0; l < nsites_; l++)
     l1_pos = Coordinates_.indx_cellwise(l);
     l2_pos = Coordinates_.indy_cellwise(l);
     for(int atom_l=0;atom_l<n_atoms_;atom_l++){
-        for(int orb_l=0;orb_l<n_atoms_;orb_l++){
+        for(int orb_l=0;orb_l<n_orbs_;orb_l++){
 
         //For U[l][m]
         for(m=0;m<nsites_;m++){
@@ -628,7 +628,7 @@ for(l=0; l < nsites_; l++)
             m2_pos = Coordinates_.indy_cellwise(m);
 
             for(int atom_m=0;atom_m<n_atoms_;atom_m++){
-                for(int orb_m=0;orb_m<n_atoms_;orb_m++){
+                for(int orb_m=0;orb_m<n_orbs_;orb_m++){
 
                 a = Coordinates_.Nbasis(l1_pos, l2_pos, atom_l+2*orb_l);
                 b = Coordinates_.Nbasis(m1_pos, m2_pos, atom_m+2*orb_m);
@@ -910,10 +910,15 @@ t_hoppings.clear();
 
 //For spin up
 //hoppings
+// if(lx_<=2 || ly_<=2){
+//     t_neighs.push_back(3);t_neighs.push_back(7);
+//     t_hoppings.push_back(Parameters_.t1_minus_a2);t_hoppings.push_back(Parameters_.t1_plus_a1_minus_a2);
+// }
+// else{
 t_neighs.push_back(0);t_neighs.push_back(3);t_neighs.push_back(7);t_neighs.push_back(14);
 t_hoppings.push_back(Parameters_.t1_plus_a1);t_hoppings.push_back(Parameters_.t1_minus_a2);
 t_hoppings.push_back(Parameters_.t1_plus_a1_minus_a2);t_hoppings.push_back(Parameters_.t1_plus_a1_minus_2a2);
-
+//}
 
 
 
@@ -973,17 +978,17 @@ for(int atom1=0;atom1<2;atom1++)
         for(int atom2=0;atom2<2;atom2++)
         {
 
-for(int orb1=0;orb1<2;orb1++)
+for(int orb1=0;orb1<n_orbs_;orb1++)
 {
-        for(int orb2=0;orb2<2;orb2++)
+        for(int orb2=0;orb2<n_orbs_;orb2++)
         {
 
     a = Coordinates_.Nbasis(lx_pos, ly_pos, atom1 + 2*orb1) + nsites_ * n_orbs_* n_atoms_ * spin1;
     b = Coordinates_.Nbasis(lx_pos, ly_pos, atom2 + 2*orb2) + nsites_ * n_orbs_* n_atoms_ * spin2;
     //assert(a != b);
-    if (a != b)
+    if (a != b && (abs(Parameters_.t0[atom2 + 2*orb2 + 2*n_orbs_*spin2][atom1 + 2*orb1 + 2*n_orbs_*spin1])>0.0000001) )
     {
-            HTB_(b, a) = 1.0*Parameters_.t0[atom2 + 2*orb2 + 4*spin2][atom1 + 2*orb1 + 4*spin1];
+            HTB_(b, a) = 1.0*Parameters_.t0[atom2 + 2*orb2 + 2*n_orbs_*spin2][atom1 + 2*orb1 + 2*n_orbs_*spin1];
             HTB_(a, b) = conj(HTB_(b, a));
         
     }
@@ -1012,6 +1017,7 @@ for(int neigh=0;neigh<t_neighs.size();neigh++){
 
         if( (!Coordinates_.HIT_Y_BC) || Parameters_.PBC_Y){
 
+ 
             mx_pos = Coordinates_.indx_cellwise(m);
             my_pos = Coordinates_.indy_cellwise(m);
 
@@ -1027,11 +1033,25 @@ for(int neigh=0;neigh<t_neighs.size();neigh++){
                         a = Coordinates_.Nbasis(lx_pos, ly_pos, atom1 + 2*orb1) + nsites_ * n_orbs_* n_atoms_*spin1;
                         b = Coordinates_.Nbasis(mx_pos, my_pos, atom2 + 2*orb2) + nsites_ * n_orbs_* n_atoms_*spin2;
                         assert(a != b);
-                        if (a != b)
+                        if (a != b && (abs(t_hoppings[neigh][atom2 + 2*orb2 + 2*n_orbs_*spin2][atom1 + 2*orb1 + 2*n_orbs_*spin1])>0.0000001))
                         {
 
-                            HTB_(b, a) = 1.0*t_hoppings[neigh][atom2+2*orb2+4*spin2][atom1+2*orb1+4*spin1];
+                            HTB_(b, a) = 1.0*t_hoppings[neigh][atom2+2*orb2+2*n_orbs_*spin2][atom1+2*orb1+2*n_orbs_*spin1];
                             HTB_(a, b) = conj(HTB_(b, a));
+
+                            
+
+                            // if(l==2 && (atom1==1)){
+                            // if((abs(t_hoppings[neigh][atom2+2*orb2+4*spin2][atom1+2*orb1+4*spin1])>0) ){
+                            // cout<<"("<<l<<","<<atom1<<")"<<"("<<m<<","<<atom2<<")"<<" :  "<<HTB_(b,a)<<endl;
+                            // }
+                            // }
+
+                            // if( (l==2 && m==0) ){
+                            // cout<<neigh<<" : ("<<l<<","<<atom1<<")--->"<<"("<<m<<","<<atom2<<")"<<" :  "<<t_hoppings[neigh][atom2+2*orb2+4*spin2][atom1+2*orb1+4*spin1]<<endl;
+                            // cout<<HTB_(b,a)<<endl;
+                            // }
+
 
                         }
 
@@ -1050,6 +1070,8 @@ for(int neigh=0;neigh<t_neighs.size();neigh++){
 }
 
 
+
+
 } // ----------
 
 
@@ -1065,7 +1087,7 @@ int ix_pos, iy_pos, jx_pos, jy_pos;
 for(int site_i=0;site_i<nsites_;site_i++){
 for(int atom_i=0;atom_i<n_orbs_;atom_i++){
 for(int orb_i=0;orb_i<n_orbs_;orb_i++){
-for(int spin_i=0;spin_i<2;spin_i++){
+for(int spin_i=0;spin_i<1;spin_i++){
     ix_pos = Coordinates_.indx_cellwise(site_i);
     iy_pos = Coordinates_.indy_cellwise(site_i);
     index_i= Coordinates_.Nbasis(ix_pos, iy_pos, atom_i + 2*orb_i) + nsites_ * n_orbs_* n_atoms_*spin_i;
@@ -1074,7 +1096,7 @@ for(int spin_i=0;spin_i<2;spin_i++){
     for(int site_j=0;site_j<nsites_;site_j++){
     for(int atom_j=0;atom_j<n_orbs_;atom_j++){
     for(int orb_j=0;orb_j<n_orbs_;orb_j++){
-        for(int spin_j=0;spin_j<2;spin_j++){
+        for(int spin_j=0;spin_j<1;spin_j++){
             jx_pos = Coordinates_.indx_cellwise(site_j);
             jy_pos = Coordinates_.indy_cellwise(site_j);
             index_j= Coordinates_.Nbasis(jx_pos, jy_pos, atom_j + 2*orb_j) + nsites_ * n_orbs_* n_atoms_*spin_j;
