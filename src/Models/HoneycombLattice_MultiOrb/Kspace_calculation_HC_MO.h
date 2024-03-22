@@ -2502,6 +2502,147 @@ void Kspace_calculation_HC_MO::Initialize()
         //cout<<"Ansatz State not working right now"<<endl;
         //assert(false);
 
+
+            if(Parameters_.OP_Ansatz_type=="TL_WC_FM"){
+
+                assert(n_orbs_==1);
+                //Hartree Terms
+                for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+                    for(int gamma=0;gamma<n_atoms_;gamma++){
+                        for(int sigma=0;sigma<2;sigma++){
+
+                            if(gamma==1){
+                                OPs_.value.push_back(complex<double> (0.5,0.0));
+                            }
+                            else{
+                                OPs_.value.push_back(complex<double> (0.0,0.0));
+                            }
+                            OPs_new_.value.push_back(0.0);
+
+                            row_temp=  alpha + gamma*(S_) +  sigma*(n_atoms_*S_) + 0*(2*n_atoms_*S_);
+                            col_temp=row_temp;
+
+                            OPs_.rows.push_back(row_temp);OPs_new_.rows.push_back(row_temp);
+                            OPs_.columns.push_back(col_temp);OPs_new_.columns.push_back(col_temp);
+                            SI_to_ind[col_temp + row_temp*(ncells_*2*n_atoms_*n_orbs_*S_)] = OPs_.value.size()-1;
+
+                        }
+                    }
+                }
+
+
+                //Fock Terms
+                int alpha_1, alpha_2, alpha_p_1, alpha_p_2, d1_org, d2_org;
+                int row_,col_;
+                if(!Parameters_.Just_Hartree){
+                    bool check_;
+                    for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+                        for(int gamma=0;gamma<n_atoms_;gamma++){
+                            for(int sigma=0;sigma<2;sigma++){
+
+                                for(int cell_=0;cell_<ncells_;cell_++){
+                                    for(int alpha_p=0;alpha_p<UnitCellSize_x*UnitCellSize_y;alpha_p++){
+                                        for(int gamma_p=0;gamma_p<n_atoms_;gamma_p++){
+                                            for(int sigma_p=0;sigma_p<2;sigma_p++){
+
+
+                                                alpha_1 = alpha % UnitCellSize_x;
+                                                alpha_p_1 = alpha_p % UnitCellSize_x;
+
+                                                alpha_2 = (alpha - alpha_1)/UnitCellSize_x;
+                                                alpha_p_2 = (alpha_p - alpha_p_1)/UnitCellSize_x;
+
+                                                d1_org = Coordinates_.indx_cellwise(cell_);
+                                                d2_org = Coordinates_.indy_cellwise(cell_);
+                                                row_ = gamma + (0 )*n_atoms_*n_orbs_ + (0)*(n_atoms_*n_orbs_*lx_);
+                                                col_ = gamma_p
+                                                      + (((d1_org*UnitCellSize_x) + (alpha_p_1 - alpha_1) + lx_)%lx_)  *n_atoms_*n_orbs_
+                                                      + (((d2_org*UnitCellSize_y) + (alpha_p_2 - alpha_2) + ly_)%ly_)*(n_atoms_*n_orbs_*lx_);
+
+
+                                                if(cell_==0){
+                                                    check_= ((alpha_p + gamma_p*(S_) +  sigma_p*(n_atoms_*n_orbs_*S_)) > (alpha + gamma*(S_) +  sigma*(n_atoms_*n_orbs_*S_)));
+                                                    // cout<<"Check : "<<(alpha_p + gamma_p*(S_) +  sigma_p*(n_atoms_*n_orbs_*S_))<<"  "<<(alpha + gamma*(S_) +  sigma*(n_atoms_*n_orbs_*S_))<<"  "<<chk_str<<endl;
+                                                }
+                                                else{
+                                                    check_ = ((alpha_p + gamma_p*(S_) +  sigma_p*(n_atoms_*n_orbs_*S_)) >= (alpha + gamma*(S_) +  sigma*(n_atoms_*n_orbs_*S_)));
+                                                }
+
+                                            if(row_!=col_){
+                                                if( ( abs(V_int_OP_check(row_, col_)) < Global_Eps )){
+                                                    check_=false;
+                                                }
+                                            }
+
+
+                                                if( check_ ){
+
+                                                    row_temp = alpha + gamma*(S_) +  sigma*(n_atoms_*n_orbs_*S_) + 0*(2*n_atoms_*n_orbs_*S_);
+                                                    col_temp = alpha_p + gamma_p*(S_) +  sigma_p*(n_atoms_*n_orbs_*S_) + cell_*(2*n_atoms_*n_orbs_*S_);
+
+                                                    if(cell_!=0){
+                                                        OPs_.value.push_back(complex<double> (0,0));
+                                                    }
+                                                    else{
+                                                        if((alpha + gamma*(S_)) != (alpha_p + gamma_p*(S_))){
+                                                            OPs_.value.push_back(complex<double> (0,0));
+                                                        }
+                                                        else{
+                                                            assert(cell_==0);
+                                                            assert(alpha==alpha_p);
+                                                            assert(gamma==gamma_p);
+                                                            assert(sigma_p==1);
+                                                            assert(sigma==0);
+                                                            if(gamma==0){
+                                                                OPs_.value.push_back(complex<double> (0,0));
+                                                            }
+                                                            else{
+                                                                int alpha_1 = alpha % UnitCellSize_x; //a = a1 +a2*lx
+                                                                int alpha_2 = (alpha - alpha_1)/UnitCellSize_x;
+                                                                assert(UnitCellSize_x%3==0);
+                                                                assert(UnitCellSize_y%3==0);
+                                                                int sub_lattice_x = alpha_1%3;
+                                                                int sub_lattice_y = alpha_2%3;
+                                                                if((sub_lattice_x==0 && sub_lattice_y==0) ||
+                                                                        (sub_lattice_x==1 && sub_lattice_y==1)||
+                                                                        (sub_lattice_x==2 && sub_lattice_y==2)){
+                                                                    OPs_.value.push_back(complex<double> (-1.0,0));
+                                                                }
+                                                                if((sub_lattice_x==1 && sub_lattice_y==0) ||
+                                                                        (sub_lattice_x==0 && sub_lattice_y==2)||
+                                                                        (sub_lattice_x==2 && sub_lattice_y==1)){
+                                                                    OPs_.value.push_back(complex<double> (-1.0,0));
+                                                                }
+                                                                if((sub_lattice_x==2 && sub_lattice_y==0) ||
+                                                                        (sub_lattice_x==0 && sub_lattice_y==1)||
+                                                                        (sub_lattice_x==1 && sub_lattice_y==2)){
+                                                                    OPs_.value.push_back(complex<double> (-1.0,0));
+                                                                }
+
+
+
+                                                            }
+                                                        }
+                                                    }
+                                                    OPs_new_.value.push_back(0.0);
+
+                                                    OPs_.rows.push_back(row_temp);OPs_new_.rows.push_back(row_temp);
+                                                    OPs_.columns.push_back(col_temp);OPs_new_.columns.push_back(col_temp);
+
+                                                    SI_to_ind[col_temp + row_temp*(ncells_*2*n_atoms_*n_orbs_*S_)] = OPs_.value.size()-1;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                }
+
+            }
+
             if(Parameters_.OP_Ansatz_type=="TL_WC_120AFM"){
 
                 assert(n_orbs_==1);
