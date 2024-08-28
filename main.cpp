@@ -56,6 +56,13 @@ using namespace std;
 #include "src/Models/HoneycombLattice_MultiOrb/Observables_HC_MO.h"
 #include "src/Models/HoneycombLattice_MultiOrb/Kspace_calculation_HC_MO.h"
 
+
+#include "src/Models/Generic2dLattice/Parameters_G2dLattice.h"
+#include "src/Models/Generic2dLattice/Coordinates_G2dLattice.h"
+#include "src/Models/Generic2dLattice/Connections_G2dLattice.h"
+#include "src/Models/Generic2dLattice/Observables_G2dLattice.h"
+#include "src/Models/Generic2dLattice/Kspace_calculation_G2dLattice.h"
+
 #include "random"
 
 
@@ -174,6 +181,28 @@ int main(int argc, char *argv[]) {
             Kspace_calculation_HC_.SelfConsistency();
 
         }
+
+         if(ModelType=="Generic2dLattice"){
+
+             Parameters_G2dLattice Parameters_G2d_;
+             Parameters_G2d_.Initialize(model_inputfile);
+
+             Coordinates_G2dLattice  Coordinates_G2d_(Parameters_G2d_.lx, Parameters_G2d_.ly, Parameters_G2d_.n_atoms, Parameters_G2d_.n_orbs);
+             Connections_G2dLattice  Connections_G2d_(Parameters_G2d_, Coordinates_G2d_);
+             Connections_G2d_.Print_Hopping();                                       //::DONE
+             // Connections_HC_.InteractionsCreate();
+             // Connections_HC_.Print_LongRangeInt();
+             //Connections_HC_.Print_Spin_resolved_OnsiteE();
+             // Connections_HC_.Interactions_Sorting();
+
+             Coordinates_G2dLattice Coordinates_G2d_UC_(Parameters_G2d_.lx/Parameters_G2d_.UnitCellSize_x, Parameters_G2d_.ly/Parameters_G2d_.UnitCellSize_y, 1, 1);
+
+
+             mt19937_64 Generator_(Parameters_G2d_.RandomSeed);
+             Kspace_calculation_G2dLattice Kspace_calculation_G2d_(Parameters_G2d_, Coordinates_G2d_UC_, Connections_G2d_, Generator_);
+             Kspace_calculation_G2d_.SelfConsistency();
+
+         }
 
     }
 

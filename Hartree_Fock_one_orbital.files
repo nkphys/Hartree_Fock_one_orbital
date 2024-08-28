@@ -1,5 +1,6 @@
 Create_mat_atom_orb_spin.cpp
 Get_hoppings.cpp
+Get_hoppings_1orb_HC.cpp
 LocalSz_triangular.cpp
 Localdensity_triangular.cpp
 SS_q.cpp
@@ -18,6 +19,11 @@ src/Models/DiceLattice/Coordinates_DL.h
 src/Models/DiceLattice/Kspace_calculation_DL.h
 src/Models/DiceLattice/Observables_DL.h
 src/Models/DiceLattice/Parameters_DL.h
+src/Models/Generic2dLattice/Connections_G2dLattice.h
+src/Models/Generic2dLattice/Coordinates_G2dLattice.h
+src/Models/Generic2dLattice/Kspace_calculation_G2dLattice.h
+src/Models/Generic2dLattice/Observables_G2dLattice.h
+src/Models/Generic2dLattice/Parameters_G2dLattice.h
 src/Models/HoneycombLattice_MultiOrb/Connections_HC_MO.h
 src/Models/HoneycombLattice_MultiOrb/Coordinates_HC_MO.h
 src/Models/HoneycombLattice_MultiOrb/Kspace_calculation_HC_MO.h
