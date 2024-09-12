@@ -2188,16 +2188,16 @@ void Kspace_calculation_G2dLattice::Create_Kspace_Spectrum(){
 
             //Onsite Energies
             //OnSiteE_up
-            // for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
-            //     for(int gamma=0;gamma<n_atoms_*n_orbs_;gamma++){
-            //         for(int spin1=0;spin1<2;spin1++){
-            //             row_ = alpha + gamma*(UnitCellSize_x*UnitCellSize_y)
-            //             + spin1*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-            //             col_=row_;
-            //             Ham_(row_,col_) += Parameters_.OnSiteE[gamma][spin1];
-            //         }
-            //     }
-            // }
+            for(int alpha=0;alpha<UnitCellSize_x*UnitCellSize_y;alpha++){
+                for(int gamma=0;gamma<n_atoms_*n_orbs_;gamma++){
+                    for(int spin1=0;spin1<2;spin1++){
+                        row_ = alpha + gamma*(UnitCellSize_x*UnitCellSize_y)
+                        + spin1*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                        col_=row_;
+                        Ham_(row_,col_) += Parameters_.OnSiteE[gamma][spin1];
+                    }
+                }
+            }
 
             complex<double> OP_val;
             //Interaction:

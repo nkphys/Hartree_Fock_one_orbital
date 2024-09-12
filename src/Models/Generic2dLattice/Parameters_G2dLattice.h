@@ -176,8 +176,18 @@ void Parameters_G2dLattice::Initialize(string inputfile_)
 
     OnSiteE.resize(n_atoms*n_orbs);
     for (int orb=0;orb<n_atoms*n_orbs;orb++){
-        OnSiteE[orb].resize(4);
+        OnSiteE[orb].resize(2);
     }
+
+
+    string OnSiteE_string = matchstring2(inputfile_, "OnSiteE");
+    stringstream OnSiteE_stream(OnSiteE_string);
+    for(int atom_no=0;atom_no<n_atoms;atom_no++){
+        for(int orb_no=0;orb_no<n_orbs;orb_no++){
+            OnSiteE_stream>>OnSiteE[atom_no+n_atoms*orb_no][0];
+            OnSiteE[atom_no+n_atoms*orb_no][1]=OnSiteE[atom_no+n_atoms*orb_no][0];
+        }}
+
 
 
     BoundaryConnection_X = double(matchstring(inputfile_, "PBC_X"));
