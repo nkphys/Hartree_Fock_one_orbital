@@ -1,17 +1,18 @@
 #!/bin/bash
-#SBATCH -p all-nodes
+#SBATCH --job-name=Run_w_l
+#SBATCH -A st-ianaffle-1
+#SBATCH -t 23:00:00
+#SBATCH --output=output.txt
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --mem=60000mb
-#SBATCH --job-name=HF_LL
-module load gcc/9.2
-module load mkl
-module load ld-path
-export MKL_NUM_THREADS=1
-export NUMEXPR_NUM_THREADS=1
-export OMP_NUM_THREADS=1
-
-hostname
+cd $SLURM_SUBMIT_DIR
+module load gcc/9.4.0
+module load intel-mkl/2020.4.304
 date
 time ./k_space_SelfConsistency Generic2dLattice input_run.inp > out_run.txt
+rm Nw0.0001000000.txt
+rm k_space_SelfConsistency
+rm Bands*
+rm Local_spin_resolved_densities0.0001000000.txt
+rm a.out
 date

@@ -23,7 +23,7 @@ int N_atoms=3;
 int N_orbs=1;
 
 double t1_parameter=-1.0;
-double t2_parameter=0.0;
+double t2_parameter=0.85;
 
 //e1=(sqrt(3)/2,1/2)
 //e2=(-sqrt(3)/2,1/2)

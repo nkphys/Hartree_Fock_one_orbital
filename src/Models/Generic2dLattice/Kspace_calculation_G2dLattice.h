@@ -58,6 +58,7 @@ public:
     void Create_Current_Oprs_Faster();
     void Hall_conductance();
     void Update_Total_Density();
+    void Calculate_Akw(double omega_wrt_mu);
     //::DONE
 
 
@@ -797,6 +798,63 @@ double Kspace_calculation_G2dLattice::Lorentzian(double x, double brd)
     return temp;
 }
 
+
+void Kspace_calculation_G2dLattice::Calculate_Akw(double omega_wrt_mu)
+{
+
+    assert(Parameters_.UnitCellSize_x==1);
+    assert(Parameters_.UnitCellSize_y==1);
+
+    //---------Read from input file-----------------------//
+    string fileout = "AkwCut.txt";
+    double omega_min, omega_max, d_omega;
+
+    double eta = 0.01;
+    double omega_target = omega_wrt_mu + mu_;
+
+    //---------------------------------------------------//
+
+    ofstream file_Akw_out(fileout.c_str());
+    file_Akw_out<<"#k1  k2  Akw_up(w_target)    Akw_dn(w_target)"<<endl;
+    double Akw_spin=0.0;
+    int S_ = UnitCellSize_x*UnitCellSize_y;
+    assert(S_==1);
+    int c1;
+
+    int k_index, state;
+    for(int k1=0;k1<(lx_cells+1);k1++){
+    int k1_temp=k1%lx_cells;
+
+    for(int k2=0;k2<(ly_cells+1);k2++){
+    int k2_temp=k2%ly_cells;
+    k_index = Coordinates_.Ncell(k1_temp,k2_temp);
+    file_Akw_out<<k1<<"  "<<k2;
+
+    for(int spin=0;spin<2;spin++){
+    Akw_spin=0.0;
+
+    for(int gamma_=0;gamma_<n_atoms_*n_orbs_;gamma_++){
+    c1 = 0 + gamma_*(S_) +  spin*(n_atoms_*n_orbs_*S_);
+
+    for(int n=0;n<2*n_atoms_*n_orbs_*S_;n++){ //band_index
+
+    state = 2*n_atoms_*n_orbs_*S_*k_index + n;
+    Akw_spin += abs(Eigvectors_[state][c1])*abs(Eigvectors_[state][c1])*
+                Lorentzian( omega_target-Eigenvalues_saved[state], eta);
+            }
+    }
+
+    file_Akw_out<<"  "<<Akw_spin;
+    }
+    file_Akw_out<<endl;
+    }
+    file_Akw_out<<endl;
+    }
+
+}
+
+
+
 void Kspace_calculation_G2dLattice::Calculate_Nw()
 {
 
@@ -936,6 +994,7 @@ void Kspace_calculation_G2dLattice::Get_minimum_distance_direction(int l,int m,i
 
 }
 
+
 void Kspace_calculation_G2dLattice::Get_Bands(){
 
     char temp_char[50];
@@ -974,9 +1033,20 @@ void Kspace_calculation_G2dLattice::Get_Bands(){
 
     // ---k_path---------
 
-    //--------\Gamma to X-----------------
+    //--------\Gamma to M-----------------
     ky_i = 0;
     for (kx_i = 0; kx_i <= (lx_cells/ 2); kx_i++)
+    {
+        temp_pair.first = kx_i;
+        temp_pair.second = kx_i;
+        k_path.push_back(temp_pair);
+    }
+    //----------------------------------
+
+
+    //--------M to X-----------------
+    kx_i = (lx_cells / 2);
+    for (ky_i = (ly_cells / 2)-1; ky_i >=0; ky_i--)
     {
         temp_pair.first = kx_i;
         temp_pair.second = ky_i;
@@ -984,15 +1054,40 @@ void Kspace_calculation_G2dLattice::Get_Bands(){
     }
     //----------------------------------
 
-    //--------X to M-----------------
-    kx_i = (lx_cells / 2);
-    for (ky_i = 1; ky_i <= (ly_cells / 2); ky_i++)
+
+    //--------X to Gamma-----------------
+    ky_i = 0;
+    for (kx_i = (lx_cells / 2)-1; kx_i >=0; kx_i--)
     {
         temp_pair.first = kx_i;
         temp_pair.second = ky_i;
         k_path.push_back(temp_pair);
     }
     //----------------------------------
+
+
+    //--------Gamma to Y-----------------
+    kx_i = 0;
+    ky_i = 0;
+    for (ky_i = 1; ky_i <=(ly_cells/2); ky_i++)
+    {
+        temp_pair.first = kx_i;
+        temp_pair.second = ky_i;
+        k_path.push_back(temp_pair);
+    }
+    //----------------------------------
+
+    //--------Y to M-----------------
+    kx_i = 0;
+    ky_i = ly_cells/2;
+    for (kx_i = 1; kx_i <=(lx_cells/2); kx_i++)
+    {
+        temp_pair.first = kx_i;
+        temp_pair.second = ky_i;
+        k_path.push_back(temp_pair);
+    }
+    //----------------------------------
+
 
     //--------M to \Gamma[with one extra point,
     //                  because in gnuplot use "set pm3d corners2color c1"
@@ -1191,13 +1286,35 @@ void Kspace_calculation_G2dLattice::Get_Bands(){
     //----k_path done-------
 
 
+    file_out_bands<<"#kindex  E(k,1)  UP  DOWN  E(k,2)  UP DOWN  ....."<<endl;
     for (int k_point = 0; k_point < k_path.size(); k_point++)
     {
         k_index=Coordinates_.Ncell(k_path[k_point].first, k_path[k_point].second);
 
+        //Eigvectors_[state][c1]
+        //k_index = Coordinates_.Ncell(k1,k2);
+        //state = 2*n_atoms_*n_orbs_*S_*k_index + n;
+        //c1 = alpha_row + gamma_row*(S_) +  sigma_row*(n_atoms_*n_orbs_*S_);
         file_out_bands<<k_point<<"   ";
         for(int band=0;band<2*n_orbs_*n_atoms_*UnitCellSize_x*UnitCellSize_y;band++){
-            file_out_bands<<Eigenvalues_[2*n_orbs_*n_atoms_*UnitCellSize_x*UnitCellSize_y*k_index + band]<<"   ";
+
+            int state = 2*n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y*k_index + band;
+            double up_contr =0;
+            double dn_contr =0;
+            int c_up, c_dn;
+            for(int alpha_temp=0;alpha_temp<UnitCellSize_x*UnitCellSize_y;alpha_temp++){
+                for(int gamma_temp=0;gamma_temp<n_atoms_*n_orbs_;gamma_temp++){
+                    c_up = alpha_temp + gamma_temp*(UnitCellSize_x*UnitCellSize_y) +  0*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                    c_dn = alpha_temp + gamma_temp*(UnitCellSize_x*UnitCellSize_y) +  1*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+
+                    up_contr += abs(Eigvectors_[state][c_up])*abs(Eigvectors_[state][c_up]);
+                    dn_contr += abs(Eigvectors_[state][c_dn])*abs(Eigvectors_[state][c_dn]);
+
+                }
+            }
+
+            file_out_bands<<Eigenvalues_[state]<<"   "<<up_contr<<"   "<<dn_contr<<"   ";
+
         }
         file_out_bands<<endl;
     }
@@ -2480,6 +2597,7 @@ void Kspace_calculation_G2dLattice::SelfConsistency(){
         Get_spin_resolved_local_densities();
         Get_local_spins();
         Calculate_Nw();
+        Calculate_Akw(0.0);
 
         string Eigenvalues_fl_out = "Eigenvalues.txt";
         ofstream Eigenvalues_file_out(Eigenvalues_fl_out.c_str());

@@ -14,7 +14,7 @@ public:
                    Connections_G2dLattice &Connections__)
         : Parameters_(Parameters__), Coordinates_(Coordinates__),
           Connections_(Connections__),
-          lx_(Parameters_.lx), ly_(Parameters_.ly), ncells_(Coordinates_.ncells_), nbasis_(Coordinates_.nbasis_), n_orbs_(Coordinates_.n_orbs_)
+          lx_(Parameters_.lx), ly_(Parameters_.ly), ncells_(Coordinates_.ncells_), nbasis_(Coordinates_.nbasis_), n_orbs_(Coordinates_.n_orbs_), n_atoms_(Coordinates_.n_atoms_)
     {
         Initialize();
     }
@@ -40,7 +40,7 @@ public:
     Coordinates_G2dLattice &Coordinates_;
     Connections_G2dLattice &Connections_;
     int lx_, ly_, ncells_, nbasis_;
-    int n_orbs_;
+    int n_orbs_, n_atoms_;
     Matrix<double> SiSj_;
     vector<double> sx_, sy_, sz_;
 
@@ -316,6 +316,9 @@ void Observables_G2dLattice::Calculate_Akxw_ribbon()
 void Observables_G2dLattice::Calculate_Akw()
 {
 
+    assert(Parameters_.UnitCellSize_x==1);
+    assert(Parameters_.UnitCellSize_y==1);
+
     //---------Read from input file-----------------------//
     string fileout = "Akw.txt" ;
     double omega_min, omega_max, d_omega;
@@ -332,8 +335,8 @@ void Observables_G2dLattice::Calculate_Akw()
     int c1;
 
     Mat_3_Complex_doub A_nk;
-    A_nk.resize(2*n_orbs_);
-    for(int i=0;i<2*n_orbs_;i++){
+    A_nk.resize(2*n_atoms_*n_orbs_);
+    for(int i=0;i<2*n_orbs_*n_atoms_;i++){
         A_nk[i].resize(eigs_.size());
         for(int n=0;n<eigs_.size();n++){
             A_nk[i][n].resize(Coordinates_.ncells_);
