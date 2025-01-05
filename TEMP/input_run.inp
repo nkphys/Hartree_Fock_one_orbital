@@ -4,8 +4,8 @@
 PBC_X=1
 PBC_Y=1
 
-Xsite=48
-Ysite=48
+Xsite=24
+Ysite=24
 N_Orbs=1
 N_Atoms=3
 UnitCellSize_x=1
@@ -21,12 +21,12 @@ t1_plus_a1_minus_a2_mat_file=t1_plus_a1_minus_a2_mat.txt
 
 t1_plus_a1_plus_a2_mat_file=t1_plus_a1_plus_a2_mat.txt
 
-U0=0 40.0 40.0
+U0=2.0 2.0 2.0
 
-OnSiteE=10.0 0.0 0.0
+OnSiteE=0.0 0.0 0.0
 
 Self_consistency_kspace=1
-Total_particles=5056
+Total_particles=1728
 Fixing_mu=0
 Mu_value=100
 

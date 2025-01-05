@@ -27,6 +27,8 @@ public:
     Mat_2_Complex_doub t1_plus_a1, t1_minus_a2, t1_plus_a1_minus_a2,t1_plus_a1_plus_a2;
 
     Mat_1_doub U0;
+    Mat_1_doub JHund;
+    Mat_1_doub UPrime;
     string File_onsite_U, File_pa1_ma2_U, File_ma2_U;
     double U0ByUNN;
     double AnisotropyZ;
@@ -127,13 +129,24 @@ void Parameters_G2dLattice::Initialize(string inputfile_)
     }
 
 
-    U0.resize(n_atoms*n_orbs);
+    U0.resize(n_atoms);
     string U0_string = matchstring2(inputfile_, "U0");
     stringstream U0_stream(U0_string);
     for(int atom_no=0;atom_no<n_atoms;atom_no++){
-        for(int orb_no=0;orb_no<n_orbs;orb_no++){
-    U0_stream>>U0[atom_no+n_atoms*orb_no];
-        }}
+    U0_stream>>U0[atom_no];
+    }
+
+    JHund.resize(n_atoms);
+    string JHund_string = matchstring2(inputfile_, "JHund");
+    stringstream JHund_stream(JHund_string);
+    for(int atom_no=0;atom_no<n_atoms;atom_no++){
+        JHund_stream>>JHund[atom_no];
+    }
+
+    UPrime.resize(n_atoms);
+    for(int atom_no=0;atom_no<n_atoms;atom_no++){
+        UPrime[atom_no] = U0[atom_no] - 2.0*JHund[atom_no];
+    }
 
     lx = int(matchstring(inputfile_, "Xsite"));
     ly = int(matchstring(inputfile_, "Ysite"));
