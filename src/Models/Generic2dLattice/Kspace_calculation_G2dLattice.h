@@ -1422,6 +1422,8 @@ void Kspace_calculation_G2dLattice::Get_Energies_new(){
 
     complex<double> OP_val, OP_val_p;
 
+    bool NA_spinflip=Parameters_.NoSpinFlipOP;
+
     //Interaction local intra-orbital U0:
     for(int j=0;j<UnitCellSize_x*UnitCellSize_y;j++){
         for(int b_beta=0;b_beta<n_atoms_;b_beta++){
@@ -1461,16 +1463,18 @@ void Kspace_calculation_G2dLattice::Get_Energies_new(){
                                 col_OP = j + atom_plus_orb*(UnitCellSize_x*UnitCellSize_y)
                                          + (spin_p)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
 
-                                if(col_OP>row_OP){
-                                    index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                                    OP_val = OPs_.value[index_OP];
-                                }
-                                else{
-                                    index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                                    OP_val = conj(OPs_.value[index_OP]);
-                                }
+                                if(!NA_spinflip){
+                                    if(col_OP>row_OP){
+                                        index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                        OP_val = OPs_.value[index_OP];
+                                    }
+                                    else{
+                                        index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                        OP_val = conj(OPs_.value[index_OP]);
+                                    }
 
-                                E_class_temp -=Parameters_.U0[b_beta]*OP_val*OP_val_p;
+                                    E_class_temp -=Parameters_.U0[b_beta]*OP_val*OP_val_p;
+                                }
                             }
                         }
                     }
@@ -1565,31 +1569,33 @@ void Kspace_calculation_G2dLattice::Get_Energies_new(){
                                spin_*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
                         row_ = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
                                (1-spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-                        if(col_>row_){
-                            index_OP_p = SI_to_ind[col_ + row_*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                            OP_val_p = OPs_.value[index_OP_p];
-                        }
-                        else{
-                            index_OP_p = SI_to_ind[row_ + col_*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                            OP_val_p = conj(OPs_.value[index_OP_p]);
-                        }
 
-                        col_OP = row_;
-                        row_OP = col_;
+                        if(!NA_spinflip){
+                            if(col_>row_){
+                                index_OP_p = SI_to_ind[col_ + row_*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                OP_val_p = OPs_.value[index_OP_p];
+                            }
+                            else{
+                                index_OP_p = SI_to_ind[row_ + col_*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                OP_val_p = conj(OPs_.value[index_OP_p]);
+                            }
 
-                        if(col_OP>row_OP){
-                            index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                            OP_val = OPs_.value[index_OP];
-                        }
-                        else{
-                            index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                            OP_val = conj(OPs_.value[index_OP]);
-                        }
-                        //3 and 5
-                        E_class_temp -= (Parameters_.UPrime[atom_no] - 0.5*Parameters_.JHund[atom_no])*OP_val*OP_val_p;
-                        //4 and 6
-                        E_class_temp -= conj((Parameters_.UPrime[atom_no] - 0.5*Parameters_.JHund[atom_no])*OP_val*OP_val_p);
+                            col_OP = row_;
+                            row_OP = col_;
 
+                            if(col_OP>row_OP){
+                                index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                OP_val = OPs_.value[index_OP];
+                            }
+                            else{
+                                index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                OP_val = conj(OPs_.value[index_OP]);
+                            }
+                            //3 and 5
+                            E_class_temp -= (Parameters_.UPrime[atom_no] - 0.5*Parameters_.JHund[atom_no])*OP_val*OP_val_p;
+                            //4 and 6
+                            E_class_temp -= conj((Parameters_.UPrime[atom_no] - 0.5*Parameters_.JHund[atom_no])*OP_val*OP_val_p);
+                        }
                     }
 
                 }}}}
@@ -1612,62 +1618,67 @@ void Kspace_calculation_G2dLattice::Get_Energies_new(){
                                spin_*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
                         row_ = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
                                (1-spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-                        if(col_>row_){
-                            index_OP_p = SI_to_ind[col_ + row_*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                            OP_val_p = OPs_.value[index_OP_p];
-                        }
-                        else{
-                            index_OP_p = SI_to_ind[row_ + col_*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                            OP_val_p = conj(OPs_.value[index_OP_p]);
-                        }
+
+                        if(!NA_spinflip){
+                            if(col_>row_){
+                                index_OP_p = SI_to_ind[col_ + row_*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                OP_val_p = OPs_.value[index_OP_p];
+                            }
+                            else{
+                                index_OP_p = SI_to_ind[row_ + col_*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                OP_val_p = conj(OPs_.value[index_OP_p]);
+                            }
 
 
-                        col_OP = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
-                                 (1-spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-                        row_OP = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
-                                 (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                            col_OP = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
+                                     (1-spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                            row_OP = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
+                                     (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
 
-                        if(col_OP>row_OP){
-                            index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                            OP_val = OPs_.value[index_OP];
+                            if(col_OP>row_OP){
+                                index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                OP_val = OPs_.value[index_OP];
+                            }
+                            else{
+                                index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                OP_val = conj(OPs_.value[index_OP]);
+                            }
+                            //1 and 3
+                            E_class_temp -= (0.5*Parameters_.JHund[atom_no])*2.0*OP_val*OP_val_p;
                         }
-                        else{
-                            index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                            OP_val = conj(OPs_.value[index_OP]);
-                        }
-                        //1 and 3
-                        E_class_temp -= (0.5*Parameters_.JHund[atom_no])*2.0*OP_val*OP_val_p;
 
                         //2 and 4
                         col_ = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
                                spin_*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
                         row_ = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
                                (1-spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-                        if(col_>row_){
-                            index_OP_p = SI_to_ind[col_ + row_*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                            OP_val_p = OPs_.value[index_OP_p];
-                        }
-                        else{
-                            index_OP_p = SI_to_ind[row_ + col_*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                            OP_val_p = conj(OPs_.value[index_OP_p]);
-                        }
 
-                        col_OP = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
-                                 (1-spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-                        row_OP = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
-                                 (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                        if(!NA_spinflip){
+                            if(col_>row_){
+                                index_OP_p = SI_to_ind[col_ + row_*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                OP_val_p = OPs_.value[index_OP_p];
+                            }
+                            else{
+                                index_OP_p = SI_to_ind[row_ + col_*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                OP_val_p = conj(OPs_.value[index_OP_p]);
+                            }
 
-                        if(col_OP>row_OP){
-                            index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                            OP_val = OPs_.value[index_OP];
-                        }
-                        else{
-                            index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                            OP_val = conj(OPs_.value[index_OP]);
-                        }
-                        //2 and 4
-                        E_class_temp -= (0.5*Parameters_.JHund[atom_no])*2.0*OP_val*OP_val_p;
+                            col_OP = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
+                                     (1-spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                            row_OP = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
+                                     (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
 
+                            if(col_OP>row_OP){
+                                index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                OP_val = OPs_.value[index_OP];
+                            }
+                            else{
+                                index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                OP_val = conj(OPs_.value[index_OP]);
+                            }
+                            //2 and 4
+                            E_class_temp -= (0.5*Parameters_.JHund[atom_no])*2.0*OP_val*OP_val_p;
+                        }
 
                         //5 and 11
                         col_ = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
@@ -1882,33 +1893,34 @@ void Kspace_calculation_G2dLattice::Get_Energies_new(){
                                spin_*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
                         row_ = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
                                (1-spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-                        if(col_>row_){
-                            index_OP_p = SI_to_ind[col_ + row_*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                            OP_val_p = OPs_.value[index_OP_p];
-                        }
-                        else{
-                            index_OP_p = SI_to_ind[row_ + col_*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                            OP_val_p = conj(OPs_.value[index_OP_p]);
-                        }
+                        if(!NA_spinflip){
+                            if(col_>row_){
+                                index_OP_p = SI_to_ind[col_ + row_*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                OP_val_p = OPs_.value[index_OP_p];
+                            }
+                            else{
+                                index_OP_p = SI_to_ind[row_ + col_*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                OP_val_p = conj(OPs_.value[index_OP_p]);
+                            }
 
-                        col_OP = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
-                                 (1-spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-                        row_OP = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
-                                 (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                            col_OP = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
+                                     (1-spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                            row_OP = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
+                                     (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
 
-                        if(col_OP>row_OP){
-                            index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                            OP_val = OPs_.value[index_OP];
+                            if(col_OP>row_OP){
+                                index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                OP_val = OPs_.value[index_OP];
+                            }
+                            else{
+                                index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                OP_val = conj(OPs_.value[index_OP]);
+                            }
+                            //7 and 9
+                            E_class_temp -= (0.5*Parameters_.JHund[atom_no])*OP_val*OP_val_p;
+                            //8 and 10
+                            E_class_temp -= conj((0.5*Parameters_.JHund[atom_no])*OP_val*OP_val_p);
                         }
-                        else{
-                            index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                            OP_val = conj(OPs_.value[index_OP]);
-                        }
-                        //7 and 9
-                        E_class_temp -= (0.5*Parameters_.JHund[atom_no])*OP_val*OP_val_p;
-                        //8 and 10
-                        E_class_temp -= conj((0.5*Parameters_.JHund[atom_no])*OP_val*OP_val_p);
-
 
                     }
 
@@ -1932,33 +1944,34 @@ void Kspace_calculation_G2dLattice::Get_Energies_new(){
                                spin_*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
                         row_ = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
                                (1-spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-                        if(col_>row_){
-                            index_OP_p = SI_to_ind[col_ + row_*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                            OP_val_p = OPs_.value[index_OP_p];
-                        }
-                        else{
-                            index_OP_p = SI_to_ind[row_ + col_*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                            OP_val_p = conj(OPs_.value[index_OP_p]);
-                        }
+                        if(!NA_spinflip){
+                            if(col_>row_){
+                                index_OP_p = SI_to_ind[col_ + row_*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                OP_val_p = OPs_.value[index_OP_p];
+                            }
+                            else{
+                                index_OP_p = SI_to_ind[row_ + col_*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                OP_val_p = conj(OPs_.value[index_OP_p]);
+                            }
 
-                        col_OP = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
-                                 (1-spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-                        row_OP = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
-                                 (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                            col_OP = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
+                                     (1-spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                            row_OP = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
+                                     (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
 
-                        if(col_OP>row_OP){
-                            index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                            OP_val = OPs_.value[index_OP];
+                            if(col_OP>row_OP){
+                                index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                OP_val = OPs_.value[index_OP];
+                            }
+                            else{
+                                index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                OP_val = conj(OPs_.value[index_OP]);
+                            }
+                            //1 and 2
+                            E_class_temp -= (1.0*Parameters_.JHund[atom_no])*OP_val*OP_val_p;
+                            //3 and 4
+                            E_class_temp -= conj((1.0*Parameters_.JHund[atom_no])*OP_val*OP_val_p);
                         }
-                        else{
-                            index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                            OP_val = conj(OPs_.value[index_OP]);
-                        }
-                        //1 and 2
-                        E_class_temp -= (1.0*Parameters_.JHund[atom_no])*OP_val*OP_val_p;
-                        //3 and 4
-                        E_class_temp -= conj((1.0*Parameters_.JHund[atom_no])*OP_val*OP_val_p);
-
 
                         //5 and 6 [hc : 7 and 8]
                         col_ = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
@@ -1998,18 +2011,18 @@ void Kspace_calculation_G2dLattice::Get_Energies_new(){
 
 
 
-   E_class = -0.5*ncells_*E_class_temp.real();
+    E_class = -0.5*ncells_*E_class_temp.real();
 
 
-   //----------Eclass done
+    //----------Eclass done
 
 
-   E_quant=0.0;
-   for(int n=0;n<Eigenvalues_.size();n++){
-       E_quant += (Eigenvalues_[n]*
-                   (1.0/( exp((Eigenvalues_[n]-mu_)*Parameters_.beta ) + 1.0))
-                   );
-   }
+    E_quant=0.0;
+    for(int n=0;n<Eigenvalues_.size();n++){
+        E_quant += (Eigenvalues_[n]*
+                    (1.0/( exp((Eigenvalues_[n]-mu_)*Parameters_.beta ) + 1.0))
+                    );
+    }
 
 }
 
@@ -2354,20 +2367,20 @@ void Kspace_calculation_G2dLattice::Get_Tau_Pseudospins(){
                 //Local Tplus
                 val=0.0;
                 for(int spin_=0;spin_<2;spin_++){
-                c1 = alpha + (gamma+0*n_atoms_)*(S_) + spin_*(n_atoms_*n_orbs_*S_);
-                c2 = alpha + (gamma+1*n_atoms_)*(S_)  + spin_*(n_atoms_*n_orbs_*S_);
-                for(int n=0;n<2*n_atoms_*n_orbs_*S_;n++){ //band_index
-                    for(int k1=0;k1<lx_cells;k1++){
-                        for(int k2=0;k2<ly_cells;k2++){
-                            k_index = Coordinates_.Ncell(k1,k2);
-                            state = 2*n_atoms_*n_orbs_*S_*k_index + n;
-                            val += (1.0/ncells_)*(
-                                       (conj(Eigvectors_[state][c1])*Eigvectors_[state][c2])
-                                       *(1.0/( exp((Eigenvalues_saved[state]-mu_)*Parameters_.beta ) + 1.0))
-                                       );
+                    c1 = alpha + (gamma+0*n_atoms_)*(S_) + spin_*(n_atoms_*n_orbs_*S_);
+                    c2 = alpha + (gamma+1*n_atoms_)*(S_)  + spin_*(n_atoms_*n_orbs_*S_);
+                    for(int n=0;n<2*n_atoms_*n_orbs_*S_;n++){ //band_index
+                        for(int k1=0;k1<lx_cells;k1++){
+                            for(int k2=0;k2<ly_cells;k2++){
+                                k_index = Coordinates_.Ncell(k1,k2);
+                                state = 2*n_atoms_*n_orbs_*S_*k_index + n;
+                                val += (1.0/ncells_)*(
+                                           (conj(Eigvectors_[state][c1])*Eigvectors_[state][c2])
+                                           *(1.0/( exp((Eigenvalues_saved[state]-mu_)*Parameters_.beta ) + 1.0))
+                                           );
+                            }
                         }
                     }
-                }
                 }
                 splus_val = val;
                 sx_val = splus_val.real();
@@ -2378,28 +2391,28 @@ void Kspace_calculation_G2dLattice::Get_Tau_Pseudospins(){
                 double fac_;
                 for(int sigma=0;sigma<2;sigma++){
                     for(int orb=0;orb<2;orb++){
-                    fac_=1.0 - (2.0*orb);
-                    c1 = alpha + (gamma+orb*n_atoms_)*(S_) + sigma*(n_orbs_*n_atoms_*S_);
-                    c2=c1;
-                    for(int n=0;n<2*n_atoms_*n_orbs_*S_;n++){ //band_index
-                        for(int k1=0;k1<lx_cells;k1++){
-                            for(int k2=0;k2<ly_cells;k2++){
-                                k_index = Coordinates_.Ncell(k1,k2);
-                                state = 2*n_atoms_*n_orbs_*S_*k_index + n;
-                                val += 0.5*(fac_/ncells_)*(
-                                           (conj(Eigvectors_[state][c1])*Eigvectors_[state][c2])
-                                           *(1.0/( exp((Eigenvalues_saved[state]-mu_)*Parameters_.beta ) + 1.0))
-                                           );
+                        fac_=1.0 - (2.0*orb);
+                        c1 = alpha + (gamma+orb*n_atoms_)*(S_) + sigma*(n_orbs_*n_atoms_*S_);
+                        c2=c1;
+                        for(int n=0;n<2*n_atoms_*n_orbs_*S_;n++){ //band_index
+                            for(int k1=0;k1<lx_cells;k1++){
+                                for(int k2=0;k2<ly_cells;k2++){
+                                    k_index = Coordinates_.Ncell(k1,k2);
+                                    state = 2*n_atoms_*n_orbs_*S_*k_index + n;
+                                    val += 0.5*(fac_/ncells_)*(
+                                               (conj(Eigvectors_[state][c1])*Eigvectors_[state][c2])
+                                               *(1.0/( exp((Eigenvalues_saved[state]-mu_)*Parameters_.beta ) + 1.0))
+                                               );
+                                }
                             }
                         }
                     }
-                }
                 }
                 sz_val=val.real();
 
 
 
-         file_out_Local_orb_densities<<sz_val<<"    "<<sx_val<<"   "<<sy_val<<"    "<<sqrt(sz_val*sz_val + sy_val*sy_val + sx_val*sx_val)<<"     ";
+                file_out_Local_orb_densities<<sz_val<<"    "<<sx_val<<"   "<<sy_val<<"    "<<sqrt(sz_val*sz_val + sy_val*sy_val + sx_val*sx_val)<<"     ";
 
 
                 Total_Sz +=sz_val;
@@ -2835,6 +2848,7 @@ void Kspace_calculation_G2dLattice::Initialize()
 
             //Fock
             bool check_;
+            bool NA_spinflip;
             int alpha_1, alpha_2, alpha_p_1, alpha_p_2, d1_org, d2_org;
             int row_,col_;
             int atom_orb_no, atom_orb_no_p;
@@ -2860,7 +2874,9 @@ void Kspace_calculation_G2dLattice::Initialize()
                                         col_temp = alpha + (atom_orb_no_p)*(S_) +  sigma_p*(n_atoms_*n_orbs_*S_) + 0*(2*n_atoms_*n_orbs_*S_);
                                         check_ = (col_temp > row_temp);
 
-                                        if( check_ ){
+                                        NA_spinflip = Parameters_.NoSpinFlipOP && (sigma_p!=sigma);
+
+                                        if( check_ && (!NA_spinflip)){
 
                                             OPs_.value.push_back(complex<double> (random1(),random1()));
                                             OPs_new_.value.push_back(0.0);
@@ -2993,6 +3009,10 @@ complex<double> Kspace_calculation_G2dLattice::h_KE(int alpha, int gamma, int si
 void Kspace_calculation_G2dLattice::Create_Kspace_Spectrum(){
 
 
+    bool PinningField=true;
+    double PinningFieldValue=Parameters_.PinningFieldValue;
+
+
     //Calculating density using OP's will be going inside Hamiltonian
     OPs_total_den=0.0;
     int index_OP;
@@ -3113,6 +3133,21 @@ void Kspace_calculation_G2dLattice::Create_Kspace_Spectrum(){
                 }
             }
 
+
+            //small pinning field
+            if(PinningField){
+                int alpha=0;
+                int gamma=0;
+                for(int spin1=0;spin1<2;spin1++){
+                    row_ = alpha + gamma*(UnitCellSize_x*UnitCellSize_y)
+                    + spin1*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                    col_=row_;
+                    Ham_(row_,col_) += PinningFieldValue*(spin1);
+                }
+
+            }
+
+            bool NA_spinflip=Parameters_.NoSpinFlipOP;
             complex<double> OP_val;
             //Interaction local intra-orbital U0:
             for(int j=0;j<UnitCellSize_x*UnitCellSize_y;j++){
@@ -3138,21 +3173,23 @@ void Kspace_calculation_G2dLattice::Create_Kspace_Spectrum(){
                                 }
                                 else{
                                     if(!Parameters_.Just_Hartree){
-                                        row_OP = j + atom_plus_orb*(UnitCellSize_x*UnitCellSize_y)
-                                        + (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-                                        col_OP = j + atom_plus_orb*(UnitCellSize_x*UnitCellSize_y)
-                                                 + (spin_p)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                                        if(!NA_spinflip){
+                                            row_OP = j + atom_plus_orb*(UnitCellSize_x*UnitCellSize_y)
+                                            + (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                                            col_OP = j + atom_plus_orb*(UnitCellSize_x*UnitCellSize_y)
+                                                     + (spin_p)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
 
-                                        if(col_OP>row_OP){
-                                            index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                                            OP_val = OPs_.value[index_OP];
-                                        }
-                                        else{
-                                            index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                                            OP_val = conj(OPs_.value[index_OP]);
-                                        }
+                                            if(col_OP>row_OP){
+                                                index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                                OP_val = OPs_.value[index_OP];
+                                            }
+                                            else{
+                                                index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                                OP_val = conj(OPs_.value[index_OP]);
+                                            }
 
-                                        Ham_(row_,col_) -=Parameters_.U0[b_beta]*OP_val;
+                                            Ham_(row_,col_) -=Parameters_.U0[b_beta]*OP_val;
+                                        }
                                     }
                                 }
                             }
@@ -3200,42 +3237,44 @@ void Kspace_calculation_G2dLattice::Create_Kspace_Spectrum(){
             for(int j=0;j<UnitCellSize_x*UnitCellSize_y;j++){
                 for(int atom_no=0;atom_no<n_atoms_;atom_no++){
                     for(int alpha=0;alpha<n_orbs_;alpha++){
-                            for(int beta=(alpha+1);beta<n_orbs_;beta++){
+                        for(int beta=(alpha+1);beta<n_orbs_;beta++){
 
-                                for(int spin_=0;spin_<2;spin_++){
+                            for(int spin_=0;spin_<2;spin_++){
 
-                                    //1 and 7 [2 and 8 are h.c. of 1 and 7 ]
-                                    col_ = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
-                                           spin_*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-                                    row_ = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
-                                           spin_*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                                //1 and 7 [2 and 8 are h.c. of 1 and 7 ]
+                                col_ = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
+                                       spin_*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                                row_ = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
+                                       spin_*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
 
-                                    col_OP = row_;
-                                    row_OP = col_;
+                                col_OP = row_;
+                                row_OP = col_;
 
-                                    if(col_OP>row_OP){
-                                        index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                                        OP_val = OPs_.value[index_OP];
-                                    }
-                                    else{
-                                        index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                                        OP_val = conj(OPs_.value[index_OP]);
-                                    }
-                                    //1 and 7
-                                    Ham_(row_,col_) -= (Parameters_.UPrime[atom_no] - 0.5*Parameters_.JHund[atom_no])*OP_val;
-                                    //2 and 8
-                                    Ham_(col_,row_) -= conj((Parameters_.UPrime[atom_no] - 0.5*Parameters_.JHund[atom_no])*OP_val);
+                                if(col_OP>row_OP){
+                                    index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                    OP_val = OPs_.value[index_OP];
+                                }
+                                else{
+                                    index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                    OP_val = conj(OPs_.value[index_OP]);
+                                }
+                                //1 and 7
+                                Ham_(row_,col_) -= (Parameters_.UPrime[atom_no] - 0.5*Parameters_.JHund[atom_no])*OP_val;
+                                //2 and 8
+                                Ham_(col_,row_) -= conj((Parameters_.UPrime[atom_no] - 0.5*Parameters_.JHund[atom_no])*OP_val);
 
 
-                                    //3 and 5 [4 and 6 are h.c. of 3 and 5 ]
-                                    col_ = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
-                                           spin_*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-                                    row_ = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
-                                           (1-spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                                //3 and 5 [4 and 6 are h.c. of 3 and 5 ]
+                                col_ = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
+                                       spin_*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                                row_ = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
+                                       (1-spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
 
-                                    col_OP = row_;
-                                    row_OP = col_;
+                                col_OP = row_;
+                                row_OP = col_;
 
+
+                                if(!NA_spinflip){
                                     if(col_OP>row_OP){
                                         index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
                                         OP_val = OPs_.value[index_OP];
@@ -3248,10 +3287,10 @@ void Kspace_calculation_G2dLattice::Create_Kspace_Spectrum(){
                                     Ham_(row_,col_) -= (Parameters_.UPrime[atom_no] - 0.5*Parameters_.JHund[atom_no])*OP_val;
                                     //4 and 6
                                     Ham_(col_,row_) -= conj((Parameters_.UPrime[atom_no] - 0.5*Parameters_.JHund[atom_no])*OP_val);
-
                                 }
+                            }
 
-            }}}}
+                        }}}}
 
 
             //Hunds Coupling
@@ -3263,146 +3302,152 @@ void Kspace_calculation_G2dLattice::Create_Kspace_Spectrum(){
 
                             for(int spin_=0;spin_<2;spin_++){
 
-                             //1 and 3
-                            col_ = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
+                                    //1 and 3
+                                col_ = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
                                        spin_*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-                            row_ = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
+                                row_ = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
                                        (1-spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
 
-                            col_OP = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
-                                   (1-spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-                            row_OP = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
-                                   (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                                col_OP = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
+                                         (1-spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                                row_OP = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
+                                         (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
 
-                            if(col_OP>row_OP){
-                                index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                                OP_val = OPs_.value[index_OP];
+                                //NA_spinflip = Parameters_.NoSpinFlipOP && (spin_p!=spin_);
+                                if(!NA_spinflip){
+                                    if(col_OP>row_OP){
+                                        index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                        OP_val = OPs_.value[index_OP];
+                                    }
+                                    else{
+                                        index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                        OP_val = conj(OPs_.value[index_OP]);
+                                    }
+                                    //1 and 3
+                                    Ham_(row_,col_) -= (0.5*Parameters_.JHund[atom_no])*2.0*OP_val;
+                                }
+
+
+                                //2 and 4
+                                col_ = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
+                                       spin_*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                                row_ = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
+                                       (1-spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+
+                                col_OP = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
+                                         (1-spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                                row_OP = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
+                                         (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+
+                                //NA_spinflip = Parameters_.NoSpinFlipOP && (spin_p!=spin_);
+                                if(!NA_spinflip){
+                                    if(col_OP>row_OP){
+                                        index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                        OP_val = OPs_.value[index_OP];
+                                    }
+                                    else{
+                                        index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                        OP_val = conj(OPs_.value[index_OP]);
+                                    }
+                                    //2 and 4
+                                    Ham_(row_,col_) -= (0.5*Parameters_.JHund[atom_no])*2.0*OP_val;
+                                }
+
+                                //5 and 11
+                                col_ = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
+                                       spin_*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                                row_ = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
+                                       (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+
+                                col_OP = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
+                                         (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                                row_OP = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
+                                         (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+
+                                if(col_OP>row_OP){
+                                    index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                    OP_val = OPs_.value[index_OP];
+                                }
+                                else{
+                                    index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                    OP_val = conj(OPs_.value[index_OP]);
+                                }
+                                //5 and 11
+                                Ham_(row_,col_) -= (0.5*Parameters_.JHund[atom_no])*OP_val;
+
+
+                                //6 and 12
+                                col_ = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
+                                       spin_*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                                row_ = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
+                                       (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+
+                                col_OP = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
+                                         (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                                row_OP = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
+                                         (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+
+                                if(col_OP>row_OP){
+                                    index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                    OP_val = OPs_.value[index_OP];
+                                }
+                                else{
+                                    index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                    OP_val = conj(OPs_.value[index_OP]);
+                                }
+                                //6 and 12
+                                Ham_(row_,col_) -= (0.5*Parameters_.JHund[atom_no])*OP_val;
+
+
+
+                                //7 and 9
+                                col_ = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
+                                       spin_*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                                row_ = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
+                                       (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+
+                                col_OP = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
+                                         (1-spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                                row_OP = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
+                                         (1-spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+
+                                if(col_OP>row_OP){
+                                    index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                    OP_val = OPs_.value[index_OP];
+                                }
+                                else{
+                                    index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                    OP_val = conj(OPs_.value[index_OP]);
+                                }
+                                //7 and 9
+                                Ham_(row_,col_) += (0.5*Parameters_.JHund[atom_no])*OP_val;
+
+
+                                //8 and 10
+                                col_ = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
+                                       spin_*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                                row_ = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
+                                       (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+
+                                col_OP = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
+                                         (1-spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+                                row_OP = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
+                                         (1-spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
+
+                                if(col_OP>row_OP){
+                                    index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                    OP_val = OPs_.value[index_OP];
+                                }
+                                else{
+                                    index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                    OP_val = conj(OPs_.value[index_OP]);
+                                }
+                                //8 and 10
+                                Ham_(row_,col_) += (0.5*Parameters_.JHund[atom_no])*OP_val;
+
                             }
-                            else{
-                                index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                                OP_val = conj(OPs_.value[index_OP]);
-                            }
-                            //1 and 3
-                            Ham_(row_,col_) -= (0.5*Parameters_.JHund[atom_no])*2.0*OP_val;
 
-                            //2 and 4
-                            col_ = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
-                                   spin_*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-                            row_ = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
-                                   (1-spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-
-                            col_OP = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
-                                     (1-spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-                            row_OP = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
-                                     (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-
-                            if(col_OP>row_OP){
-                                index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                                OP_val = OPs_.value[index_OP];
-                            }
-                            else{
-                                index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                                OP_val = conj(OPs_.value[index_OP]);
-                            }
-                            //2 and 4
-                            Ham_(row_,col_) -= (0.5*Parameters_.JHund[atom_no])*2.0*OP_val;
-
-
-                            //5 and 11
-                            col_ = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
-                                   spin_*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-                            row_ = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
-                                   (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-
-                            col_OP = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
-                                     (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-                            row_OP = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
-                                     (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-
-                            if(col_OP>row_OP){
-                                index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                                OP_val = OPs_.value[index_OP];
-                            }
-                            else{
-                                index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                                OP_val = conj(OPs_.value[index_OP]);
-                            }
-                            //5 and 11
-                            Ham_(row_,col_) -= (0.5*Parameters_.JHund[atom_no])*OP_val;
-
-
-                            //6 and 12
-                            col_ = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
-                                   spin_*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-                            row_ = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
-                                   (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-
-                            col_OP = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
-                                     (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-                            row_OP = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
-                                     (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-
-                            if(col_OP>row_OP){
-                                index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                                OP_val = OPs_.value[index_OP];
-                            }
-                            else{
-                                index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                                OP_val = conj(OPs_.value[index_OP]);
-                            }
-                            //6 and 12
-                            Ham_(row_,col_) -= (0.5*Parameters_.JHund[atom_no])*OP_val;
-
-
-
-                            //7 and 9
-                            col_ = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
-                                   spin_*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-                            row_ = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
-                                   (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-
-                            col_OP = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
-                                     (1-spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-                            row_OP = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
-                                     (1-spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-
-                            if(col_OP>row_OP){
-                                index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                                OP_val = OPs_.value[index_OP];
-                            }
-                            else{
-                                index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                                OP_val = conj(OPs_.value[index_OP]);
-                            }
-                            //7 and 9
-                            Ham_(row_,col_) += (0.5*Parameters_.JHund[atom_no])*OP_val;
-
-
-                            //8 and 10
-                            col_ = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
-                                   spin_*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-                            row_ = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
-                                   (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-
-                            col_OP = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
-                                     (1-spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-                            row_OP = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
-                                     (1-spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
-
-                            if(col_OP>row_OP){
-                                index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                                OP_val = OPs_.value[index_OP];
-                            }
-                            else{
-                                index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                                OP_val = conj(OPs_.value[index_OP]);
-                            }
-                            //8 and 10
-                            Ham_(row_,col_) += (0.5*Parameters_.JHund[atom_no])*OP_val;
-
-                            }
-
-            }}}}
+                        }}}}
 
 
 
@@ -3479,19 +3524,21 @@ void Kspace_calculation_G2dLattice::Create_Kspace_Spectrum(){
                                 row_OP = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
                                          (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
 
-                                if(col_OP>row_OP){
-                                    index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                                    OP_val = OPs_.value[index_OP];
+                                //NA_spinflip = Parameters_.NoSpinFlipOP && (spin_p!=spin_);
+                                if(!NA_spinflip){
+                                    if(col_OP>row_OP){
+                                        index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                        OP_val = OPs_.value[index_OP];
+                                    }
+                                    else{
+                                        index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                        OP_val = conj(OPs_.value[index_OP]);
+                                    }
+                                    //7 and 9
+                                    Ham_(row_,col_) -= (0.5*Parameters_.JHund[atom_no])*OP_val;
+                                    //8 and 10
+                                    Ham_(col_,row_) -= conj((0.5*Parameters_.JHund[atom_no])*OP_val);
                                 }
-                                else{
-                                    index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                                    OP_val = conj(OPs_.value[index_OP]);
-                                }
-                                //7 and 9
-                                Ham_(row_,col_) -= (0.5*Parameters_.JHund[atom_no])*OP_val;
-                                //8 and 10
-                                Ham_(col_,row_) -= conj((0.5*Parameters_.JHund[atom_no])*OP_val);
-
 
                             }
 
@@ -3520,19 +3567,21 @@ void Kspace_calculation_G2dLattice::Create_Kspace_Spectrum(){
                                 row_OP = j + (atom_no + n_atoms_*alpha)*(UnitCellSize_x*UnitCellSize_y) +
                                          (spin_)*(n_atoms_*n_orbs_*UnitCellSize_x*UnitCellSize_y);
 
-                                if(col_OP>row_OP){
-                                    index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                                    OP_val = OPs_.value[index_OP];
+                                //NA_spinflip = Parameters_.NoSpinFlipOP && (spin_p!=spin_);
+                                if(!NA_spinflip){
+                                    if(col_OP>row_OP){
+                                        index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                        OP_val = OPs_.value[index_OP];
+                                    }
+                                    else{
+                                        index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
+                                        OP_val = conj(OPs_.value[index_OP]);
+                                    }
+                                    //1 and 2
+                                    Ham_(row_,col_) -= (1.0*Parameters_.JHund[atom_no])*OP_val;
+                                    //3 and 4
+                                    Ham_(col_,row_) -= conj((1.0*Parameters_.JHund[atom_no])*OP_val);
                                 }
-                                else{
-                                    index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*UnitCellSize_x*UnitCellSize_y)];
-                                    OP_val = conj(OPs_.value[index_OP]);
-                                }
-                                //1 and 2
-                                Ham_(row_,col_) -= (1.0*Parameters_.JHund[atom_no])*OP_val;
-                                //3 and 4
-                                Ham_(col_,row_) -= conj((1.0*Parameters_.JHund[atom_no])*OP_val);
-
 
                                 //5 and 6 [hc : 7 and 8]
                                 col_ = j + (atom_no + n_atoms_*beta)*(UnitCellSize_x*UnitCellSize_y) +
@@ -3722,7 +3771,7 @@ void Kspace_calculation_G2dLattice::SelfConsistency(){
             }
 
             Get_new_OPs_and_error();
-           // Get_Energies();
+            // Get_Energies();
             Get_Energies_new();
 
 
@@ -3794,7 +3843,10 @@ void Kspace_calculation_G2dLattice::SelfConsistency(){
 
         Get_spin_resolved_local_densities();
         Get_local_spins();
-        Get_Tau_Pseudospins();
+
+        if(n_orbs_>1){
+            Get_Tau_Pseudospins();
+        }
         Calculate_Nw();
         //Calculate_Akw(0.0);
 

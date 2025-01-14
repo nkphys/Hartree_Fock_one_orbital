@@ -37,6 +37,7 @@ public:
     int UnitCellSize_x, UnitCellSize_y;
     bool Just_Hartree;
 
+    bool NoSpinFlipOP;
     //For observse
     double beta, mus;
     double eta, domega;
@@ -57,6 +58,7 @@ public:
     bool Fixing_mu;
     double Fixed_mu;
 
+    double PinningFieldValue;
     bool Anderson_Mixing;
     int AM_m; //Anderson_Mixing_m;
 
@@ -164,6 +166,16 @@ void Parameters_G2dLattice::Initialize(string inputfile_)
         FockType = matchstring2(inputfile_,"Fock_type");
     }
 
+    int NoSpinFlipOP_int;
+    NoSpinFlipOP_int=int(matchstring(inputfile_, "NoSpinFlipOP"));
+    if(NoSpinFlipOP_int==1){
+        NoSpinFlipOP=true;
+    }
+    else{
+        NoSpinFlipOP=false;
+    }
+
+
 
     int Create_OPs_Ansatz_int;
     Create_OPs_Ansatz_int = int(matchstring(inputfile_,"Create_OPs_Ansatz"));
@@ -222,6 +234,7 @@ void Parameters_G2dLattice::Initialize(string inputfile_)
     ns = lx * ly;
     cout << "TotalNumberOf Unit cells = " << ns << endl;
 
+    PinningFieldValue=matchstring(inputfile_,"PinningFieldValue");
 
     double Self_consistency_kspace_double;
     Self_consistency_kspace_double=double(matchstring(inputfile_,"Self_consistency_kspace"));
