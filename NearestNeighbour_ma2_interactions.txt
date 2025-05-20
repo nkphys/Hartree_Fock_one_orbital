@@ -1,6 +1,0 @@
-#site=1 is the neigh of site=0
-#site1 sublattice1 orb1 site2 sublattice2 orb2 site3 sublattice3 orb3 site4 sublattice4 orb4  V(site1 subltc1 orb1 , -2- , -3- , -4-)
-1 1 0 1 1 0 1 1 0 1 1 0 (1735.53,-4.73739e-16)
-0 0 0 0 0 0 0 0 0 0 0 0 (1734.95,3.31748e-16)
-1 1 0 0 0 0 1 1 0 0 0 0 (604.845,-8.67232e-14)
-0 0 0 1 1 0 0 0 0 1 1 0 (604.845,6.44942e-14)

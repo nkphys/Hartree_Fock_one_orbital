@@ -1,1 +1,0 @@
-#band1 band2 band3 band4  V(b1,b2,b3,b4)=<b1,b2|b3,b4>
