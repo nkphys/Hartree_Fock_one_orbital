@@ -8,7 +8,8 @@ typedef vector< complex<double> >  Mat_1_Complex_doub;
 typedef vector<Mat_1_Complex_doub> Mat_2_Complex_doub;
 typedef vector<Mat_2_Complex_doub> Mat_3_Complex_doub;
 typedef vector<Mat_3_Complex_doub> Mat_4_Complex_doub;
-
+typedef vector<Mat_4_Complex_doub> Mat_5_Complex_doub;
+typedef vector<Mat_5_Complex_doub> Mat_6_Complex_doub;
 
 
 
@@ -80,6 +81,7 @@ struct pair_int{
     int second;
 };
 typedef vector<pair_int> Mat_1_intpair;
+typedef vector<Mat_1_intpair> Mat_2_intpair;
 
 class INT_CSR_MAT{
 	

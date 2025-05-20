@@ -1,0 +1,2 @@
+rm -f SelfConsistent CreateConnections observe k_space_SelfConsistency *.o
+g++  -std=c++11 -Isrc -g3  -g   -c -o main.o main.cpp

@@ -63,6 +63,13 @@ using namespace std;
 #include "src/Models/Generic2dLattice/Observables_G2dLattice.h"
 #include "src/Models/Generic2dLattice/Kspace_calculation_G2dLattice.h"
 
+#include "src/Models/Generic2dLatticeNew/Parameters_G2dLatticeNew.h"
+#include "src/Models/Generic2dLatticeNew/Coordinates_G2dLatticeNew.h"
+#include "src/Models/Generic2dLatticeNew/Connections_G2dLatticeNew.h"
+#include "src/Models/Generic2dLatticeNew/Observables_G2dLatticeNew.h"
+#include "src/Models/Generic2dLatticeNew/Kspace_calculation_G2dLatticeNew.h"
+
+
 #include "random"
 
 
@@ -201,6 +208,33 @@ int main(int argc, char *argv[]) {
              mt19937_64 Generator_(Parameters_G2d_.RandomSeed);
              Kspace_calculation_G2dLattice Kspace_calculation_G2d_(Parameters_G2d_, Coordinates_G2d_UC_, Connections_G2d_, Generator_);
              Kspace_calculation_G2d_.SelfConsistency();
+             // Kspace_calculation_G2d_.Get_Bare_Susceptibility();
+             // Kspace_calculation_G2d_.Get_RPA_Susceptibility();
+
+         }
+
+
+         if(ModelType=="Generic2dLatticeNew"){
+
+             Parameters_G2dLatticeNew Parameters_G2d_;
+             Parameters_G2d_.Initialize(model_inputfile);
+
+             Coordinates_G2dLatticeNew  Coordinates_G2d_(Parameters_G2d_.lx, Parameters_G2d_.ly, Parameters_G2d_.n_atoms, Parameters_G2d_.n_orbs);
+             Connections_G2dLatticeNew  Connections_G2d_(Parameters_G2d_, Coordinates_G2d_);
+             Connections_G2d_.Print_Hopping();                                       //::DONE
+             // Connections_HC_.InteractionsCreate();
+             // Connections_HC_.Print_LongRangeInt();
+             //Connections_HC_.Print_Spin_resolved_OnsiteE();
+             // Connections_HC_.Interactions_Sorting();
+
+             Coordinates_G2dLatticeNew Coordinates_G2d_UC_(Connections_G2d_.lx_cells, Connections_G2d_.ly_cells, 1, 1);
+
+
+              mt19937_64 Generator_(Parameters_G2d_.RandomSeed);
+              Kspace_calculation_G2dLatticeNew Kspace_calculation_G2d_(Parameters_G2d_, Coordinates_G2d_UC_, Connections_G2d_, Generator_);
+              Kspace_calculation_G2d_.SelfConsistency();
+             // Kspace_calculation_G2d_.Get_Bare_Susceptibility();
+             // Kspace_calculation_G2d_.Get_RPA_Susceptibility();
 
          }
 

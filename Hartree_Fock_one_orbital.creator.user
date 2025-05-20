@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 14.0.1, 2025-01-10T11:25:45. -->
+<!-- Written by QtCreator 14.0.1, 2025-05-16T08:41:29. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -148,7 +148,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">ProjectExplorer.CustomExecutableRunConfiguration</value>
     <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey"></value>
     <value type="bool" key="ProjectExplorer.RunConfiguration.Customized">true</value>
-    <value type="QString" key="RunConfiguration.Arguments">Generic2dLattice modelinput_G2dLattice_3orb_KH.inp</value>
+    <value type="QString" key="RunConfiguration.Arguments">Generic2dLatticeNew modelinput_G2dLatticeNew_1orb_sqrlat.inp</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
     <value type="QString" key="RunConfiguration.WorkingDirectory">/home/nitin/Documents/Codes/Hartree_Fock_one_orbital</value>

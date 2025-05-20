@@ -1,0 +1,70 @@
+#false in X because of OBC in X
+#true in Y because just 2-siters in Y, otherwise OBC just overwrites the same connections with zeros 
+
+PBC_X=1
+PBC_Y=1
+
+Xsite=8
+Ysite=8
+N_Orbs=1
+N_Atoms=1
+UnitCellSize_x=2
+UnitCellSize_y=2
+
+File_Hoppings=Hoppings_used.txt
+
+//In following files: columns hop_3rdNNs electron to row dof at neighbouring site
+t0_mat_file=t0_mat_1orb.txt
+t1_plus_a1_file=t1_plus_a1_mat_1orb.txt
+t1_minus_a2_file=t1_minus_a2_mat_1orb.txt
+t1_plus_a1_minus_a2_mat_file=t1_plus_a1_minus_a2_mat_1orb.txt
+t1_plus_a1_plus_a2_mat_file=t1_plus_a1_plus_a2_mat_1orb.txt
+
+
+#atom
+U0=10.0
+
+#atom
+JHund=0.00
+
+#xz yz xy
+OnSiteE=0.00
+
+PinningFieldValue=0.0
+
+Self_consistency_kspace=1
+Total_particles=64
+Fixing_mu=0
+Mu_value=100
+
+No_of_SelfConsistency_iters=20000
+Convergence_Error=0.000001
+RandomSeed=10
+alpha_OP=0.6
+
+Cooling=1
+Temperature=1 0.001
+#17 0.001 1.0 0.001 1.0 0.001 1.0 0.001 1.0 0.001 1.0 0.001 1.0 0.001 1.0 2.0 1.0 0.001
+
+Anderson_Mixing=1
+Anderson_Mixing_m=20
+
+Just_Hartree=0
+NoSpinFlipOP=0
+Fock_type=Onsite
+#Onsite, Onsite_Intra, Onsite_Intra_Inter
+Read_initial_OPvalues=0
+Read_initial_OPvalues_UnitCellsType=1 1
+Read_initial_OPvalues_file=OP_CDW_1x1.txt
+#OUTPUT_OP_PiPi_alongZ.txt
+#OUTPUT_OP_0Pi_alongZ.txt
+#OUTPUT_OP_ZigZag_alongZ.txt
+#OUTPUT_OP_XZ120.txt
+#OUTPUT_OP_ZX120.txt
+Create_OPs_Ansatz=0
+OP_Ansatz_type=TL_WC_FM
+
+
+Write_Final_OPvalues_file=OP_OUTPUT_kspace
+#58933.219393228 FM_HC
+

@@ -20,6 +20,11 @@ src/Models/DiceLattice/Coordinates_DL.h
 src/Models/DiceLattice/Kspace_calculation_DL.h
 src/Models/DiceLattice/Observables_DL.h
 src/Models/DiceLattice/Parameters_DL.h
+src/Models/Generic2dLatticeNew/Connections_G2dLatticeNew.h
+src/Models/Generic2dLatticeNew/Coordinates_G2dLatticeNew.h
+src/Models/Generic2dLatticeNew/Kspace_calculation_G2dLatticeNew.h
+src/Models/Generic2dLatticeNew/Observables_G2dLatticeNew.h
+src/Models/Generic2dLatticeNew/Parameters_G2dLatticeNew.h
 src/Models/Generic2dLattice/Connections_G2dLattice.h
 src/Models/Generic2dLattice/Coordinates_G2dLattice.h
 src/Models/Generic2dLattice/Kspace_calculation_G2dLattice.h
