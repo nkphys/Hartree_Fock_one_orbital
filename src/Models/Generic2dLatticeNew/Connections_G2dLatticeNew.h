@@ -128,7 +128,6 @@ void Connections_G2dLatticeNew::Get_MUC_details(){
                 pos_.second = h2;
                 Intra_MUC_positions.push_back(pos_);
             }
-
         }
     }
 

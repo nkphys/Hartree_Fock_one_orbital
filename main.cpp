@@ -72,6 +72,9 @@ using namespace std;
 
 #include "random"
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 int main(int argc, char *argv[]) {
 
@@ -85,7 +88,10 @@ int main(int argc, char *argv[]) {
 
 
 
+
     if(ex_string=="tency"){ //k_space_SelfConsistency
+
+
         string ModelType = argv[1];
         string model_inputfile = argv[2];
 
@@ -219,6 +225,16 @@ int main(int argc, char *argv[]) {
              Parameters_G2dLatticeNew Parameters_G2d_;
              Parameters_G2d_.Initialize(model_inputfile);
 
+
+#ifdef _OPENMP
+             int N_p = omp_get_max_threads();
+             omp_set_num_threads(Parameters_G2d_.NProcessors);
+
+             cout<<"Max threads which can be used parallely = "<<N_p<<endl;
+             cout<<"No. of threads used parallely = "<<Parameters_G2d_.NProcessors<<endl;
+#endif
+
+
              Coordinates_G2dLatticeNew  Coordinates_G2d_(Parameters_G2d_.lx, Parameters_G2d_.ly, Parameters_G2d_.n_atoms, Parameters_G2d_.n_orbs);
              Connections_G2dLatticeNew  Connections_G2d_(Parameters_G2d_, Coordinates_G2d_);
              Connections_G2d_.Print_Hopping();                                       //::DONE
@@ -233,7 +249,18 @@ int main(int argc, char *argv[]) {
               mt19937_64 Generator_(Parameters_G2d_.RandomSeed);
               Kspace_calculation_G2dLatticeNew Kspace_calculation_G2d_(Parameters_G2d_, Coordinates_G2d_UC_, Connections_G2d_, Generator_);
               Kspace_calculation_G2d_.SelfConsistency();
-             // Kspace_calculation_G2d_.Get_Bare_Susceptibility();
+              if(Parameters_G2d_.Calculate_Susc){
+                  // Kspace_calculation_G2d_.Get_Bare_Susceptibility_New();
+                  // if(Kspace_calculation_G2d_.NSites_in_MUC>0){
+                  //     Kspace_calculation_G2d_.Get_Bare_Susceptibility_in_NBZ();
+                  // }
+                  Kspace_calculation_G2d_.Calculate_InteractionKernel();
+                  Kspace_calculation_G2d_.Get_RPA_Susceptibility_Matrix();
+                 // Kspace_calculation_G2d_.Get_Bare_Susceptibility_in_NBZ();
+                  Kspace_calculation_G2d_.Get_RPA_Susceptibility_in_NBZ();
+
+                  //Kspace_calculation_G2d_.Get_Bare_Susceptibility();
+              }
              // Kspace_calculation_G2d_.Get_RPA_Susceptibility();
 
          }

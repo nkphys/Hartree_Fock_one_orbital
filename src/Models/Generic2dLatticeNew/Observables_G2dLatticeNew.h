@@ -134,7 +134,7 @@ void Observables_G2dLatticeNew::Calculate_Akxw_ribbon()
     double eta = Parameters_.eta;
     omega_min = eigs_[0] - 1.0;
     omega_max = eigs_[eigs_.size() - 1] + 1.0;
-    d_omega = Parameters_.domega;
+    d_omega = Parameters_.d_omega;
     //---------------------------------------------------//
 
     int omega_index_max = int((omega_max - omega_min) / (d_omega));
@@ -325,7 +325,7 @@ void Observables_G2dLatticeNew::Calculate_Akw()
     double eta = Parameters_.eta;
     omega_min = eigs_[0] - 1.0;
     omega_max = eigs_[eigs_.size() - 1] + 1.0;
-    d_omega = Parameters_.domega;
+    d_omega = Parameters_.d_omega;
     //---------------------------------------------------//
 
     int omega_index_max = int((omega_max - omega_min) / (d_omega));
@@ -570,7 +570,7 @@ void Observables_G2dLatticeNew::Calculate_Nw()
     double eta = Parameters_.eta;
     omega_min = eigs_[0] - 5.0;
     omega_max = eigs_[eigs_.size() - 1] + 5.0;
-    d_omega = Parameters_.domega;
+    d_omega = Parameters_.d_omega;
     //---------------------------------------------------//
 
     int omega_index_max = int((omega_max - omega_min) / (d_omega));
@@ -617,7 +617,7 @@ void Observables_G2dLatticeNew::Calculate_OrbResolved_Nw()
     double eta = Parameters_.eta;
     omega_min = eigs_[0] - 5.0;
     omega_max = eigs_[eigs_.size() - 1] + 5.0;
-    d_omega = Parameters_.domega;
+    d_omega = Parameters_.d_omega;
     //---------------------------------------------------//
 
     int omega_index_max = int((omega_max - omega_min) / (d_omega));

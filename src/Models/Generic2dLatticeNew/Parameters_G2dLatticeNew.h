@@ -13,6 +13,9 @@ public:
     int n_atoms; //n_atoms in a unit cell
 
     Mat_2_doub OnSiteE;
+    Mat_1_doub PinningFieldZ;
+
+
 
     double BoundaryConnection_X, BoundaryConnection_Y;
     bool PBC_X, PBC_Y;
@@ -27,9 +30,16 @@ public:
     Mat_2_Complex_doub t0; //index = atom  + orb*2 + spin*4
     Mat_2_Complex_doub t1_plus_a1, t1_minus_a2, t1_plus_a1_minus_a2,t1_plus_a1_plus_a2;
 
+
+    Mat_3_Complex_doub Susc_OprA, Susc_OprB;
+    bool Calculate_Susc;
+
     Mat_1_doub U0;
     Mat_1_doub JHund;
     Mat_1_doub UPrime;
+    Mat_3_doub UInterOrb;
+
+
     string File_onsite_U, File_pa1_ma2_U, File_ma2_U;
     double U0ByUNN;
     double AnisotropyZ;
@@ -41,7 +51,6 @@ public:
     bool NoSpinFlipOP;
     //For observse
     double beta, mus;
-    double eta, domega;
 
     bool Self_consistency_kspace;
     double Temperature;
@@ -78,6 +87,14 @@ public:
 
     int UnitCellSize_x, UnitCellSize_y;
 
+
+    double omega_min;
+    double omega_max;
+    double d_omega;
+    double eta;
+
+    int NProcessors;
+
 };
 
 void Parameters_G2dLatticeNew::Initialize(string inputfile_)
@@ -89,6 +106,8 @@ void Parameters_G2dLatticeNew::Initialize(string inputfile_)
 
     MUC_Mat.resize(2,2);
 
+
+    NProcessors =int(matchstring(inputfile_, "N_Threads"));
     n_atoms = int(matchstring(inputfile_, "N_Atoms"));
     n_orbs = int(matchstring(inputfile_, "N_Orbs"));
     //assert(n_orbs==2);
@@ -136,6 +155,60 @@ void Parameters_G2dLatticeNew::Initialize(string inputfile_)
     }
 
 
+    string Calculate_Susc_str = matchstring2(inputfile_,"CalculateSusceptibility");
+    if(Calculate_Susc_str=="true"){
+        Calculate_Susc=true;
+    }
+    else{
+        Calculate_Susc=false;
+    }
+
+
+
+
+
+
+    if(Calculate_Susc){
+    string string_Susc_OprA, string_Susc_OprB;
+    string string_Susc_Oprs = matchstring2(inputfile_, "SusceptibilityLocalOprFilesPairWise");
+    stringstream Susc_Oprs_stream(string_Susc_Oprs);
+
+    int No_of_ABpairs;
+    Susc_Oprs_stream>>No_of_ABpairs;
+    Susc_OprA.resize(No_of_ABpairs);
+    Susc_OprB.resize(No_of_ABpairs);
+
+    for(int pair_no=0;pair_no<No_of_ABpairs;pair_no++){
+    Susc_OprA[pair_no].resize(n_orbs*n_atoms*2);
+    Susc_OprB[pair_no].resize(n_orbs*n_atoms*2);
+    for(int i=0;i<n_orbs*n_atoms*2;i++){
+        Susc_OprA[pair_no][i].resize(n_orbs*n_atoms*2);
+        Susc_OprB[pair_no][i].resize(n_orbs*n_atoms*2);
+        for(int j=0;j<n_orbs*n_atoms*2;j++){
+            Susc_OprA[pair_no][i][j]=0.0;
+            Susc_OprB[pair_no][i][j]=0.0;
+        }
+    }
+    }
+
+    for(int pair_no=0;pair_no<No_of_ABpairs;pair_no++){
+    Susc_Oprs_stream>>string_Susc_OprA>>string_Susc_OprB;
+    ifstream file_Susc_OprA(string_Susc_OprA.c_str());
+    ifstream file_Susc_OprB(string_Susc_OprB.c_str());
+
+    for(int i=0;i<2*n_atoms*n_orbs;i++){
+        for(int j=0;j<2*n_atoms*n_orbs;j++){
+            file_Susc_OprA>>Susc_OprA[pair_no][i][j];
+            file_Susc_OprB>>Susc_OprB[pair_no][i][j];
+        }
+    }
+
+    }
+
+    }
+
+
+
     U0.resize(n_atoms);
     string U0_string = matchstring2(inputfile_, "U0");
     stringstream U0_stream(U0_string);
@@ -155,6 +228,33 @@ void Parameters_G2dLatticeNew::Initialize(string inputfile_)
     for(int atom_no=0;atom_no<n_atoms;atom_no++){
         UPrime[atom_no] = U0[atom_no] - 2.0*JHund[atom_no];
     }
+
+
+
+    string U_interorb_someatom_str_temp = "U_interorb_atom_";
+    string U_interorb_atom_str;
+    UInterOrb.resize(n_atoms);
+    for(int atom_no=0;atom_no<n_atoms;atom_no++){
+        UInterOrb[atom_no].resize(n_orbs);
+        for(int orb_no_i=0;orb_no_i<n_orbs;orb_no_i++){
+            UInterOrb[atom_no][orb_no_i].resize(n_orbs);
+        }
+    }
+
+    for(int atom_no=0;atom_no<n_atoms;atom_no++){
+
+        U_interorb_atom_str = U_interorb_someatom_str_temp + to_string(atom_no);
+        string UInterOrb_string = matchstring2(inputfile_, U_interorb_atom_str);
+        stringstream UInterOrb_stream(UInterOrb_string);
+
+        for(int orb_no_i=0;orb_no_i<n_orbs;orb_no_i++){
+            for(int orb_no_j=0;orb_no_j<n_orbs;orb_no_j++){
+                UInterOrb_stream>>UInterOrb[atom_no][orb_no_i][orb_no_j];
+
+            }
+        }
+    }
+
 
     lx = int(matchstring(inputfile_, "Xsite"));
     ly = int(matchstring(inputfile_, "Ysite"));
@@ -215,6 +315,9 @@ void Parameters_G2dLatticeNew::Initialize(string inputfile_)
         OnSiteE[orb].resize(2);
     }
 
+    PinningFieldZ.resize(n_atoms*n_orbs);
+
+
 
     string OnSiteE_string = matchstring2(inputfile_, "OnSiteE");
     stringstream OnSiteE_stream(OnSiteE_string);
@@ -224,6 +327,13 @@ void Parameters_G2dLatticeNew::Initialize(string inputfile_)
             OnSiteE[atom_no+n_atoms*orb_no][1]=OnSiteE[atom_no+n_atoms*orb_no][0];
         }}
 
+
+    string PinningFieldValueZ_string = matchstring2(inputfile_, "PinningFieldValueZ");
+    stringstream PinningFieldValueZ_stream(PinningFieldValueZ_string);
+    for(int atom_no=0;atom_no<n_atoms;atom_no++){
+        for(int orb_no=0;orb_no<n_orbs;orb_no++){
+            PinningFieldValueZ_stream>>PinningFieldZ[atom_no+n_atoms*orb_no];
+        }}
 
 
     BoundaryConnection_X = double(matchstring(inputfile_, "PBC_X"));
@@ -245,7 +355,7 @@ void Parameters_G2dLatticeNew::Initialize(string inputfile_)
     ns = lx * ly;
     cout << "TotalNumberOf Unit cells = " << ns << endl;
 
-    PinningFieldValue=matchstring(inputfile_,"PinningFieldValue");
+    //PinningFieldValue=matchstring(inputfile_,"PinningFieldValue");
 
     double Self_consistency_kspace_double;
     Self_consistency_kspace_double=double(matchstring(inputfile_,"Self_consistency_kspace"));
@@ -314,6 +424,15 @@ void Parameters_G2dLatticeNew::Initialize(string inputfile_)
 
     File_OPs_in=matchstring2(inputfile_,"Read_initial_OPvalues_file");
     File_OPs_out=matchstring2(inputfile_,"Write_Final_OPvalues_file");
+
+
+
+
+    omega_min=matchstring(inputfile_,"omega_min");
+    omega_max=matchstring(inputfile_,"omega_max");
+    d_omega=matchstring(inputfile_,"d_omega");
+    eta=matchstring(inputfile_,"eta");
+
 
 
     cout << "____________________________________" << endl;
