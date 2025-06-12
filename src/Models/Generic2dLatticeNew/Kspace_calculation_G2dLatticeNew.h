@@ -2339,6 +2339,128 @@ void Kspace_calculation_G2dLatticeNew::Initialize()
             //cout<<"Ansatz State not working right now"<<endl;
             //assert(false);
 
+            if(Parameters_.OP_Ansatz_type=="AFM_AFO_3orb"){
+                assert(n_orbs_==3);
+                assert(n_atoms_==1);
+
+                int XZ_=0;
+                int YZ_=1;
+                int XY_=2;
+                int SPINUP_=0;
+                int SPINDN_=1;
+
+                //Hartree Terms
+                for(int alpha=0;alpha<NSites_in_MUC;alpha++){
+                    for(int gamma=0;gamma<n_orbs_;gamma++){
+                        for(int sigma=0;sigma<2;sigma++){
+
+
+                            row_temp=  alpha + gamma*(S_) +  sigma*(n_atoms_*n_orbs_*S_) + 0*(2*n_atoms_*n_orbs_*S_);
+                            col_temp=row_temp;
+
+                            OPs_.rows.push_back(row_temp);OPs_new_.rows.push_back(row_temp);
+                            OPs_.columns.push_back(col_temp);OPs_new_.columns.push_back(col_temp);
+                            OPs_new_.value.push_back(0.0);
+
+                            int alpha_1 = Intra_MUC_positions[alpha].first;
+                            int alpha_2 = Intra_MUC_positions[alpha].second;
+                            int site_x_val =(((0)*Mat_MUC(0,0) + (0)*Mat_MUC(1,0)) + alpha_1 + lx_*ly_)%lx_;
+                            int site_y_val =(((0)*Mat_MUC(0,1) + (0)*Mat_MUC(1,1)) + alpha_2 + lx_*ly_)%ly_;
+                            int sublattice_type = pow(-1,site_x_val)*pow(-1,site_y_val);
+
+                            if(sublattice_type==1){
+
+
+                                if(gamma==XZ_ && sigma==SPINUP_){
+                                    temp_den=1;
+                                }
+                                if(gamma==YZ_ && sigma==SPINUP_){
+                                    temp_den=0;
+                                }
+                                if(gamma==XY_ && sigma==SPINUP_){
+                                    temp_den=1;
+                                }
+                                if(sigma==SPINDN_){
+                                    temp_den=0;
+                                }
+
+                            }
+                            else{
+                                assert(sublattice_type==-1);
+                                if(gamma==XZ_ && sigma==SPINDN_){
+                                    temp_den=0;
+                                }
+                                if(gamma==YZ_ && sigma==SPINDN_){
+                                    temp_den=1;
+                                }
+                                if(gamma==XY_ && sigma==SPINDN_){
+                                    temp_den=1;
+                                }
+                                if(sigma==SPINUP_){
+                                    temp_den=0;
+                                }
+
+                            }
+
+                            OPs_.value.push_back(complex<double> (temp_den,0.0));
+                            SI_to_ind[col_temp + row_temp*(ncells_*2*n_atoms_*n_orbs_*S_)] = OPs_.value.size()-1;
+                        }
+                    }
+                }
+
+
+
+
+                //Fock
+                bool check_;
+                bool NA_spinflip;
+                int atom_orb_no, atom_orb_no_p;
+                if(!Parameters_.Just_Hartree){
+                    for(int alpha=0;alpha<NSites_in_MUC;alpha++){
+                        for(int atom_no=0;atom_no<n_atoms_;atom_no++){
+                            for(int orb_no=0;orb_no<n_orbs_;orb_no++){
+                                atom_orb_no = atom_no + n_atoms_*orb_no;
+                                for(int sigma=0;sigma<2;sigma++){
+
+                                    int atom_no_p=atom_no;
+                                    for(int orb_no_p=0;orb_no_p<n_orbs_;orb_no_p++){
+                                        atom_orb_no_p = atom_no_p + n_atoms_*orb_no_p;
+                                        for(int sigma_p=0;sigma_p<2;sigma_p++){
+
+                                            row_temp = alpha + (atom_orb_no)*(S_) +  sigma*(n_atoms_*n_orbs_*S_) + 0*(2*n_atoms_*n_orbs_*S_);
+                                            col_temp = alpha + (atom_orb_no_p)*(S_) +  sigma_p*(n_atoms_*n_orbs_*S_) + 0*(2*n_atoms_*n_orbs_*S_);
+                                            check_ = (col_temp > row_temp);
+
+                                            NA_spinflip = Parameters_.NoSpinFlipOP && (sigma_p!=sigma);
+
+                                            if( check_ && (!NA_spinflip)){
+
+                                                OPs_.value.push_back(0.0);
+                                                OPs_new_.value.push_back(0.0);
+
+                                                OPs_.rows.push_back(row_temp);OPs_new_.rows.push_back(row_temp);
+                                                OPs_.columns.push_back(col_temp);OPs_new_.columns.push_back(col_temp);
+
+                                                SI_to_ind[col_temp + row_temp*(ncells_*2*n_atoms_*n_orbs_*S_)] = OPs_.value.size()-1;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+
+
+
+            }
+            else{
+                cout<<"ANSATZ NOT ADDED YET"<<endl;
+                assert(false);
+            }
+
+
         }
 
     }
@@ -3511,7 +3633,7 @@ void Kspace_calculation_G2dLatticeNew::Calculate_InteractionKernel(){
                 cout<<endl;
             }
         }
-          cout<<"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"<<endl;
+        cout<<"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"<<endl;
     }
 
 
@@ -3864,9 +3986,9 @@ void Kspace_calculation_G2dLatticeNew::Calculate_RPA_Susc(Matrix<complex<double>
                                                              KroneckerDelta(spin_row1, 1-spin_col1)*KroneckerDelta(spin_row1, 1-spin_row2)*KroneckerDelta(spin_row1, spin_col2)
                                                              )
                                                             /*(KroneckerDelta(spin_row1, 1-spin_row2)*KroneckerDelta(spin_row1, spin_col1)*KroneckerDelta(spin_row1, 1-spin_col2)
-                                                                                                                             -
-                                                                                                                             KroneckerDelta(spin_row1, spin_row2)*KroneckerDelta(spin_row1, 1-spin_col1)*KroneckerDelta(spin_row1, 1-spin_col2)
-                                                                                                                             )*/
+                                                                                                                                     -
+                                                                                                                                     KroneckerDelta(spin_row1, spin_row2)*KroneckerDelta(spin_row1, 1-spin_col1)*KroneckerDelta(spin_row1, 1-spin_col2)
+                                                                                                                                     )*/
                                                             ;
 
                                                 }}}}}}
@@ -4670,265 +4792,265 @@ void Kspace_calculation_G2dLatticeNew::Get_Bare_Susceptibility_in_NBZ(){
         for(int g=0;g<NSites_in_MUC;g++){
             for(int h=0;h<NSites_in_MUC;h++){
 
-    string File_Out_BarreSusc_str = "Bare_RawSusc_MBZ_PairNo" + to_string(pair_no)+"MUCs_" +to_string(g)+"_"+to_string(h) + ".txt";
-    ofstream file_out_BarreSusc(File_Out_BarreSusc_str.c_str());
-    file_out_BarreSusc<<"#q omega Chi_Bare(q,omega)"<<endl;
+                string File_Out_BarreSusc_str = "Bare_RawSusc_MBZ_PairNo" + to_string(pair_no)+"MUCs_" +to_string(g)+"_"+to_string(h) + ".txt";
+                ofstream file_out_BarreSusc(File_Out_BarreSusc_str.c_str());
+                file_out_BarreSusc<<"#q omega Chi_Bare(q,omega)"<<endl;
 
 
-    Susc_OprA=Parameters_.Susc_OprA[pair_no];
-    Susc_OprB=Parameters_.Susc_OprB[pair_no];
+                Susc_OprA=Parameters_.Susc_OprA[pair_no];
+                Susc_OprB=Parameters_.Susc_OprB[pair_no];
 
-    int q1_ind, q2_ind;
+                int q1_ind, q2_ind;
 
-    Mat_2_Complex_doub ChiRPA_AB_q_omega_NBZ; //it is bare in here :)
+                Mat_2_Complex_doub ChiRPA_AB_q_omega_NBZ; //it is bare in here :)
 
-    ChiRPA_AB_q_omega_NBZ.resize(lx_cells*ly_cells);
-    for(int q_ind=0;q_ind<lx_cells*ly_cells;q_ind++){
-        ChiRPA_AB_q_omega_NBZ[q_ind].resize(N_omega);
-    }
-
-
-    int n1_p, n2_p;
-
-    for(int atom_no_alpha=0;atom_no_alpha<n_atoms_;atom_no_alpha++){
-        for(int alpha_orb=0;alpha_orb<n_orbs_;alpha_orb++){
-            for(int spin_alpha=0;spin_alpha<2;spin_alpha++){
-
-                for(int atom_no_beta=0;atom_no_beta<n_atoms_;atom_no_beta++){
-                    for(int beta_orb=0;beta_orb<n_orbs_;beta_orb++){
-                        for(int spin_beta=0;spin_beta<2;spin_beta++){
-
-                            for(int atom_no_alpha_p=0;atom_no_alpha_p<n_atoms_;atom_no_alpha_p++){
-                                for(int alpha_orb_p=0;alpha_orb_p<n_orbs_;alpha_orb_p++){
-                                    for(int spin_alpha_p=0;spin_alpha_p<2;spin_alpha_p++){
+                ChiRPA_AB_q_omega_NBZ.resize(lx_cells*ly_cells);
+                for(int q_ind=0;q_ind<lx_cells*ly_cells;q_ind++){
+                    ChiRPA_AB_q_omega_NBZ[q_ind].resize(N_omega);
+                }
 
 
-                                        for(int atom_no_beta_p=0;atom_no_beta_p<n_atoms_;atom_no_beta_p++){
-                                            for(int beta_orb_p=0;beta_orb_p<n_orbs_;beta_orb_p++){
-                                                for(int spin_beta_p=0;spin_beta_p<2;spin_beta_p++){
+                int n1_p, n2_p;
+
+                for(int atom_no_alpha=0;atom_no_alpha<n_atoms_;atom_no_alpha++){
+                    for(int alpha_orb=0;alpha_orb<n_orbs_;alpha_orb++){
+                        for(int spin_alpha=0;spin_alpha<2;spin_alpha++){
+
+                            for(int atom_no_beta=0;atom_no_beta<n_atoms_;atom_no_beta++){
+                                for(int beta_orb=0;beta_orb<n_orbs_;beta_orb++){
+                                    for(int spin_beta=0;spin_beta<2;spin_beta++){
+
+                                        for(int atom_no_alpha_p=0;atom_no_alpha_p<n_atoms_;atom_no_alpha_p++){
+                                            for(int alpha_orb_p=0;alpha_orb_p<n_orbs_;alpha_orb_p++){
+                                                for(int spin_alpha_p=0;spin_alpha_p<2;spin_alpha_p++){
 
 
-                                                    complex<double> A_elmt = Susc_OprA[atom_no_alpha + n_atoms_*alpha_orb + n_atoms_*n_orbs_*spin_alpha][atom_no_beta + n_atoms_*beta_orb + n_atoms_*n_orbs_*spin_beta];
-                                                    complex<double> B_elmt = Susc_OprB[atom_no_alpha_p + n_atoms_*alpha_orb_p + n_atoms_*n_orbs_*spin_alpha_p][atom_no_beta_p + n_atoms_*beta_orb_p + n_atoms_*n_orbs_*spin_beta_p];
+                                                    for(int atom_no_beta_p=0;atom_no_beta_p<n_atoms_;atom_no_beta_p++){
+                                                        for(int beta_orb_p=0;beta_orb_p<n_orbs_;beta_orb_p++){
+                                                            for(int spin_beta_p=0;spin_beta_p<2;spin_beta_p++){
 
 
-                                                    if(abs(A_elmt*B_elmt)>EPS_ZERO){
+                                                                complex<double> A_elmt = Susc_OprA[atom_no_alpha + n_atoms_*alpha_orb + n_atoms_*n_orbs_*spin_alpha][atom_no_beta + n_atoms_*beta_orb + n_atoms_*n_orbs_*spin_beta];
+                                                                complex<double> B_elmt = Susc_OprB[atom_no_alpha_p + n_atoms_*alpha_orb_p + n_atoms_*n_orbs_*spin_alpha_p][atom_no_beta_p + n_atoms_*beta_orb_p + n_atoms_*n_orbs_*spin_beta_p];
 
 
-
-                                                        for(int q_ind_temp=0;q_ind_temp<lx_cells*ly_cells;q_ind_temp++){
-                                                            //cout<<"ChiRPA_q_omega (NBZ) "<<q_ind_temp<<"("<<q_path.size()<<")"<<endl;
-
-                                                            q1_ind=q_path_MBZ[q_ind_temp].first;
-                                                            q2_ind=q_path_MBZ[q_ind_temp].second;
-                                                            int q_index = q1_ind + q2_ind*lx_cells;
-
-                                                            for(int omega_ind=0;omega_ind<N_omega;omega_ind++){
-
-                                                               // ChiRPA_AB_q_omega_NBZ[q_index][omega_ind]=0.0;
-
-
-                                                                        //alpha
-                                                                        int ind1 = g + (atom_no_alpha + n_atoms_*alpha_orb)*(S_) +
-                                                                                spin_alpha*(n_atoms_*n_orbs_*S_);
-                                                                        int ind2 = g + (atom_no_beta + n_atoms_*beta_orb)*(S_) +
-                                                                                spin_beta*(n_atoms_*n_orbs_*S_);
-                                                                        int ind3 = h + (atom_no_alpha_p + n_atoms_*alpha_orb_p)*(S_) +
-                                                                                spin_alpha_p*(n_atoms_*n_orbs_*S_);
-                                                                        int ind4 = h + (atom_no_beta_p + n_atoms_*beta_orb_p)*(S_) +
-                                                                                spin_beta_p*(n_atoms_*n_orbs_*S_);
-
-                                                                        ChiRPA_AB_q_omega_NBZ[q_index][omega_ind] += A_elmt*B_elmt*ChiBareMat[q_index][omega_ind][ind1][ind2][ind3][ind4];
-
-                                                                   // }
-                                                                //}
-
-
-                                                                //file_out_BarreSusc<<q_ind_temp<<"  "<<q1_ind<<"  "<<q2_ind<<"  "<<omega<<"  ";
-                                                                //file_out_BarreSusc<<ChiRPA_AB_q_omega_NBZ[q_index][omega_ind].real()<<"  "<<ChiRPA_AB_q_omega_NBZ[q_index][omega_ind].imag()<<endl;
-
-
-                                                            }
-                                                            //file_out_BarreSusc<<endl;
-
-                                                        }
+                                                                if(abs(A_elmt*B_elmt)>EPS_ZERO){
 
 
 
+                                                                    for(int q_ind_temp=0;q_ind_temp<lx_cells*ly_cells;q_ind_temp++){
+                                                                        //cout<<"ChiRPA_q_omega (NBZ) "<<q_ind_temp<<"("<<q_path.size()<<")"<<endl;
+
+                                                                        q1_ind=q_path_MBZ[q_ind_temp].first;
+                                                                        q2_ind=q_path_MBZ[q_ind_temp].second;
+                                                                        int q_index = q1_ind + q2_ind*lx_cells;
+
+                                                                        for(int omega_ind=0;omega_ind<N_omega;omega_ind++){
+
+                                                                            //ChiRPA_AB_q_omega_NBZ[q_index][omega_ind]=0.0;
+
+
+                                                                            //alpha
+                                                                            int ind1 = g + (atom_no_alpha + n_atoms_*alpha_orb)*(S_) +
+                                                                                    spin_alpha*(n_atoms_*n_orbs_*S_);
+                                                                            int ind2 = g + (atom_no_beta + n_atoms_*beta_orb)*(S_) +
+                                                                                    spin_beta*(n_atoms_*n_orbs_*S_);
+                                                                            int ind3 = h + (atom_no_alpha_p + n_atoms_*alpha_orb_p)*(S_) +
+                                                                                    spin_alpha_p*(n_atoms_*n_orbs_*S_);
+                                                                            int ind4 = h + (atom_no_beta_p + n_atoms_*beta_orb_p)*(S_) +
+                                                                                    spin_beta_p*(n_atoms_*n_orbs_*S_);
+
+                                                                            ChiRPA_AB_q_omega_NBZ[q_index][omega_ind] += A_elmt*B_elmt*ChiBareMat[q_index][omega_ind][ind1][ind2][ind3][ind4];
+
+                                                                            // }
+                                                                            //}
+
+
+                                                                            //file_out_BarreSusc<<q_ind_temp<<"  "<<q1_ind<<"  "<<q2_ind<<"  "<<omega<<"  ";
+                                                                            //file_out_BarreSusc<<ChiRPA_AB_q_omega_NBZ[q_index][omega_ind].real()<<"  "<<ChiRPA_AB_q_omega_NBZ[q_index][omega_ind].imag()<<endl;
+
+
+                                                                        }
+                                                                        //file_out_BarreSusc<<endl;
+
+                                                                    }
 
 
 
 
-                                                    }
 
+
+
+                                                                }
+
+                                                            }}}
                                                 }}}
                                     }}}
                         }}}
-            }}}
 
 
 
-    for(int q_ind_temp=0;q_ind_temp<lx_cells*ly_cells;q_ind_temp++){
-        //cout<<"ChiRPA_q_omega (NBZ) "<<q_ind_temp<<"("<<q_path.size()<<")"<<endl;
-        // q1_ind=q_path[q_ind_temp].first;
-        // q2_ind=q_path[q_ind_temp].second;
-        // int q_index = q1_ind + q2_ind*lx_;
+                for(int q_ind_temp=0;q_ind_temp<lx_cells*ly_cells;q_ind_temp++){
+                    //cout<<"ChiRPA_q_omega (NBZ) "<<q_ind_temp<<"("<<q_path.size()<<")"<<endl;
+                    // q1_ind=q_path[q_ind_temp].first;
+                    // q2_ind=q_path[q_ind_temp].second;
+                    // int q_index = q1_ind + q2_ind*lx_;
 
-        for(int omega_ind=0;omega_ind<N_omega;omega_ind++){
-            double omega = omega_ind*d_omega + omega_min;
+                    for(int omega_ind=0;omega_ind<N_omega;omega_ind++){
+                        double omega = omega_ind*d_omega + omega_min;
 
-            file_out_BarreSusc<<q_ind_temp<<"  "<<q1_ind<<"  "<<q2_ind<<"  "<<omega<<"  ";
-            file_out_BarreSusc<<ChiRPA_AB_q_omega_NBZ[q_ind_temp][omega_ind].real()<<"  "<<ChiRPA_AB_q_omega_NBZ[q_ind_temp][omega_ind].imag()<<endl;
+                        file_out_BarreSusc<<q_ind_temp<<"  "<<q1_ind<<"  "<<q2_ind<<"  "<<omega<<"  ";
+                        file_out_BarreSusc<<ChiRPA_AB_q_omega_NBZ[q_ind_temp][omega_ind].real()<<"  "<<ChiRPA_AB_q_omega_NBZ[q_ind_temp][omega_ind].imag()<<endl;
+                    }
+                    file_out_BarreSusc<<endl;
+                }
+
+
+
+            }
         }
-        file_out_BarreSusc<<endl;
     }
-
-
-
-    }
-}
-}
 
 
 
     for(int pair_no=0;pair_no<Parameters_.Susc_OprA.size();pair_no++){
 
-    string File_Out_BarreSusc_str = "Bare_Susc_NBZ_PairNo" + to_string(pair_no)+".txt";
-    ofstream file_out_BarreSusc(File_Out_BarreSusc_str.c_str());
-    file_out_BarreSusc<<"#q omega Chi_Bare(q,omega)"<<endl;
+        string File_Out_BarreSusc_str = "Bare_Susc_NBZ_PairNo" + to_string(pair_no)+".txt";
+        ofstream file_out_BarreSusc(File_Out_BarreSusc_str.c_str());
+        file_out_BarreSusc<<"#q omega Chi_Bare(q,omega)"<<endl;
 
 
-    Susc_OprA=Parameters_.Susc_OprA[pair_no];
-    Susc_OprB=Parameters_.Susc_OprB[pair_no];
+        Susc_OprA=Parameters_.Susc_OprA[pair_no];
+        Susc_OprB=Parameters_.Susc_OprB[pair_no];
 
-    int q1_ind, q2_ind;
+        int q1_ind, q2_ind;
 
-    Mat_2_Complex_doub ChiRPA_AB_q_omega_NBZ; //it is bare in here :)
+        Mat_2_Complex_doub ChiRPA_AB_q_omega_NBZ; //it is bare in here :)
 
-    ChiRPA_AB_q_omega_NBZ.resize(lx_*ly_);
-    for(int q_ind=0;q_ind<lx_*ly_;q_ind++){
-        ChiRPA_AB_q_omega_NBZ[q_ind].resize(N_omega);
-    }
-
-
-    int n1_p, n2_p;
-
-    for(int atom_no_alpha=0;atom_no_alpha<n_atoms_;atom_no_alpha++){
-        for(int alpha_orb=0;alpha_orb<n_orbs_;alpha_orb++){
-            for(int spin_alpha=0;spin_alpha<2;spin_alpha++){
-
-                for(int atom_no_beta=0;atom_no_beta<n_atoms_;atom_no_beta++){
-                    for(int beta_orb=0;beta_orb<n_orbs_;beta_orb++){
-                        for(int spin_beta=0;spin_beta<2;spin_beta++){
-
-                            for(int atom_no_alpha_p=0;atom_no_alpha_p<n_atoms_;atom_no_alpha_p++){
-                                for(int alpha_orb_p=0;alpha_orb_p<n_orbs_;alpha_orb_p++){
-                                    for(int spin_alpha_p=0;spin_alpha_p<2;spin_alpha_p++){
+        ChiRPA_AB_q_omega_NBZ.resize(lx_*ly_);
+        for(int q_ind=0;q_ind<lx_*ly_;q_ind++){
+            ChiRPA_AB_q_omega_NBZ[q_ind].resize(N_omega);
+        }
 
 
-                                        for(int atom_no_beta_p=0;atom_no_beta_p<n_atoms_;atom_no_beta_p++){
-                                            for(int beta_orb_p=0;beta_orb_p<n_orbs_;beta_orb_p++){
-                                                for(int spin_beta_p=0;spin_beta_p<2;spin_beta_p++){
+        int n1_p, n2_p;
+
+        for(int atom_no_alpha=0;atom_no_alpha<n_atoms_;atom_no_alpha++){
+            for(int alpha_orb=0;alpha_orb<n_orbs_;alpha_orb++){
+                for(int spin_alpha=0;spin_alpha<2;spin_alpha++){
+
+                    for(int atom_no_beta=0;atom_no_beta<n_atoms_;atom_no_beta++){
+                        for(int beta_orb=0;beta_orb<n_orbs_;beta_orb++){
+                            for(int spin_beta=0;spin_beta<2;spin_beta++){
+
+                                for(int atom_no_alpha_p=0;atom_no_alpha_p<n_atoms_;atom_no_alpha_p++){
+                                    for(int alpha_orb_p=0;alpha_orb_p<n_orbs_;alpha_orb_p++){
+                                        for(int spin_alpha_p=0;spin_alpha_p<2;spin_alpha_p++){
 
 
-                                                    complex<double> A_elmt = Susc_OprA[atom_no_alpha + n_atoms_*alpha_orb + n_atoms_*n_orbs_*spin_alpha][atom_no_beta + n_atoms_*beta_orb + n_atoms_*n_orbs_*spin_beta];
-                                                    complex<double> B_elmt = Susc_OprB[atom_no_alpha_p + n_atoms_*alpha_orb_p + n_atoms_*n_orbs_*spin_alpha_p][atom_no_beta_p + n_atoms_*beta_orb_p + n_atoms_*n_orbs_*spin_beta_p];
+                                            for(int atom_no_beta_p=0;atom_no_beta_p<n_atoms_;atom_no_beta_p++){
+                                                for(int beta_orb_p=0;beta_orb_p<n_orbs_;beta_orb_p++){
+                                                    for(int spin_beta_p=0;spin_beta_p<2;spin_beta_p++){
 
 
-                                                    if(abs(A_elmt*B_elmt)>EPS_ZERO){
+                                                        complex<double> A_elmt = Susc_OprA[atom_no_alpha + n_atoms_*alpha_orb + n_atoms_*n_orbs_*spin_alpha][atom_no_beta + n_atoms_*beta_orb + n_atoms_*n_orbs_*spin_beta];
+                                                        complex<double> B_elmt = Susc_OprB[atom_no_alpha_p + n_atoms_*alpha_orb_p + n_atoms_*n_orbs_*spin_alpha_p][atom_no_beta_p + n_atoms_*beta_orb_p + n_atoms_*n_orbs_*spin_beta_p];
+
+
+                                                        if(abs(A_elmt*B_elmt)>EPS_ZERO){
 
 
 
-                                                        for(int q_ind_temp=0;q_ind_temp<q_path.size();q_ind_temp++){
-                                                            //cout<<"ChiRPA_q_omega (NBZ) "<<q_ind_temp<<"("<<q_path.size()<<")"<<endl;
+                                                            for(int q_ind_temp=0;q_ind_temp<q_path.size();q_ind_temp++){
+                                                                //cout<<"ChiRPA_q_omega (NBZ) "<<q_ind_temp<<"("<<q_path.size()<<")"<<endl;
 
-                                                            q1_ind=q_path[q_ind_temp].first;
-                                                            q2_ind=q_path[q_ind_temp].second;
-                                                            int q_index = q1_ind + q2_ind*lx_;
+                                                                q1_ind=q_path[q_ind_temp].first;
+                                                                q2_ind=q_path[q_ind_temp].second;
+                                                                int q_index = q1_ind + q2_ind*lx_;
 
-                                                            assert( (Mat_MUC(0,0)*lx_cells)%(lx_)==0);
-                                                            assert( (Mat_MUC(0,1)*lx_cells)%(ly_)==0);
-                                                            assert( (Mat_MUC(1,0)*ly_cells)%(lx_)==0);
-                                                            assert( (Mat_MUC(1,1)*ly_cells)%(ly_)==0);
-
-
-                                                            n1_p = int(((q1_ind*Mat_MUC(0,0)*lx_cells)/(lx_)) + 0.5)
-                                                                    + int(((q2_ind*Mat_MUC(0,1)*lx_cells)/(ly_)) + 0.5);
-                                                            n1_p = (n1_p + lx_cells)%lx_cells;
-
-                                                            n2_p = int(((q1_ind*Mat_MUC(1,0)*ly_cells)/(lx_)) + 0.5)
-                                                                    + int(((q2_ind*Mat_MUC(1,1)*ly_cells)/(ly_)) + 0.5);
-                                                            n2_p = (n2_p + ly_cells)%ly_cells;
-
-                                                            int qp_ind = Coordinates_.Ncell(n1_p, n2_p);
-
-                                                            for(int omega_ind=0;omega_ind<N_omega;omega_ind++){
-
-                                                                //ChiRPA_AB_q_omega_NBZ[q_index][omega_ind]=0.0;
-
-                                                                for(int g=0;g<NSites_in_MUC;g++){
-                                                                    int g1=Intra_MUC_positions[g].first;
-                                                                    int g2=Intra_MUC_positions[g].second;
-                                                                    for(int h=0;h<NSites_in_MUC;h++){
-                                                                        int h1=Intra_MUC_positions[h].first;
-                                                                        int h2=Intra_MUC_positions[h].second;
+                                                                assert( (Mat_MUC(0,0)*lx_cells)%(lx_)==0);
+                                                                assert( (Mat_MUC(0,1)*lx_cells)%(ly_)==0);
+                                                                assert( (Mat_MUC(1,0)*ly_cells)%(lx_)==0);
+                                                                assert( (Mat_MUC(1,1)*ly_cells)%(ly_)==0);
 
 
-                                                                        //alpha
-                                                                        int ind1 = g + (atom_no_alpha + n_atoms_*alpha_orb)*(S_) +
-                                                                                spin_alpha*(n_atoms_*n_orbs_*S_);
-                                                                        int ind2 = g + (atom_no_beta + n_atoms_*beta_orb)*(S_) +
-                                                                                spin_beta*(n_atoms_*n_orbs_*S_);
-                                                                        int ind3 = h + (atom_no_alpha_p + n_atoms_*alpha_orb_p)*(S_) +
-                                                                                spin_alpha_p*(n_atoms_*n_orbs_*S_);
-                                                                        int ind4 = h + (atom_no_beta_p + n_atoms_*beta_orb_p)*(S_) +
-                                                                                spin_beta_p*(n_atoms_*n_orbs_*S_);
+                                                                n1_p = int(((q1_ind*Mat_MUC(0,0)*lx_cells)/(lx_)) + 0.5)
+                                                                        + int(((q2_ind*Mat_MUC(0,1)*lx_cells)/(ly_)) + 0.5);
+                                                                n1_p = (n1_p + lx_cells)%lx_cells;
 
-                                                                        ChiRPA_AB_q_omega_NBZ[q_index][omega_ind] += A_elmt*B_elmt*(1.0/(NSites_in_MUC))*exp(iota_complex*2.0*PI*( (1.0*q1_ind*(g1-h1))/(lx_) + (1.0*q2_ind*(g2-h2))/(ly_) ))*
-                                                                                ChiBareMat[qp_ind][omega_ind][ind1][ind2][ind3][ind4];
+                                                                n2_p = int(((q1_ind*Mat_MUC(1,0)*ly_cells)/(lx_)) + 0.5)
+                                                                        + int(((q2_ind*Mat_MUC(1,1)*ly_cells)/(ly_)) + 0.5);
+                                                                n2_p = (n2_p + ly_cells)%ly_cells;
 
+                                                                int qp_ind = Coordinates_.Ncell(n1_p, n2_p);
+
+                                                                for(int omega_ind=0;omega_ind<N_omega;omega_ind++){
+
+                                                                    ChiRPA_AB_q_omega_NBZ[q_index][omega_ind]=0.0;
+
+                                                                    for(int g=0;g<NSites_in_MUC;g++){
+                                                                        int g1=Intra_MUC_positions[g].first;
+                                                                        int g2=Intra_MUC_positions[g].second;
+                                                                        for(int h=0;h<NSites_in_MUC;h++){
+                                                                            int h1=Intra_MUC_positions[h].first;
+                                                                            int h2=Intra_MUC_positions[h].second;
+
+
+                                                                            //alpha
+                                                                            int ind1 = g + (atom_no_alpha + n_atoms_*alpha_orb)*(S_) +
+                                                                                    spin_alpha*(n_atoms_*n_orbs_*S_);
+                                                                            int ind2 = g + (atom_no_beta + n_atoms_*beta_orb)*(S_) +
+                                                                                    spin_beta*(n_atoms_*n_orbs_*S_);
+                                                                            int ind3 = h + (atom_no_alpha_p + n_atoms_*alpha_orb_p)*(S_) +
+                                                                                    spin_alpha_p*(n_atoms_*n_orbs_*S_);
+                                                                            int ind4 = h + (atom_no_beta_p + n_atoms_*beta_orb_p)*(S_) +
+                                                                                    spin_beta_p*(n_atoms_*n_orbs_*S_);
+
+                                                                            ChiRPA_AB_q_omega_NBZ[q_index][omega_ind] += A_elmt*B_elmt*(1.0/(NSites_in_MUC))*exp(iota_complex*2.0*PI*( (1.0*q1_ind*(g1-h1))/(lx_) + (1.0*q2_ind*(g2-h2))/(ly_) ))*
+                                                                                    ChiBareMat[qp_ind][omega_ind][ind1][ind2][ind3][ind4];
+
+                                                                        }
                                                                     }
+
+
+                                                                    //file_out_BarreSusc<<q_ind_temp<<"  "<<q1_ind<<"  "<<q2_ind<<"  "<<omega<<"  ";
+                                                                    //file_out_BarreSusc<<ChiRPA_AB_q_omega_NBZ[q_index][omega_ind].real()<<"  "<<ChiRPA_AB_q_omega_NBZ[q_index][omega_ind].imag()<<endl;
+
+
                                                                 }
-
-
-                                                                //file_out_BarreSusc<<q_ind_temp<<"  "<<q1_ind<<"  "<<q2_ind<<"  "<<omega<<"  ";
-                                                                //file_out_BarreSusc<<ChiRPA_AB_q_omega_NBZ[q_index][omega_ind].real()<<"  "<<ChiRPA_AB_q_omega_NBZ[q_index][omega_ind].imag()<<endl;
-
+                                                                //file_out_BarreSusc<<endl;
 
                                                             }
-                                                            //file_out_BarreSusc<<endl;
+
+
+
+
+
+
 
                                                         }
 
+                                                    }}}
+                                        }}}
+                            }}}
+                }}}
 
 
 
+        for(int q_ind_temp=0;q_ind_temp<q_path.size();q_ind_temp++){
+            //cout<<"ChiRPA_q_omega (NBZ) "<<q_ind_temp<<"("<<q_path.size()<<")"<<endl;
+            q1_ind=q_path[q_ind_temp].first;
+            q2_ind=q_path[q_ind_temp].second;
+            int q_index = q1_ind + q2_ind*lx_;
 
+            for(int omega_ind=0;omega_ind<N_omega;omega_ind++){
+                double omega = omega_ind*d_omega + omega_min;
 
-
-                                                    }
-
-                                                }}}
-                                    }}}
-                        }}}
-            }}}
-
-
-
-    for(int q_ind_temp=0;q_ind_temp<q_path.size();q_ind_temp++){
-        //cout<<"ChiRPA_q_omega (NBZ) "<<q_ind_temp<<"("<<q_path.size()<<")"<<endl;
-        q1_ind=q_path[q_ind_temp].first;
-        q2_ind=q_path[q_ind_temp].second;
-        int q_index = q1_ind + q2_ind*lx_;
-
-        for(int omega_ind=0;omega_ind<N_omega;omega_ind++){
-            double omega = omega_ind*d_omega + omega_min;
-
-            file_out_BarreSusc<<q_ind_temp<<"  "<<q1_ind<<"  "<<q2_ind<<"  "<<omega<<"  ";
-            file_out_BarreSusc<<ChiRPA_AB_q_omega_NBZ[q_index][omega_ind].real()<<"  "<<ChiRPA_AB_q_omega_NBZ[q_index][omega_ind].imag()<<endl;
+                file_out_BarreSusc<<q_ind_temp<<"  "<<q1_ind<<"  "<<q2_ind<<"  "<<omega<<"  ";
+                file_out_BarreSusc<<ChiRPA_AB_q_omega_NBZ[q_index][omega_ind].real()<<"  "<<ChiRPA_AB_q_omega_NBZ[q_index][omega_ind].imag()<<endl;
+            }
+            file_out_BarreSusc<<endl;
         }
-        file_out_BarreSusc<<endl;
-    }
 
 
 
@@ -5265,142 +5387,142 @@ void Kspace_calculation_G2dLatticeNew::Get_RPA_Susceptibility_in_NBZ(){
 
     for(int pair_no=0;pair_no<Parameters_.Susc_OprA.size();pair_no++){
 
-    string File_Out_BarreSusc_str = "RPA_Susc_NBZ_PairNo" + to_string(pair_no)+".txt";
-    ofstream file_out_BarreSusc(File_Out_BarreSusc_str.c_str());
-    file_out_BarreSusc<<"#q omega Chi_RPA_gh(q,omega)"<<endl;
+        string File_Out_BarreSusc_str = "RPA_Susc_NBZ_PairNo" + to_string(pair_no)+".txt";
+        ofstream file_out_BarreSusc(File_Out_BarreSusc_str.c_str());
+        file_out_BarreSusc<<"#q omega Chi_RPA_gh(q,omega)"<<endl;
 
 
-    Susc_OprA=Parameters_.Susc_OprA[pair_no];
-    Susc_OprB=Parameters_.Susc_OprB[pair_no];
+        Susc_OprA=Parameters_.Susc_OprA[pair_no];
+        Susc_OprB=Parameters_.Susc_OprB[pair_no];
 
-    int q1_ind, q2_ind;
+        int q1_ind, q2_ind;
 
-    Mat_2_Complex_doub ChiRPA_AB_q_omega_NBZ;
+        Mat_2_Complex_doub ChiRPA_AB_q_omega_NBZ;
 
-    ChiRPA_AB_q_omega_NBZ.resize(lx_*ly_);
-    for(int q_ind=0;q_ind<lx_*ly_;q_ind++){
-        ChiRPA_AB_q_omega_NBZ[q_ind].resize(N_omega);
-    }
-
-
-    int n1_p, n2_p;
-
-    for(int atom_no_alpha=0;atom_no_alpha<n_atoms_;atom_no_alpha++){
-        for(int alpha_orb=0;alpha_orb<n_orbs_;alpha_orb++){
-            for(int spin_alpha=0;spin_alpha<2;spin_alpha++){
-
-                for(int atom_no_beta=0;atom_no_beta<n_atoms_;atom_no_beta++){
-                    for(int beta_orb=0;beta_orb<n_orbs_;beta_orb++){
-                        for(int spin_beta=0;spin_beta<2;spin_beta++){
-
-                            for(int atom_no_alpha_p=0;atom_no_alpha_p<n_atoms_;atom_no_alpha_p++){
-                                for(int alpha_orb_p=0;alpha_orb_p<n_orbs_;alpha_orb_p++){
-                                    for(int spin_alpha_p=0;spin_alpha_p<2;spin_alpha_p++){
+        ChiRPA_AB_q_omega_NBZ.resize(lx_*ly_);
+        for(int q_ind=0;q_ind<lx_*ly_;q_ind++){
+            ChiRPA_AB_q_omega_NBZ[q_ind].resize(N_omega);
+        }
 
 
-                                        for(int atom_no_beta_p=0;atom_no_beta_p<n_atoms_;atom_no_beta_p++){
-                                            for(int beta_orb_p=0;beta_orb_p<n_orbs_;beta_orb_p++){
-                                                for(int spin_beta_p=0;spin_beta_p<2;spin_beta_p++){
+        int n1_p, n2_p;
+
+        for(int atom_no_alpha=0;atom_no_alpha<n_atoms_;atom_no_alpha++){
+            for(int alpha_orb=0;alpha_orb<n_orbs_;alpha_orb++){
+                for(int spin_alpha=0;spin_alpha<2;spin_alpha++){
+
+                    for(int atom_no_beta=0;atom_no_beta<n_atoms_;atom_no_beta++){
+                        for(int beta_orb=0;beta_orb<n_orbs_;beta_orb++){
+                            for(int spin_beta=0;spin_beta<2;spin_beta++){
+
+                                for(int atom_no_alpha_p=0;atom_no_alpha_p<n_atoms_;atom_no_alpha_p++){
+                                    for(int alpha_orb_p=0;alpha_orb_p<n_orbs_;alpha_orb_p++){
+                                        for(int spin_alpha_p=0;spin_alpha_p<2;spin_alpha_p++){
 
 
-                                                    complex<double> A_elmt = Susc_OprA[atom_no_alpha + n_atoms_*alpha_orb + n_atoms_*n_orbs_*spin_alpha][atom_no_beta + n_atoms_*beta_orb + n_atoms_*n_orbs_*spin_beta];
-                                                    complex<double> B_elmt = Susc_OprB[atom_no_alpha_p + n_atoms_*alpha_orb_p + n_atoms_*n_orbs_*spin_alpha_p][atom_no_beta_p + n_atoms_*beta_orb_p + n_atoms_*n_orbs_*spin_beta_p];
+                                            for(int atom_no_beta_p=0;atom_no_beta_p<n_atoms_;atom_no_beta_p++){
+                                                for(int beta_orb_p=0;beta_orb_p<n_orbs_;beta_orb_p++){
+                                                    for(int spin_beta_p=0;spin_beta_p<2;spin_beta_p++){
 
 
-                                                    if(abs(A_elmt*B_elmt)>EPS_ZERO){
+                                                        complex<double> A_elmt = Susc_OprA[atom_no_alpha + n_atoms_*alpha_orb + n_atoms_*n_orbs_*spin_alpha][atom_no_beta + n_atoms_*beta_orb + n_atoms_*n_orbs_*spin_beta];
+                                                        complex<double> B_elmt = Susc_OprB[atom_no_alpha_p + n_atoms_*alpha_orb_p + n_atoms_*n_orbs_*spin_alpha_p][atom_no_beta_p + n_atoms_*beta_orb_p + n_atoms_*n_orbs_*spin_beta_p];
+
+
+                                                        if(abs(A_elmt*B_elmt)>EPS_ZERO){
 
 
 
-                                                        for(int q_ind_temp=0;q_ind_temp<q_path.size();q_ind_temp++){
-                                                            //cout<<"ChiRPA_q_omega (NBZ) "<<q_ind_temp<<"("<<q_path.size()<<")"<<endl;
+                                                            for(int q_ind_temp=0;q_ind_temp<q_path.size();q_ind_temp++){
+                                                                //cout<<"ChiRPA_q_omega (NBZ) "<<q_ind_temp<<"("<<q_path.size()<<")"<<endl;
 
-                                                            q1_ind=q_path[q_ind_temp].first;
-                                                            q2_ind=q_path[q_ind_temp].second;
-                                                            int q_index = q1_ind + q2_ind*lx_;
+                                                                q1_ind=q_path[q_ind_temp].first;
+                                                                q2_ind=q_path[q_ind_temp].second;
+                                                                int q_index = q1_ind + q2_ind*lx_;
 
-                                                            assert( (Mat_MUC(0,0)*lx_cells)%(lx_)==0);
-                                                            assert( (Mat_MUC(0,1)*lx_cells)%(ly_)==0);
-                                                            assert( (Mat_MUC(1,0)*ly_cells)%(lx_)==0);
-                                                            assert( (Mat_MUC(1,1)*ly_cells)%(ly_)==0);
-
-
-                                                            n1_p = int(((q1_ind*Mat_MUC(0,0)*lx_cells)/(lx_)) + 0.5)
-                                                                    + int(((q2_ind*Mat_MUC(0,1)*lx_cells)/(ly_)) + 0.5);
-                                                            n1_p = (n1_p + lx_cells)%lx_cells;
-
-                                                            n2_p = int(((q1_ind*Mat_MUC(1,0)*ly_cells)/(lx_)) + 0.5)
-                                                                    + int(((q2_ind*Mat_MUC(1,1)*ly_cells)/(ly_)) + 0.5);
-                                                            n2_p = (n2_p + ly_cells)%ly_cells;
-
-                                                            int qp_ind = Coordinates_.Ncell(n1_p, n2_p);
-
-                                                            for(int omega_ind=0;omega_ind<N_omega;omega_ind++){
-
-                                                               // ChiRPA_AB_q_omega_NBZ[q_index][omega_ind]=0.0;
-
-                                                                for(int g=0;g<NSites_in_MUC;g++){
-                                                                    int g1=Intra_MUC_positions[g].first;
-                                                                    int g2=Intra_MUC_positions[g].second;
-                                                                    for(int h=0;h<NSites_in_MUC;h++){
-                                                                        int h1=Intra_MUC_positions[h].first;
-                                                                        int h2=Intra_MUC_positions[h].second;
+                                                                assert( (Mat_MUC(0,0)*lx_cells)%(lx_)==0);
+                                                                assert( (Mat_MUC(0,1)*lx_cells)%(ly_)==0);
+                                                                assert( (Mat_MUC(1,0)*ly_cells)%(lx_)==0);
+                                                                assert( (Mat_MUC(1,1)*ly_cells)%(ly_)==0);
 
 
-                                                                        //alpha
-                                                                        int ind1 = g + (atom_no_alpha + n_atoms_*alpha_orb)*(S_) +
-                                                                                spin_alpha*(n_atoms_*n_orbs_*S_);
-                                                                        int ind2 = g + (atom_no_beta + n_atoms_*beta_orb)*(S_) +
-                                                                                spin_beta*(n_atoms_*n_orbs_*S_);
-                                                                        int ind3 = h + (atom_no_alpha_p + n_atoms_*alpha_orb_p)*(S_) +
-                                                                                spin_alpha_p*(n_atoms_*n_orbs_*S_);
-                                                                        int ind4 = h + (atom_no_beta_p + n_atoms_*beta_orb_p)*(S_) +
-                                                                                spin_beta_p*(n_atoms_*n_orbs_*S_);
+                                                                n1_p = int(((q1_ind*Mat_MUC(0,0)*lx_cells)/(lx_)) + 0.5)
+                                                                        + int(((q2_ind*Mat_MUC(0,1)*lx_cells)/(ly_)) + 0.5);
+                                                                n1_p = (n1_p + lx_cells)%lx_cells;
 
-                                                                        ChiRPA_AB_q_omega_NBZ[q_index][omega_ind] += A_elmt*B_elmt*(1.0/(NSites_in_MUC))*exp(iota_complex*2.0*PI*( (1.0*q1_ind*(g1-h1))/(lx_) + (1.0*q2_ind*(g2-h2))/(ly_) ))*
-                                                                                ChiRPAMat[qp_ind][omega_ind][ind1][ind2][ind3][ind4];
+                                                                n2_p = int(((q1_ind*Mat_MUC(1,0)*ly_cells)/(lx_)) + 0.5)
+                                                                        + int(((q2_ind*Mat_MUC(1,1)*ly_cells)/(ly_)) + 0.5);
+                                                                n2_p = (n2_p + ly_cells)%ly_cells;
 
+                                                                int qp_ind = Coordinates_.Ncell(n1_p, n2_p);
+
+                                                                for(int omega_ind=0;omega_ind<N_omega;omega_ind++){
+
+                                                                    // ChiRPA_AB_q_omega_NBZ[q_index][omega_ind]=0.0;
+
+                                                                    for(int g=0;g<NSites_in_MUC;g++){
+                                                                        int g1=Intra_MUC_positions[g].first;
+                                                                        int g2=Intra_MUC_positions[g].second;
+                                                                        for(int h=0;h<NSites_in_MUC;h++){
+                                                                            int h1=Intra_MUC_positions[h].first;
+                                                                            int h2=Intra_MUC_positions[h].second;
+
+
+                                                                            //alpha
+                                                                            int ind1 = g + (atom_no_alpha + n_atoms_*alpha_orb)*(S_) +
+                                                                                    spin_alpha*(n_atoms_*n_orbs_*S_);
+                                                                            int ind2 = g + (atom_no_beta + n_atoms_*beta_orb)*(S_) +
+                                                                                    spin_beta*(n_atoms_*n_orbs_*S_);
+                                                                            int ind3 = h + (atom_no_alpha_p + n_atoms_*alpha_orb_p)*(S_) +
+                                                                                    spin_alpha_p*(n_atoms_*n_orbs_*S_);
+                                                                            int ind4 = h + (atom_no_beta_p + n_atoms_*beta_orb_p)*(S_) +
+                                                                                    spin_beta_p*(n_atoms_*n_orbs_*S_);
+
+                                                                            ChiRPA_AB_q_omega_NBZ[q_index][omega_ind] += A_elmt*B_elmt*(1.0/(NSites_in_MUC))*exp(iota_complex*2.0*PI*( (1.0*q1_ind*(g1-h1))/(lx_) + (1.0*q2_ind*(g2-h2))/(ly_) ))*
+                                                                                    ChiRPAMat[qp_ind][omega_ind][ind1][ind2][ind3][ind4];
+
+                                                                        }
                                                                     }
+
+
+                                                                    //file_out_BarreSusc<<q_ind_temp<<"  "<<q1_ind<<"  "<<q2_ind<<"  "<<omega<<"  ";
+                                                                    //file_out_BarreSusc<<ChiRPA_AB_q_omega_NBZ[q_index][omega_ind].real()<<"  "<<ChiRPA_AB_q_omega_NBZ[q_index][omega_ind].imag()<<endl;
+
+
                                                                 }
-
-
-                                                                //file_out_BarreSusc<<q_ind_temp<<"  "<<q1_ind<<"  "<<q2_ind<<"  "<<omega<<"  ";
-                                                                //file_out_BarreSusc<<ChiRPA_AB_q_omega_NBZ[q_index][omega_ind].real()<<"  "<<ChiRPA_AB_q_omega_NBZ[q_index][omega_ind].imag()<<endl;
-
+                                                                //file_out_BarreSusc<<endl;
 
                                                             }
-                                                            //file_out_BarreSusc<<endl;
+
+
+
+
+
+
 
                                                         }
 
+                                                    }}}
+                                        }}}
+                            }}}
+                }}}
 
 
 
+        for(int q_ind_temp=0;q_ind_temp<q_path.size();q_ind_temp++){
+            //cout<<"ChiRPA_q_omega (NBZ) "<<q_ind_temp<<"("<<q_path.size()<<")"<<endl;
+            q1_ind=q_path[q_ind_temp].first;
+            q2_ind=q_path[q_ind_temp].second;
+            int q_index = q1_ind + q2_ind*lx_;
 
+            for(int omega_ind=0;omega_ind<N_omega;omega_ind++){
+                double omega = omega_ind*d_omega + omega_min;
 
-
-                                                    }
-
-                                                }}}
-                                    }}}
-                        }}}
-            }}}
-
-
-
-    for(int q_ind_temp=0;q_ind_temp<q_path.size();q_ind_temp++){
-        //cout<<"ChiRPA_q_omega (NBZ) "<<q_ind_temp<<"("<<q_path.size()<<")"<<endl;
-        q1_ind=q_path[q_ind_temp].first;
-        q2_ind=q_path[q_ind_temp].second;
-        int q_index = q1_ind + q2_ind*lx_;
-
-        for(int omega_ind=0;omega_ind<N_omega;omega_ind++){
-            double omega = omega_ind*d_omega + omega_min;
-
-            file_out_BarreSusc<<q_ind_temp<<"  "<<q1_ind<<"  "<<q2_ind<<"  "<<omega<<"  ";
-            file_out_BarreSusc<<ChiRPA_AB_q_omega_NBZ[q_index][omega_ind].real()<<"  "<<ChiRPA_AB_q_omega_NBZ[q_index][omega_ind].imag()<<endl;
+                file_out_BarreSusc<<q_ind_temp<<"  "<<q1_ind<<"  "<<q2_ind<<"  "<<omega<<"  ";
+                file_out_BarreSusc<<ChiRPA_AB_q_omega_NBZ[q_index][omega_ind].real()<<"  "<<ChiRPA_AB_q_omega_NBZ[q_index][omega_ind].imag()<<endl;
+            }
+            file_out_BarreSusc<<endl;
         }
-        file_out_BarreSusc<<endl;
-    }
 
 
 
@@ -5501,11 +5623,11 @@ void Kspace_calculation_G2dLatticeNew::Get_RPA_Susceptibility_Matrix(){
 
 
 #ifdef _OPENMP
-        int N_p = omp_get_max_threads();
-        omp_set_num_threads(Parameters_.NProcessors);
+    int N_p = omp_get_max_threads();
+    omp_set_num_threads(Parameters_.NProcessors);
 
-        cout<<"Max threads which can be used parallely = "<<N_p<<endl;
-        cout<<"No. of threads used parallely = "<<Parameters_.NProcessors<<endl;
+    cout<<"Max threads which can be used parallely = "<<N_p<<endl;
+    cout<<"No. of threads used parallely = "<<Parameters_.NProcessors<<endl;
 #endif
 
 
@@ -5513,115 +5635,115 @@ void Kspace_calculation_G2dLatticeNew::Get_RPA_Susceptibility_Matrix(){
     cout<<"CALCULATING BARE CHI"<<endl;
     //Calculate ChiBare
 
-int thread_id=0;
+    int thread_id=0;
 #ifdef _OPENMP
 #pragma omp parallel for default(shared)
 #endif
     for(int q_ind_temp=0;q_ind_temp<q_path.size();q_ind_temp++){
 #ifdef _OPENMP
-            thread_id = omp_get_thread_num();
+        thread_id = omp_get_thread_num();
 #endif
-    cout<<"q_ind = "<<q_ind_temp<<" ("<<q_path.size()<<") in thread "<<thread_id<<endl;
+        cout<<"q_ind = "<<q_ind_temp<<" ("<<q_path.size()<<") in thread "<<thread_id<<endl;
 
-    int q1_ind_local=q_path[q_ind_temp].first;
-    int q2_ind_local=q_path[q_ind_temp].second;
-    int q_index = Coordinates_.Ncell(q1_ind_local, q2_ind_local);
+        int q1_ind_local=q_path[q_ind_temp].first;
+        int q2_ind_local=q_path[q_ind_temp].second;
+        int q_index = Coordinates_.Ncell(q1_ind_local, q2_ind_local);
 
-    for(int g=0;g<S_;g++){
-        for(int m=0;m<n_atoms_;m++){
-            for(int alpha=0;alpha<n_orbs_;alpha++){
-                for(int sigma=0;sigma<2;sigma++){
-                    int ind1 = g + (m + alpha*n_atoms_)*S_ + sigma*(n_atoms_*n_orbs_*S_);
+        for(int g=0;g<S_;g++){
+            for(int m=0;m<n_atoms_;m++){
+                for(int alpha=0;alpha<n_orbs_;alpha++){
+                    for(int sigma=0;sigma<2;sigma++){
+                        int ind1 = g + (m + alpha*n_atoms_)*S_ + sigma*(n_atoms_*n_orbs_*S_);
 
-                    int h=g;
-                    int n=m;
-                  //  for(int h=0;h<S_;h++){??
-                    //    for(int n=0;n<n_atoms_;n++){
-                            for(int beta=0;beta<n_orbs_;beta++){
-                                for(int sigma_til=0;sigma_til<2;sigma_til++){
-                                    int ind2 = h + (n + beta*n_atoms_)*S_ + sigma_til*(n_atoms_*n_orbs_*S_);
-
-
-                                    for(int hp=0;hp<S_;hp++){
-                                        for(int np=0;np<n_atoms_;np++){
-                                            for(int alphap=0;alphap<n_orbs_;alphap++){
-                                                for(int sigmap=0;sigmap<2;sigmap++){
-                                                    int ind3 = hp + (np + alphap*n_atoms_)*S_ + sigmap*(n_atoms_*n_orbs_*S_);
+                        int h=g;
+                        int n=m;
+                        //  for(int h=0;h<S_;h++){??
+                        //    for(int n=0;n<n_atoms_;n++){
+                        for(int beta=0;beta<n_orbs_;beta++){
+                            for(int sigma_til=0;sigma_til<2;sigma_til++){
+                                int ind2 = h + (n + beta*n_atoms_)*S_ + sigma_til*(n_atoms_*n_orbs_*S_);
 
 
-
-                                                    for(int betap=0;betap<n_orbs_;betap++){
-                                                        for(int sigma_tilp=0;sigma_tilp<2;sigma_tilp++){
-                                                            int ind4 = hp + (np + betap*n_atoms_)*S_ + sigma_tilp*(n_atoms_*n_orbs_*S_);
-
-                                                                cout<<"BARE CHI : "<<ind1<<" ("<<S_*n_atoms_*n_orbs_*2<<") "<<ind2<<" ("<<S_*n_atoms_*n_orbs_*2<<") "<<ind3<<" ("<<S_*n_atoms_*n_orbs_*2<<") "<<betap + sigma_tilp*n_orbs_<<" ("<<n_orbs_*2<<") "<<q_ind_temp<<" ("<<q_path.size()<<") "<<endl;
-
-
-                                                                for(int omega_ind=0;omega_ind<N_omega;omega_ind++){
-                                                                    double omega = omega_ind*d_omega + omega_min;
-                                                                    //   file_out_BarreSusc<<q_ind_temp<<"  "<<q1_ind<<"  "<<q2_ind<<"  "<<omega<<"  ";
-
-                                                                    ChiBareMat[q_index][omega_ind][ind1][ind2][ind3][ind4]=0.0;
-
-                                                                    for(int k1_ind=0;k1_ind<lx_cells;k1_ind++){
-                                                                        for(int k2_ind=0;k2_ind<ly_cells;k2_ind++){
-
-                                                                            int kpq1_ind = (k1_ind + q1_ind_local + lx_cells)%lx_cells;
-                                                                            int kpq2_ind = (k2_ind + q2_ind_local + ly_cells)%ly_cells;
-
-                                                                            int k_index = Coordinates_.Ncell(k1_ind,k2_ind);
-                                                                            int kpq_index = Coordinates_.Ncell(kpq1_ind,kpq2_ind);
+                                for(int hp=0;hp<S_;hp++){
+                                    for(int np=0;np<n_atoms_;np++){
+                                        for(int alphap=0;alphap<n_orbs_;alphap++){
+                                            for(int sigmap=0;sigmap<2;sigmap++){
+                                                int ind3 = hp + (np + alphap*n_atoms_)*S_ + sigmap*(n_atoms_*n_orbs_*S_);
 
 
 
+                                                for(int betap=0;betap<n_orbs_;betap++){
+                                                    for(int sigma_tilp=0;sigma_tilp<2;sigma_tilp++){
+                                                        int ind4 = hp + (np + betap*n_atoms_)*S_ + sigma_tilp*(n_atoms_*n_orbs_*S_);
+
+                                                        cout<<"BARE CHI : "<<ind1<<" ("<<S_*n_atoms_*n_orbs_*2<<") "<<ind2<<" ("<<S_*n_atoms_*n_orbs_*2<<") "<<ind3<<" ("<<S_*n_atoms_*n_orbs_*2<<") "<<betap + sigma_tilp*n_orbs_<<" ("<<n_orbs_*2<<") "<<q_ind_temp<<" ("<<q_path.size()<<") "<<endl;
 
 
-                                                                            for(int lambda=0;lambda<2*n_atoms_*n_orbs_*S_;lambda++){
-                                                                                for(int lambdap=0;lambdap<2*n_atoms_*n_orbs_*S_;lambdap++){
-                                                                                    int state_k_lambda = 2*n_atoms_*n_orbs_*S_*k_index + lambda;
-                                                                                    int state_kpq_lambdap = 2*n_atoms_*n_orbs_*S_*kpq_index + lambdap;
+                                                        for(int omega_ind=0;omega_ind<N_omega;omega_ind++){
+                                                            double omega = omega_ind*d_omega + omega_min;
+                                                            //   file_out_BarreSusc<<q_ind_temp<<"  "<<q1_ind<<"  "<<q2_ind<<"  "<<omega<<"  ";
 
-                                                                                    double a_temp=(omega + Eigenvalues_saved[state_k_lambda] - Eigenvalues_saved[state_kpq_lambdap]);
-                                                                                    double absolute_val_sqr= a_temp*a_temp + eta*eta;
-                                                                                    double real_part = 1.0*a_temp/absolute_val_sqr;
-                                                                                    double imag_part = -1.0*eta/absolute_val_sqr;
+                                                            ChiBareMat[q_index][omega_ind][ind1][ind2][ind3][ind4]=0.0;
 
-                                                                                    complex<double> inverse_pole = complex<double>(real_part, imag_part);
+                                                            for(int k1_ind=0;k1_ind<lx_cells;k1_ind++){
+                                                                for(int k2_ind=0;k2_ind<ly_cells;k2_ind++){
 
-                                                                                    ChiBareMat[q_index][omega_ind][ind1][ind2][ind3][ind4] += ((1.0/(lx_cells*ly_cells)))*((1.0/( exp((Eigenvalues_saved[state_k_lambda]-mu_)*Parameters_.beta ) + 1.0)) - (1.0/( exp((Eigenvalues_saved[state_kpq_lambdap]-mu_)*Parameters_.beta ) + 1.0)))
-                                                                                            *inverse_pole
-                                                                                            *conj(Eigvectors_[state_k_lambda][ind1])*Eigvectors_[state_kpq_lambdap][ind2]
-                                                                                            *conj(Eigvectors_[state_kpq_lambdap][ind3])*(Eigvectors_[state_k_lambda][ind4]);
+                                                                    int kpq1_ind = (k1_ind + q1_ind_local + lx_cells)%lx_cells;
+                                                                    int kpq2_ind = (k2_ind + q2_ind_local + ly_cells)%ly_cells;
+
+                                                                    int k_index = Coordinates_.Ncell(k1_ind,k2_ind);
+                                                                    int kpq_index = Coordinates_.Ncell(kpq1_ind,kpq2_ind);
 
 
 
-                                                                                    //ChiBare_AB_q_omega[IntraMUC_indexA][IntraMUC_indexB][q_index][omega_ind] += ((1.0/(lx_cells*ly_cells)))*((1.0/( exp((Eigenvalues_saved[state_k_n]-mu_)*Parameters_.beta ) + 1.0)) - (1.0/( exp((Eigenvalues_saved[state_kpq_m]-mu_)*Parameters_.beta ) + 1.0)))*
-                                                                                    //        ABmat[IntraMUC_indexA][IntraMUC_indexB][state_k_n][state_kpq_m]*inverse_pole;
 
-                                                                                }}
+
+                                                                    for(int lambda=0;lambda<2*n_atoms_*n_orbs_*S_;lambda++){
+                                                                        for(int lambdap=0;lambdap<2*n_atoms_*n_orbs_*S_;lambdap++){
+                                                                            int state_k_lambda = 2*n_atoms_*n_orbs_*S_*k_index + lambda;
+                                                                            int state_kpq_lambdap = 2*n_atoms_*n_orbs_*S_*kpq_index + lambdap;
+
+                                                                            double a_temp=(omega + Eigenvalues_saved[state_k_lambda] - Eigenvalues_saved[state_kpq_lambdap]);
+                                                                            double absolute_val_sqr= a_temp*a_temp + eta*eta;
+                                                                            double real_part = 1.0*a_temp/absolute_val_sqr;
+                                                                            double imag_part = -1.0*eta/absolute_val_sqr;
+
+                                                                            complex<double> inverse_pole = complex<double>(real_part, imag_part);
+
+                                                                            ChiBareMat[q_index][omega_ind][ind1][ind2][ind3][ind4] += ((1.0/(lx_cells*ly_cells)))*((1.0/( exp((Eigenvalues_saved[state_k_lambda]-mu_)*Parameters_.beta ) + 1.0)) - (1.0/( exp((Eigenvalues_saved[state_kpq_lambdap]-mu_)*Parameters_.beta ) + 1.0)))
+                                                                                    *inverse_pole
+                                                                                    *conj(Eigvectors_[state_k_lambda][ind1])*Eigvectors_[state_kpq_lambdap][ind2]
+                                                                                    *conj(Eigvectors_[state_kpq_lambdap][ind3])*(Eigvectors_[state_k_lambda][ind4]);
+
+
+
+                                                                            //ChiBare_AB_q_omega[IntraMUC_indexA][IntraMUC_indexB][q_index][omega_ind] += ((1.0/(lx_cells*ly_cells)))*((1.0/( exp((Eigenvalues_saved[state_k_n]-mu_)*Parameters_.beta ) + 1.0)) - (1.0/( exp((Eigenvalues_saved[state_kpq_m]-mu_)*Parameters_.beta ) + 1.0)))*
+                                                                            //        ABmat[IntraMUC_indexA][IntraMUC_indexB][state_k_n][state_kpq_m]*inverse_pole;
+
                                                                         }}
-                                                                }
-                                                            //}
+                                                                }}
                                                         }
+                                                        //}
                                                     }
-
                                                 }
+
                                             }
                                         }
                                     }
-
                                 }
+
                             }
-                      //  }
-                    //}
+                        }
+                        //  }
+                        //}
 
 
 
+                    }
                 }
             }
         }
     }
-}
 
 
     cout<<"CALCULATING OneMinusChiBareTimesI_Inv"<<endl;
@@ -5646,55 +5768,55 @@ int thread_id=0;
                             int n=m;
                             // for(int h=0;h<S_;h++){
                             //     for(int n=0;n<n_atoms_;n++){
-                                    for(int beta=0;beta<n_orbs_;beta++){
-                                        for(int sigma_til=0;sigma_til<2;sigma_til++){
-                                            int ind2 = h + (n + beta*n_atoms_)*S_ + sigma_til*(n_atoms_*n_orbs_*S_);
+                            for(int beta=0;beta<n_orbs_;beta++){
+                                for(int sigma_til=0;sigma_til<2;sigma_til++){
+                                    int ind2 = h + (n + beta*n_atoms_)*S_ + sigma_til*(n_atoms_*n_orbs_*S_);
 
-                                            for(int hp=0;hp<S_;hp++){
-                                                for(int np=0;np<n_atoms_;np++){
-                                                    for(int alphap=0;alphap<n_orbs_;alphap++){
-                                                        for(int sigmap=0;sigmap<2;sigmap++){
-                                                            int ind3 = hp + (np + alphap*n_atoms_)*S_ + sigmap*(n_atoms_*n_orbs_*S_);
+                                    for(int hp=0;hp<S_;hp++){
+                                        for(int np=0;np<n_atoms_;np++){
+                                            for(int alphap=0;alphap<n_orbs_;alphap++){
+                                                for(int sigmap=0;sigmap<2;sigmap++){
+                                                    int ind3 = hp + (np + alphap*n_atoms_)*S_ + sigmap*(n_atoms_*n_orbs_*S_);
 
 
-                                                            for(int betap=0;betap<n_orbs_;betap++){
-                                                                for(int sigma_tilp=0;sigma_tilp<2;sigma_tilp++){
-                                                                    int ind4 = hp + (np + betap*n_atoms_)*S_ + sigma_tilp*(n_atoms_*n_orbs_*S_);
+                                                    for(int betap=0;betap<n_orbs_;betap++){
+                                                        for(int sigma_tilp=0;sigma_tilp<2;sigma_tilp++){
+                                                            int ind4 = hp + (np + betap*n_atoms_)*S_ + sigma_tilp*(n_atoms_*n_orbs_*S_);
 
-                                                                    ChiBareTimesI[q_index][omega_ind][ind1][ind2][ind3][ind4]=0.0;
+                                                            ChiBareTimesI[q_index][omega_ind][ind1][ind2][ind3][ind4]=0.0;
 
-                                                                    for(int alphapp=0;alphapp<n_orbs_;alphapp++){
-                                                                        for(int sigmapp=0;sigmapp<2;sigmapp++){
-                                                                            int ind3_p = hp + (np + alphapp*n_atoms_)*S_ + sigmapp*(n_atoms_*n_orbs_*S_);
+                                                            for(int alphapp=0;alphapp<n_orbs_;alphapp++){
+                                                                for(int sigmapp=0;sigmapp<2;sigmapp++){
+                                                                    int ind3_p = hp + (np + alphapp*n_atoms_)*S_ + sigmapp*(n_atoms_*n_orbs_*S_);
 
-                                                                            for(int betapp=0;betapp<n_orbs_;betapp++){
-                                                                                for(int sigma_tilpp=0;sigma_tilpp<2;sigma_tilpp++){
-                                                                                    int ind4_p = hp + (np + betapp*n_atoms_)*S_ + sigma_tilpp*(n_atoms_*n_orbs_*S_);
+                                                                    for(int betapp=0;betapp<n_orbs_;betapp++){
+                                                                        for(int sigma_tilpp=0;sigma_tilpp<2;sigma_tilpp++){
+                                                                            int ind4_p = hp + (np + betapp*n_atoms_)*S_ + sigma_tilpp*(n_atoms_*n_orbs_*S_);
 
-                                                                                    ChiBareTimesI[q_index][omega_ind][ind1][ind2][ind3][ind4] += ChiBareMat[q_index][omega_ind][ind1][ind2][ind3_p][ind4_p]
-                                                                                            *IntKer[np][alphapp+sigmapp*n_orbs_][betapp+sigma_tilpp*n_orbs_][alphap+sigmap*n_orbs_][betap+sigma_tilp*n_orbs_];
+                                                                            ChiBareTimesI[q_index][omega_ind][ind1][ind2][ind3][ind4] += ChiBareMat[q_index][omega_ind][ind1][ind2][ind3_p][ind4_p]
+                                                                                    *IntKer[np][alphapp+sigmapp*n_orbs_][betapp+sigma_tilpp*n_orbs_][alphap+sigmap*n_orbs_][betap+sigma_tilp*n_orbs_];
 
-                                                                                }
-                                                                            }
                                                                         }
                                                                     }
-
-                                                                    OneMinusChiBareTimesI_Inv[q_index][omega_ind](ind1 + ind2*ChiMatsize,ind3 + ind4*ChiMatsize) -= ChiBareTimesI[q_index][omega_ind][ind1][ind2][ind3][ind4];
-
                                                                 }
                                                             }
 
+                                                            OneMinusChiBareTimesI_Inv[q_index][omega_ind](ind1 + ind2*ChiMatsize,ind3 + ind4*ChiMatsize) -= ChiBareTimesI[q_index][omega_ind][ind1][ind2][ind3][ind4];
 
                                                         }
                                                     }
+
+
                                                 }
                                             }
-
-
                                         }
                                     }
-                               // }
-                           // }
+
+
+                                }
+                            }
+                            // }
+                            // }
 
 
 
@@ -6078,8 +6200,8 @@ void Kspace_calculation_G2dLatticeNew::SelfConsistency(){
 
         Create_Kspace_Spectrum();
         if(lx_cells==ly_cells){
-        Get_Bands();
-            }
+            Get_Bands();
+        }
         //Calculate_ChernNumbers();
 
         Arranging_spectrum();
