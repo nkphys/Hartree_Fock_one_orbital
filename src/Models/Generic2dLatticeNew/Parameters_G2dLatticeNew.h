@@ -142,7 +142,7 @@ void Parameters_G2dLatticeNew::Initialize(string inputfile_)
     for(int i=0;i<2*n_atoms*n_orbs;i++){
         for(int j=0;j<2*n_atoms*n_orbs;j++){
             file_t0>>t0[i][j];
-            t0[i][j].imag(0);
+            //t0[i][j].imag(0);
             file_t1_plus_a1_minus_a2>>t1_plus_a1_minus_a2[i][j];
             t1_plus_a1_minus_a2[i][j].imag(0);
             file_t1_plus_a1_plus_a2>>t1_plus_a1_plus_a2[i][j];

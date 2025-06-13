@@ -20,12 +20,14 @@ typedef vector< int >  Mat_1_int;
 int main(){
 
 int N_atoms=1;
-int N_orbs=2;
+int N_orbs=3;
 
 double spin_fac=1.0;
 double orb_fac=0.0;
 double t1_parameter=-1.0; //square lattice connection
 double t2_parameter=0.0; //diagonal connections
+
+double lambda_SOC=0.2;
 
 //e1=(sqrt(3)/2,1/2)
 //e2=(-sqrt(3)/2,1/2)
@@ -36,20 +38,9 @@ double t2_parameter=0.0; //diagonal connections
 
 //atom + orb*2 + spin*4
 
-string t0_file_str = "t0_mat.txt" ;
+string t0_file_str = "t0_mat_with_SOC.txt" ;
 ofstream t0_file(t0_file_str.c_str());
 
-string t1_plus_a1_file_str = "t1_plus_a1_mat.txt" ;
-ofstream t1_plus_a1_file(t1_plus_a1_file_str.c_str());
-
-string t1_minus_a2_file_str = "t1_minus_a2_mat.txt" ;
-ofstream t1_minus_a2_file(t1_minus_a2_file_str.c_str());
-
-string t1_plus_a1_minus_a2_file_str = "t1_plus_a1_minus_a2_mat.txt" ;
-ofstream t1_plus_a1_minus_a2_file(t1_plus_a1_minus_a2_file_str.c_str());
-
-string t1_plus_a1_plus_a2_file_str = "t1_plus_a1_plus_a2_mat.txt" ;
-ofstream t1_plus_a1_plus_a2_file(t1_plus_a1_plus_a2_file_str.c_str());
 
 
 complex<double> val=0.0;
