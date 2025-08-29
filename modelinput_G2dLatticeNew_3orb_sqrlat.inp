@@ -4,8 +4,8 @@
 PBC_X=1
 PBC_Y=1
 
-Xsite=6
-Ysite=6
+Xsite=12
+Ysite=12
 N_Orbs=3
 N_Atoms=1
 
@@ -53,7 +53,7 @@ PinningFieldValueZ=0.0 0.0 0
 #Magnetic Field along Sx
 PinningFieldValueX=0.005 0.005 0.005
 
-CalculateSusceptibility=true
+CalculateSusceptibility=false
 SusceptibilityLocalOprFilesPairWise=8 SzLocal_atom0_total.txt SzLocal_atom0_total.txt SpLocal_atom0_total.txt SmLocal_atom0_total.txt SmLocal_atom0_total.txt SpLocal_atom0_total.txt Tauz_atom0_total.txt Tauz_atom0_total.txt Taum_atom0_total.txt Taup_atom0_total.txt Taup_atom0_total.txt Taum_atom0_total.txt SpLocal_atom0_total.txt Taum_atom0_total.txt SmLocal_atom0_total.txt Taup_atom0_total.txt
 omega_min=-0.00
 omega_max=0.2
@@ -64,7 +64,7 @@ N_Threads=8
 
 
 Self_consistency_kspace=1
-Total_particles=72
+Total_particles=288
 Fixing_mu=0
 Mu_value=100
 
@@ -84,15 +84,15 @@ Just_Hartree=0
 NoSpinFlipOP=0
 Fock_type=Onsite
 #Onsite, Onsite_Intra, Onsite_Intra_Inter
-Read_initial_OPvalues=0
-Read_initial_OPvalues_UnitCellsType=1 1
-Read_initial_OPvalues_file=OP_CDW_1x1.txt
+Read_initial_OPvalues=1
+Read_initial_OPvalues_UnitCellsType=-234 -34
+Read_initial_OPvalues_file=OP_ansatz.txt
 #OUTPUT_OP_PiPi_alongZ.txt
 #OUTPUT_OP_0Pi_alongZ.txt
 #OUTPUT_OP_ZigZag_alongZ.txt
 #OUTPUT_OP_XZ120.txt
 #OUTPUT_OP_ZX120.txt
-Create_OPs_Ansatz=1
+Create_OPs_Ansatz=0
 OP_Ansatz_type=AFM_AFO_3orb
 
 

@@ -2619,6 +2619,139 @@ void Kspace_calculation_G2dLatticeNew::Initialize()
     }
 
     else{
+
+
+        //Hartree Terms
+        for(int alpha=0;alpha<NSites_in_MUC;alpha++){
+            for(int gamma=0;gamma<n_atoms_*n_orbs_;gamma++){
+                for(int sigma=0;sigma<2;sigma++){
+                    // OPs_.value.push_back(complex<double> (random1(),0.0));
+                    //OPs_.value.push_back(complex<double> (0.2,0.0));
+                    //OPs_new_.value.push_back(0.0);
+
+                    row_temp=  alpha + gamma*(S_) +  sigma*(n_atoms_*n_orbs_*S_) + 0*(2*n_atoms_*n_orbs_*S_);
+                    col_temp=row_temp;
+
+                    OPs_.rows.push_back(row_temp);OPs_new_.rows.push_back(row_temp);
+                    OPs_.columns.push_back(col_temp);OPs_new_.columns.push_back(col_temp);
+
+                    OPs_new_.value.push_back(0.0);
+                    if(Parameters_.Fixing_mu){
+                        OPs_.value.push_back(complex<double> (0.0,0.0));
+                    }
+                    else{
+                        OPs_.value.push_back(complex<double> (0.0,0.0));
+                    }
+
+                    SI_to_ind[col_temp + row_temp*(ncells_*2*n_atoms_*n_orbs_*S_)] = OPs_.value.size()-1;
+                }
+            }
+        }
+
+        //Fock
+        bool check_;
+        bool NA_spinflip;
+        int alpha_1, alpha_2, alpha_p_1, alpha_p_2, d1_org, d2_org;
+        int row_,col_;
+        int atom_orb_no, atom_orb_no_p;
+        if(!Parameters_.Just_Hartree){
+            for(int alpha=0;alpha<NSites_in_MUC;alpha++){
+                // alpha_1 = alpha % UnitCellSize_x;
+                // alpha_2 = (alpha - alpha_1)/UnitCellSize_x;
+
+                for(int atom_no=0;atom_no<n_atoms_;atom_no++){
+                    for(int orb_no=0;orb_no<n_orbs_;orb_no++){
+                        atom_orb_no = atom_no + n_atoms_*orb_no;
+                        for(int sigma=0;sigma<2;sigma++){
+
+                            //for(int atom_no_p=0;atom_no_p<n_atoms_;atom_no_p++){
+                            int atom_no_p=atom_no;
+                            for(int orb_no_p=0;orb_no_p<n_orbs_;orb_no_p++){
+                                atom_orb_no_p = atom_no_p + n_atoms_*orb_no_p;
+                                for(int sigma_p=0;sigma_p<2;sigma_p++){
+
+
+                                    //check_= (sigma_p > sigma);
+                                    row_temp = alpha + (atom_orb_no)*(S_) +  sigma*(n_atoms_*n_orbs_*S_) + 0*(2*n_atoms_*n_orbs_*S_);
+                                    col_temp = alpha + (atom_orb_no_p)*(S_) +  sigma_p*(n_atoms_*n_orbs_*S_) + 0*(2*n_atoms_*n_orbs_*S_);
+                                    check_ = (col_temp > row_temp);
+
+                                    NA_spinflip = Parameters_.NoSpinFlipOP && (sigma_p!=sigma);
+
+                                    if( check_ && (!NA_spinflip)){
+
+                                        OPs_.value.push_back(complex<double> (0.0,0.0));
+                                        OPs_new_.value.push_back(0.0);
+
+                                        OPs_.rows.push_back(row_temp);OPs_new_.rows.push_back(row_temp);
+                                        OPs_.columns.push_back(col_temp);OPs_new_.columns.push_back(col_temp);
+
+                                        SI_to_ind[col_temp + row_temp*(ncells_*2*n_atoms_*n_orbs_*S_)] = OPs_.value.size()-1;
+                                    }
+                                }
+                            }
+                            // }
+                        }
+                    }
+                }
+            }
+        }
+
+
+
+        //Now Reading
+        string File_In_Local_OP = Parameters_.File_OPs_in;
+        ifstream file_in_Local_OP(File_In_Local_OP.c_str());
+        string temp1, line_temp;
+        int lx_old_, ly_old_;
+        double temp_doub;
+        complex<double> temp_complex;
+        getline(file_in_Local_OP,temp1);
+        getline(file_in_Local_OP,line_temp);
+        stringstream line_temp_ss1(line_temp);
+        line_temp_ss1>>lx_old_>>ly_old_;
+
+        int S_= NSites_in_MUC;
+        int row_temp, col_temp;
+        int cell_row, alpha_plus_gamma, alpha_row,gamma_row, sigma_row, c1;
+        int alpha_plus_gamma_sigma, alpha_col, gamma_col, sigma_col, cell_col;
+        int alpha_row_read, atom_no_row_read, orb_no_row_read, sigma_row_read;
+        int alpha_col_read, atom_no_col_read, orb_no_col_read, sigma_col_read;
+        int atom_no_row, atom_no_col, orb_no_row, orb_no_col;
+        for(int OP_no=0;OP_no<OPs_.value.size();OP_no++){
+            row_temp=OPs_.rows[OP_no];
+            col_temp=OPs_.columns[OP_no];
+
+
+            //alpha + gamma*(S_) +  sigma*(n_atoms_*n_orbs_*S_) + cell_*(2*n_atoms_*n_orbs_*S_)
+            cell_row = 0;
+            alpha_plus_gamma = row_temp%(n_atoms_*n_orbs_*S_);
+            alpha_row = alpha_plus_gamma%S_;
+            gamma_row = (alpha_plus_gamma -alpha_row)/S_;
+            //gamma = atom_no + n_Atoms*orb_no
+            atom_no_row= gamma_row%n_atoms_;
+            orb_no_row= (gamma_row - atom_no_row)/n_atoms_;
+            sigma_row = (row_temp - alpha_plus_gamma)/(n_atoms_*n_orbs_*S_);
+            c1 = alpha_row + gamma_row*(S_) +  sigma_row*(n_atoms_*n_orbs_*S_);
+            assert(c1==row_temp);
+
+            alpha_plus_gamma_sigma = col_temp%(2*n_atoms_*n_orbs_*S_);
+            alpha_plus_gamma = alpha_plus_gamma_sigma%(n_atoms_*n_orbs_*S_);
+            alpha_col = alpha_plus_gamma%S_;
+            gamma_col = (alpha_plus_gamma -alpha_col)/S_;
+            atom_no_col= gamma_col%n_atoms_;
+            orb_no_col= (gamma_col - atom_no_col)/n_atoms_;
+            sigma_col = (alpha_plus_gamma_sigma - alpha_plus_gamma)/(n_atoms_*n_orbs_*S_);
+            cell_col = (col_temp - alpha_plus_gamma_sigma)/(2*n_atoms_*n_orbs_*S_);
+
+            file_in_Local_OP>>alpha_row_read>>atom_no_row_read>>orb_no_row_read>>sigma_row_read
+                            >>alpha_col_read>>atom_no_col_read>>orb_no_col_read>>sigma_col_read
+                            >>temp_complex>>temp_doub;
+            assert(alpha_row_read==alpha_row) ; assert(atom_no_row_read==atom_no_row) ;assert(orb_no_row_read==orb_no_row) ;assert(sigma_row_read==sigma_row);
+            assert(alpha_col_read==alpha_col) ;assert(atom_no_col_read==atom_no_col) ;assert(orb_no_col_read==orb_no_col) ;assert(sigma_col_read==sigma_col);
+            OPs_.value[OP_no] =temp_complex;
+        }
+
     }
 
 
