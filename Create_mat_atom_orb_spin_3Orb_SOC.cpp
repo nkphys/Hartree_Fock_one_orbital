@@ -25,7 +25,7 @@ int N_atoms=1;
 int N_orbs=3;
 
 
-double lambda_SOC=0.02;
+double lambda_SOC=0.2;
 complex<double> iota_complex = complex<double>(0.0, 1.0);
 complex<double> one_complex = complex<double>(1.0, 0.0);
 
@@ -34,8 +34,8 @@ string t0_file_str = "t0_mat_with_SOC.txt" ;
 ofstream t0_file(t0_file_str.c_str());
 
  /* Convention
- 0==yz
- 1==xz
+ 0==xz
+ 1==yz
  2==xy
  0==up
  1==dn
@@ -48,13 +48,13 @@ yz_up(site=0),xz_up(site=0),xy_up(site=0), yz_dn(site=0),xz_dn(site=0),xy_dn(sit
     for(int i=0;i<6;i++){
         A_SOC[i].resize(6);
     }
-    A_SOC[0][1]=iota_complex;A_SOC[1][0]=-1.0*iota_complex;
-    A_SOC[1][5]=iota_complex;A_SOC[5][1]=-1.0*iota_complex;
-    A_SOC[0][5]=-1.0*one_complex;A_SOC[5][0]=-1.0*one_complex;
+    A_SOC[1][0]=iota_complex;A_SOC[0][1]=-1.0*iota_complex;
+    A_SOC[0][5]=iota_complex;A_SOC[5][0]=-1.0*iota_complex;
+    A_SOC[1][5]=-1.0*one_complex;A_SOC[5][1]=-1.0*one_complex;
 
-    A_SOC[3][4]=-1.0*iota_complex;A_SOC[4][3]=iota_complex;
-    A_SOC[4][2]=iota_complex;A_SOC[2][4]=-1.0*iota_complex;
-    A_SOC[3][2]=one_complex;A_SOC[2][3]=one_complex;
+    A_SOC[4][3]=-1.0*iota_complex;A_SOC[3][4]=iota_complex;
+    A_SOC[3][2]=iota_complex;A_SOC[2][3]=-1.0*iota_complex;
+    A_SOC[4][2]=one_complex;A_SOC[2][4]=one_complex;
 
 
 complex<double> val=0.0;

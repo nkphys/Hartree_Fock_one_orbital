@@ -66,7 +66,7 @@ public:
     void Create_Current_Oprs_Faster();
     void Hall_conductance();
     void Update_Total_Density();
-    void Calculate_Akw(double omega_wrt_mu);
+    void Calculate_Akw();
     void Create_K_Path(string PathType, Mat_1_intpair & k_path);
     void Create_K_Path_NBZ(string PathType, Mat_1_intpair & k_path);
     void Get_Bare_Susceptibility_New();
@@ -165,6 +165,9 @@ public:
     Mat_6_Complex_doub ChiBareTimesI;
     vector < vector < Matrix <complex<double>> > > OneMinusChiBareTimesI_Inv;
     Mat_6_Complex_doub ChiRPAMat;
+
+    Mat_4_Complex_doub AkwMat;
+
 
     //Mat_2_Complex_doub Chi0_;
 
@@ -491,7 +494,157 @@ double Kspace_calculation_G2dLatticeNew::Lorentzian(double x, double brd)
 }
 
 
-void Kspace_calculation_G2dLatticeNew::Calculate_Akw(double omega_wrt_mu){}
+void Kspace_calculation_G2dLatticeNew::Calculate_Akw(){
+    double omega_min=Parameters_.omega_min;
+    double omega_max=Parameters_.omega_max;
+    double d_omega=Parameters_.d_omega;
+    double eta=Parameters_.eta;
+    int N_omega = int(((omega_max-omega_min)/d_omega) + 0.5) + 1;
+
+
+    int S_ = NSites_in_MUC;
+
+    AkwMat.resize(2*n_atoms_*n_orbs_*S_);
+    for(int c1=0;c1<2*n_atoms_*n_orbs_*S_;c1++){
+        AkwMat[c1].resize(2*n_atoms_*n_orbs_*S_);
+        for(int c2=0;c2<2*n_atoms_*n_orbs_*S_;c2++){
+            AkwMat[c1][c2].resize(lx_cells*ly_cells);
+            for(int qind=0;qind<lx_cells*ly_cells;qind++){
+                AkwMat[c1][c2][qind].resize(N_omega);
+            }
+        }
+    }
+
+
+    // int k_index_m = Coordinates_.Ncell(k1_ind_m,k2_ind_m);
+    // int state_k_m = 2*n_atoms_*n_orbs_*S_*k_index_m + m;
+    // ABmat[IntraMUC_indexA][IntraMUC_indexB][state_k_n][state_k_m] += A_elmt*B_elmt
+    //*conj(Eigvectors_[state_k_n][alpha_comp])
+
+
+    for(int c1=0;c1<2*n_atoms_*n_orbs_*S_;c1++){
+        for(int c2=0;c2<2*n_atoms_*n_orbs_*S_;c2++){
+            for(int qind=0;qind<lx_cells*ly_cells;qind++){
+                for(int omega_ind=0;omega_ind<N_omega;omega_ind++){
+                    double omega_val = omega_min + d_omega*omega_ind;
+                    AkwMat[c1][c2][qind][omega_ind]=0.0;
+
+                    for(int n=0;n<2*n_atoms_*n_orbs_*S_;n++){
+                        int state_q_n = 2*n_atoms_*n_orbs_*S_*qind + n;
+                        AkwMat[c1][c2][qind][omega_ind] += conj(Eigvectors_[state_q_n][c1])*(Eigvectors_[state_q_n][c2])*
+                                Lorentzian(omega_val - Eigenvalues_saved[state_q_n],eta);
+                    }
+                }
+            }}}
+
+
+
+
+    //Transforming to Normal Brillioun Zone
+    Mat_1_intpair q_path;
+    //Create_K_Path_NBZ("MGKMpY_HXGBZ", q_path);
+    Create_K_Path_NBZ("GMXGYMG", q_path);
+    //Create_K_Path_NBZ("FullBZ", q_path);
+
+
+
+
+    int q1_ind, q2_ind;
+
+    Mat_2_Complex_doub ChiRPA_AB_q_omega_NBZ;
+
+    int n1_p, n2_p;
+
+    for(int atom_no_alpha=0;atom_no_alpha<n_atoms_;atom_no_alpha++){
+        for(int alpha_orb=0;alpha_orb<n_orbs_;alpha_orb++){
+            for(int spin_alpha=0;spin_alpha<2;spin_alpha++){
+
+                for(int atom_no_beta=0;atom_no_beta<n_atoms_;atom_no_beta++){
+                    for(int beta_orb=0;beta_orb<n_orbs_;beta_orb++){
+                        for(int spin_beta=0;spin_beta<2;spin_beta++){
+
+                            complex<double> Akw_temp=0.0;
+                            string File_Out_Akw_str = "Akw_NBZ_atom_orb_spin"
+                                    + to_string(atom_no_alpha)+"_"
+                                    + to_string(alpha_orb)+"_"
+                                    + to_string(spin_alpha)+"_"
+                                    + to_string(atom_no_beta)+"_"
+                                    + to_string(beta_orb)+"_"
+                                    + to_string(spin_beta)+"_"
+                                    +".txt";
+
+                            ofstream file_out_Akw(File_Out_Akw_str.c_str());
+                            file_out_Akw<<"#q omega Akw(q,omega)"<<endl;
+
+                            for(int q_ind_temp=0;q_ind_temp<q_path.size();q_ind_temp++){
+                                //cout<<"ChiRPA_q_omega (NBZ) "<<q_ind_temp<<"("<<q_path.size()<<")"<<endl;
+
+                                q1_ind=q_path[q_ind_temp].first;
+                                q2_ind=q_path[q_ind_temp].second;
+                                int q_index = q1_ind + q2_ind*lx_;
+
+                                assert( (Mat_MUC(0,0)*lx_cells)%(lx_)==0);
+                                assert( (Mat_MUC(0,1)*lx_cells)%(ly_)==0);
+                                assert( (Mat_MUC(1,0)*ly_cells)%(lx_)==0);
+                                assert( (Mat_MUC(1,1)*ly_cells)%(ly_)==0);
+
+
+                                n1_p = int(((q1_ind*Mat_MUC(0,0)*lx_cells)/(lx_)) + 0.5)
+                                        + int(((q2_ind*Mat_MUC(0,1)*lx_cells)/(ly_)) + 0.5);
+                                n1_p = (n1_p + lx_cells)%lx_cells;
+
+                                n2_p = int(((q1_ind*Mat_MUC(1,0)*ly_cells)/(lx_)) + 0.5)
+                                        + int(((q2_ind*Mat_MUC(1,1)*ly_cells)/(ly_)) + 0.5);
+                                n2_p = (n2_p + ly_cells)%ly_cells;
+
+                                int qp_ind = Coordinates_.Ncell(n1_p, n2_p);
+
+                                for(int omega_ind=0;omega_ind<N_omega;omega_ind++){
+                                    double omega_val = omega_min + d_omega*omega_ind;
+
+                                    // ChiRPA_AB_q_omega_NBZ[q_index][omega_ind]=0.0;
+
+                                    Akw_temp=0.0;
+                                    for(int g=0;g<NSites_in_MUC;g++){
+                                        int g1=Intra_MUC_positions[g].first;
+                                        int g2=Intra_MUC_positions[g].second;
+                                        for(int h=0;h<NSites_in_MUC;h++){
+                                            int h1=Intra_MUC_positions[h].first;
+                                            int h2=Intra_MUC_positions[h].second;
+
+
+                                            //alpha
+                                            int ind1 = h + (atom_no_alpha + n_atoms_*alpha_orb)*(S_) +
+                                                    spin_alpha*(n_atoms_*n_orbs_*S_);
+                                            int ind2 = g + (atom_no_beta + n_atoms_*beta_orb)*(S_) +
+                                                    spin_beta*(n_atoms_*n_orbs_*S_);
+
+                                            Akw_temp += (1.0/(NSites_in_MUC))*exp(iota_complex*2.0*PI*( (1.0*q1_ind*(g1-h1))/(lx_) + (1.0*q2_ind*(g2-h2))/(ly_) ))*
+                                                    AkwMat[ind1][ind2][qp_ind][omega_ind];
+                                        }
+                                    }
+
+                                    file_out_Akw<<q_ind_temp<<"  "<<q1_ind<<"  "<<q2_ind<<"  "<<omega_val<<"   "<<Akw_temp.real()<<"  "<<Akw_temp.imag()<<endl;
+
+                                    //file_out_BarreSusc<<q_ind_temp<<"  "<<q1_ind<<"  "<<q2_ind<<"  "<<omega<<"  ";
+                                    //file_out_BarreSusc<<ChiRPA_AB_q_omega_NBZ[q_index][omega_ind].real()<<"  "<<ChiRPA_AB_q_omega_NBZ[q_index][omega_ind].imag()<<endl;
+
+
+                                }
+                                file_out_Akw<<endl;
+                                //file_out_BarreSusc<<endl;
+
+                            }
+
+
+                        }}}
+            }}}
+
+
+
+
+
+}
 
 void Kspace_calculation_G2dLatticeNew::Calculate_Nw()
 {
@@ -2695,8 +2848,8 @@ complex<double> Kspace_calculation_G2dLatticeNew::h_KE(int alpha, int gamma, int
 void Kspace_calculation_G2dLatticeNew::Create_Kspace_Spectrum(){
 
 
-    bool PinningField=true;
-    double PinningFieldValue=Parameters_.PinningFieldValue;
+    // bool PinningField=true;
+    // double PinningFieldValue=Parameters_.PinningFieldValue;
 
 
 
@@ -2822,18 +2975,29 @@ void Kspace_calculation_G2dLatticeNew::Create_Kspace_Spectrum(){
             }
 
 
-            //small pinning field
-            if(PinningField){
-                for(int alpha=0;alpha<S_;alpha++){
-                    for(int gamma=0;gamma<n_atoms_*n_orbs_;gamma++){
-                        for(int spin1=0;spin1<2;spin1++){
-                            row_ = alpha + gamma*(S_)
-                                    + spin1*(n_atoms_*n_orbs_*S_);
-                            col_=row_;
-                            Ham_(row_,col_) += Parameters_.PinningFieldZ[gamma]*(0.5 - 1.0*spin1);
-                        }
-                    }}
-            }
+            //magnetic field along z
+            for(int alpha=0;alpha<S_;alpha++){
+                for(int gamma=0;gamma<n_atoms_*n_orbs_;gamma++){
+                    for(int spin1=0;spin1<2;spin1++){
+                        row_ = alpha + gamma*(S_)
+                                + spin1*(n_atoms_*n_orbs_*S_);
+                        col_=row_;
+                        Ham_(row_,col_) += Parameters_.PinningFieldZ[gamma]*(0.5 - 1.0*spin1);
+                    }
+            }}
+
+            //magnetic field along x
+            for(int alpha=0;alpha<S_;alpha++){
+                for(int gamma=0;gamma<n_atoms_*n_orbs_;gamma++){
+                    for(int spin1=0;spin1<2;spin1++){
+                        row_ = alpha + gamma*(S_)
+                                + spin1*(n_atoms_*n_orbs_*S_);
+                        col_= alpha + gamma*(S_)
+                                + (1-spin1)*(n_atoms_*n_orbs_*S_);
+                        Ham_(row_,col_) += Parameters_.PinningFieldX[gamma]*0.5;
+                    }
+            }}
+
 
             bool NA_spinflip=Parameters_.NoSpinFlipOP;
             complex<double> OP_val;
@@ -3986,9 +4150,9 @@ void Kspace_calculation_G2dLatticeNew::Calculate_RPA_Susc(Matrix<complex<double>
                                                              KroneckerDelta(spin_row1, 1-spin_col1)*KroneckerDelta(spin_row1, 1-spin_row2)*KroneckerDelta(spin_row1, spin_col2)
                                                              )
                                                             /*(KroneckerDelta(spin_row1, 1-spin_row2)*KroneckerDelta(spin_row1, spin_col1)*KroneckerDelta(spin_row1, 1-spin_col2)
-                                                                                                                                     -
-                                                                                                                                     KroneckerDelta(spin_row1, spin_row2)*KroneckerDelta(spin_row1, 1-spin_col1)*KroneckerDelta(spin_row1, 1-spin_col2)
-                                                                                                                                     )*/
+                                                                                                                                                                             -
+                                                                                                                                                                             KroneckerDelta(spin_row1, spin_row2)*KroneckerDelta(spin_row1, 1-spin_col1)*KroneckerDelta(spin_row1, 1-spin_col2)
+                                                                                                                                                                             )*/
                                                             ;
 
                                                 }}}}}}
@@ -6249,7 +6413,7 @@ void Kspace_calculation_G2dLatticeNew::SelfConsistency(){
             Get_Tau_Pseudospins();
         }
         Calculate_Nw();
-        //Calculate_Akw(0.0);
+        Calculate_Akw();
 
         string Eigenvalues_fl_out = "Eigenvalues.txt";
         ofstream Eigenvalues_file_out(Eigenvalues_fl_out.c_str());

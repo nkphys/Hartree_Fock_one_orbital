@@ -4,8 +4,8 @@
 PBC_X=1
 PBC_Y=1
 
-Xsite=8
-Ysite=8
+Xsite=6
+Ysite=6
 N_Orbs=3
 N_Atoms=1
 
@@ -17,6 +17,11 @@ File_Hoppings=Hoppings_used.txt
 
 //In following files: columns hop_3rdNNs electron to row dof at neighbouring site
 t0_mat_file=t0_mat_with_SOC.txt
+
+//t0_mat_3orb.txt
+
+//t0_mat_with_SOC.txt
+
 t1_plus_a1_file=t1_plus_a1_mat_3orb.txt
 t1_minus_a2_file=t1_minus_a2_mat_3orb.txt
 t1_plus_a1_minus_a2_mat_file=t1_plus_a1_minus_a2_mat_3orb.txt
@@ -25,15 +30,15 @@ t1_plus_a1_plus_a2_mat_file=t1_plus_a1_plus_a2_mat_3orb.txt
 
 
 #N_atoms
-U0=8.0
+U0=10.0
 
 #N_atoms
-JHund=1.6
+JHund=2.0
 
 #U_ab
 #U_00 U_01 .. U_10 U_11 ..
 #N_orbs X N_orbs
-U_interorb_atom_0=0 4.0 4.0 4.0 0 4.0 4.0 4.0 0
+U_interorb_atom_0=0 5.0 5.0 5.0 0 5.0 5.0 5.0 0
 
 
 #N_atoms X N_orbs
@@ -45,24 +50,26 @@ OnSiteE=0.0 0.0 -1.5
 #along Sz
 PinningFieldValueZ=0.0 0.0 0
 
+#Magnetic Field along Sx
+PinningFieldValueX=0.005 0.005 0.005
 
 CalculateSusceptibility=true
-SusceptibilityLocalOprFilesPairWise=6 SzLocal_atom0_total.txt SzLocal_atom0_total.txt SpLocal_atom0_total.txt SmLocal_atom0_total.txt SmLocal_atom0_total.txt SpLocal_atom0_total.txt Tauz_atom0_total.txt Tauz_atom0_total.txt Taum_atom0_total.txt Taup_atom0_total.txt Taup_atom0_total.txt Taum_atom0_total.txt
-omega_min=0.0
-omega_max=0.20
-d_omega=0.0025
-eta=0.0002
+SusceptibilityLocalOprFilesPairWise=8 SzLocal_atom0_total.txt SzLocal_atom0_total.txt SpLocal_atom0_total.txt SmLocal_atom0_total.txt SmLocal_atom0_total.txt SpLocal_atom0_total.txt Tauz_atom0_total.txt Tauz_atom0_total.txt Taum_atom0_total.txt Taup_atom0_total.txt Taup_atom0_total.txt Taum_atom0_total.txt SpLocal_atom0_total.txt Taum_atom0_total.txt SmLocal_atom0_total.txt Taup_atom0_total.txt
+omega_min=-0.00
+omega_max=0.2
+d_omega=0.0005
+eta=0.0001
 N_Threads=8
 
 
 
 Self_consistency_kspace=1
-Total_particles=128
+Total_particles=72
 Fixing_mu=0
 Mu_value=100
 
 No_of_SelfConsistency_iters=100000
-Convergence_Error=0.00000001
+Convergence_Error=0.0000001
 RandomSeed=1
 alpha_OP=0.55
 
@@ -85,7 +92,7 @@ Read_initial_OPvalues_file=OP_CDW_1x1.txt
 #OUTPUT_OP_ZigZag_alongZ.txt
 #OUTPUT_OP_XZ120.txt
 #OUTPUT_OP_ZX120.txt
-Create_OPs_Ansatz=0
+Create_OPs_Ansatz=1
 OP_Ansatz_type=AFM_AFO_3orb
 
 

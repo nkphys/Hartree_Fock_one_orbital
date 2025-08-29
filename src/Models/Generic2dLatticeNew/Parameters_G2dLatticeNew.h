@@ -14,7 +14,7 @@ public:
 
     Mat_2_doub OnSiteE;
     Mat_1_doub PinningFieldZ;
-
+    Mat_1_doub PinningFieldX;
 
 
     double BoundaryConnection_X, BoundaryConnection_Y;
@@ -334,6 +334,16 @@ void Parameters_G2dLatticeNew::Initialize(string inputfile_)
         for(int orb_no=0;orb_no<n_orbs;orb_no++){
             PinningFieldValueZ_stream>>PinningFieldZ[atom_no+n_atoms*orb_no];
         }}
+
+
+
+    PinningFieldX.resize(n_atoms*n_orbs);
+    string PinningFieldValueX_string = matchstring2(inputfile_, "PinningFieldValueX");
+    stringstream PinningFieldValueX_stream(PinningFieldValueX_string);
+    for(int atom_no=0;atom_no<n_atoms;atom_no++){
+        for(int orb_no=0;orb_no<n_orbs;orb_no++){
+            PinningFieldValueX_stream>>PinningFieldX[atom_no+n_atoms*orb_no];
+    }}
 
 
     BoundaryConnection_X = double(matchstring(inputfile_, "PBC_X"));
