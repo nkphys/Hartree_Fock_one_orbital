@@ -3660,11 +3660,8 @@ double Kspace_calculation_G2dLatticeNew::random1(){
 
 
 
-
 void Kspace_calculation_G2dLatticeNew::Initialize()
 {
-
-
     kick_while_cooling=0.0;
     
     NOT_AVAIL_INT=-1000;
@@ -3683,7 +3680,7 @@ void Kspace_calculation_G2dLatticeNew::Initialize()
     NSites_in_MUC = Connections_.NSites_in_MUC;
     Intra_MUC_positions = Connections_.Intra_MUC_positions;
 
-    Connections_bw_MUC();
+    //Connections_bw_MUC();
     Create_InverseMapping();
 
     //Get_MUC_details();
@@ -4140,6 +4137,7 @@ void Kspace_calculation_G2dLatticeNew::Initialize()
 }
 
 
+
 void Kspace_calculation_G2dLatticeNew::Arranging_spectrum(){
 
     // Eigvectors_saved=Eigvectors_;
@@ -4320,8 +4318,8 @@ complex<double> Kspace_calculation_G2dLatticeNew::h_KE(int alpha, int gamma, int
         int i1_ = (((d1_org)*Mat_MUC(0,0) + (d2_org)*Mat_MUC(1,0)) + alpha_1 + lx_*ly_)%lx_;
         int i2_ = (((d1_org)*Mat_MUC(0,1) + (d2_org)*Mat_MUC(1,1)) + alpha_2 + lx_*ly_)%ly_;
 
-        int i1_cell0_ = (0 + alpha_p_1 + lx_*ly_)%lx_;
-        int i2_cell0_ = (0 + alpha_p_2 + lx_*ly_)%ly_;
+       // int i1_cell0_ = (0 + alpha_p_1 + lx_*ly_)%lx_;
+       // int i2_cell0_ = (0 + alpha_p_2 + lx_*ly_)%ly_;
 
         if(i1_>=lx_ || i2_>=ly_ || i1_<0 || i2_<0){
             assert(false);
@@ -4331,7 +4329,10 @@ complex<double> Kspace_calculation_G2dLatticeNew::h_KE(int alpha, int gamma, int
                 + (i2_)*lx_*n_orbs_*n_atoms_
                 + sigma*(lx_*ly_*n_orbs_*n_atoms_);
 
-        col_ = ( gamma_p + (i1_cell0_)*n_orbs_*n_atoms_ + ((i2_cell0_)*lx_*n_orbs_*n_atoms_)) + sigma_p*(lx_*ly_*n_orbs_*n_atoms_);
+        //col_ = ( gamma_p + (i1_cell0_)*n_orbs_*n_atoms_ + ((i2_cell0_)*lx_*n_orbs_*n_atoms_)) + sigma_p*(lx_*ly_*n_orbs_*n_atoms_);
+
+        col_ = (gamma_p) +alpha_p*(n_atoms_*n_orbs_) + NSites_in_MUC*n_orbs_*n_atoms_*sigma_p;
+
         //Coordinates_.Nbasis(lx_pos, ly_pos, atom1 + n_atoms_*orb1) + nsites_ * n_orbs_* n_atoms_ * spin1;
 
 

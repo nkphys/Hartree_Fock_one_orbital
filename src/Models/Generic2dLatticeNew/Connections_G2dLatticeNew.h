@@ -17,7 +17,7 @@ Connections_G2dLatticeNew(Parameters_G2dLatticeNew &Parameters__, Coordinates_G2
 
 {
 Initialize();
-HTBCreate();
+HTBCreateNew();
 }
 
 void Initialize();                                     //::DONE
@@ -31,6 +31,8 @@ void Interactions_Sorting();
 void Check_Hermiticity();                              //::DONE
 void Check_up_down_symmetry();                         //::DONE
 void HTBCreate();                                      //::DONE
+void HTBCreateNew();                                      //::DONE
+
 void Print_Ansatz_LocalDen_CDW();
 void Get_minimum_distance_direction(int l, int gamma_l, int m, int gamma_m, int &r1_, int &r2_, double &dis_min);
 void Get_MUC_details();
@@ -52,6 +54,7 @@ int lx_cells, ly_cells;
 int ncells;
 
 Mat_1_intpair Intra_MUC_positions;
+Mat_2_int Intra_MUC_index;
 
 };
 
@@ -114,6 +117,14 @@ void Connections_G2dLatticeNew::Get_MUC_details(){
 
 
     //Intra_MUC_positions
+
+    Intra_MUC_index.resize(lx_);
+    for(int ix=0;ix<lx_;ix++){
+        Intra_MUC_index[ix].resize(ly_);
+        for(int iy=0;iy<ly_;iy++){
+            Intra_MUC_index[ix][iy]=-1000;
+        }
+    }
     bool inside_MUC;
     for(int h1=0;h1<lx_*ly_;h1++){
         for(int h2=0;h2<lx_*ly_;h2++){
@@ -127,6 +138,7 @@ void Connections_G2dLatticeNew::Get_MUC_details(){
                 pos_.first  = h1;
                 pos_.second = h2;
                 Intra_MUC_positions.push_back(pos_);
+                Intra_MUC_index[h1][h2]=Intra_MUC_positions.size()-1;
             }
         }
     }
@@ -258,9 +270,7 @@ n_orbs_ = Parameters_.n_orbs;
 n_atoms_ = Parameters_.n_atoms;
 int space = 2 * n_orbs_*n_atoms_*nsites_ ;
 
-HTB_.resize(space, space);
-Ham_.resize(space, space);
-Hint_.resize(n_atoms_*n_orbs_*nsites_,n_atoms_*n_orbs_*nsites_);
+//Hint_.resize(n_atoms_*n_orbs_*nsites_,n_atoms_*n_orbs_*nsites_);
 
 if(lx_%2==0){
 max_l1_dis = lx_/2;
@@ -280,6 +290,12 @@ max_l2_dis = (ly_-1)/2;
 Mat_MUC = Parameters_.MUC_Mat;
 Get_MUC_details();
 assert(ncells_ == lx_cells * ly_cells);
+
+
+int space_col = 2 * n_orbs_*n_atoms_*NSites_in_MUC;
+
+HTB_.resize(space, space_col);
+//Ham_.resize(space, space);
 
 } // ----------
 
@@ -651,6 +667,257 @@ for (int j = 0; j < Ham_.n_row(); j++)
 
 // cout<<"Hermiticity: "<<temp<<endl;
 }
+
+
+
+
+void Connections_G2dLatticeNew::HTBCreateNew()
+{
+
+    double EPS_doub=0.000001;
+
+    Mat_1_int t_neighs;
+    Mat_3_Complex_doub t_hoppings;
+    t_neighs.clear();
+    t_hoppings.clear();
+
+
+    Mat_1_int t_neighs_conj;
+    t_neighs_conj.clear();
+
+
+
+
+    //PX
+    t_neighs.push_back(0);t_hoppings.push_back(Parameters_.t1_plus_a1);
+
+    //MY
+    t_neighs.push_back(3);t_hoppings.push_back(Parameters_.t1_minus_a2);
+
+    //PXMY
+    t_neighs.push_back(7);t_hoppings.push_back(Parameters_.t1_plus_a1_minus_a2);
+
+    //PXPY
+    t_neighs.push_back(4);t_hoppings.push_back(Parameters_.t1_plus_a1_plus_a2);
+
+    //For conj
+    //MX
+    t_neighs_conj.push_back(1);t_hoppings.push_back(Parameters_.t1_plus_a1);
+
+    //PY
+    t_neighs_conj.push_back(2);t_hoppings.push_back(Parameters_.t1_minus_a2);
+
+    //MXPY
+    t_neighs_conj.push_back(5);t_hoppings.push_back(Parameters_.t1_plus_a1_minus_a2);
+
+    //MXMY
+    t_neighs_conj.push_back(6);t_hoppings.push_back(Parameters_.t1_plus_a1_plus_a2);
+
+
+
+    Matrix<complex <double>> sigma_x, sigma_y, sigma_z;
+    sigma_x.resize(2, 2);
+    sigma_y.resize(2, 2);
+    sigma_z.resize(2, 2);
+
+    // X
+    sigma_x(0, 0) = 0.0;
+    sigma_x(0, 1) = 1.0;
+    sigma_x(1, 0) = 1.0;
+    sigma_x(1, 1) = 0.0;
+
+    // y
+    sigma_y(0, 0) = 0.0;
+    sigma_y(0, 1) = -1.0*iota_complex;
+    sigma_y(1, 0) = iota_complex;
+    sigma_y(1, 1) = 0.0;
+
+    // Z
+    sigma_z(0, 0) = 1.0;
+    sigma_z(0, 1) = 0.0;
+    sigma_z(1, 0) = 0.0;
+    sigma_z(1, 1) = -1.0;
+
+
+    int l, m, a, b;
+    int lx_pos, ly_pos;
+    int mx_pos, my_pos;
+
+    HTB_.fill(0.0);
+
+    //HERE
+    for (l = 0; l < Intra_MUC_positions.size(); l++)
+    {
+
+        lx_pos = Intra_MUC_positions[l].first; //cell x-position
+        ly_pos = Intra_MUC_positions[l].second;
+
+
+        //Intra-cell  hoppings
+        for (int spin1 = 0; spin1 < 2; spin1++)
+        {
+
+            for (int spin2 = 0; spin2 < 2; spin2++)
+            {
+
+                for(int atom1=0;atom1<n_atoms_;atom1++)
+                {
+                    for(int atom2=0;atom2<n_atoms_;atom2++)
+                    {
+
+                        for(int orb1=0;orb1<n_orbs_;orb1++)
+                        {
+                            for(int orb2=0;orb2<n_orbs_;orb2++)
+                            {
+
+                                a = Coordinates_.Nbasis(lx_pos, ly_pos, atom1 + n_atoms_*orb1) + nsites_ * n_orbs_* n_atoms_ * spin1;
+                                b = Coordinates_.Nbasis(lx_pos, ly_pos, atom2 + n_atoms_*orb2) + nsites_ * n_orbs_* n_atoms_ * spin2;
+
+                                int a_col = (atom1 + n_atoms_*orb1) +l*(n_atoms_*n_orbs_) + NSites_in_MUC*n_orbs_*n_atoms_*spin1;
+                                int b_col = (atom2 + n_atoms_*orb2) +l*(n_atoms_*n_orbs_) + NSites_in_MUC*n_orbs_*n_atoms_*spin2;
+
+
+                                if (a != b && (abs(Parameters_.t0[atom2 + n_atoms_*orb2 + n_atoms_*n_orbs_*spin2][atom1 + n_atoms_*orb1 + n_atoms_*n_orbs_*spin1])>EPS_doub) )
+                                {
+                                    HTB_(b, a_col) += 1.0*Parameters_.t0[atom2 + n_atoms_*orb2 + n_atoms_*n_orbs_*spin2][atom1 + n_atoms_*orb1 + n_atoms_*n_orbs_*spin1];
+                                    HTB_(a, b_col) += conj(1.0*Parameters_.t0[atom2 + n_atoms_*orb2 + n_atoms_*n_orbs_*spin2][atom1 + n_atoms_*orb1 + n_atoms_*n_orbs_*spin1]);
+
+                                    //HTB_(a, b) = conj(HTB_(b, a));
+
+                                }
+
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
+
+
+
+        //For t1,t2,t3 hoppings
+        for (int spin1 = 0; spin1 < 2; spin1++)
+        {
+            for (int spin2 = 0; spin2 < 2; spin2++)
+            {
+                for(int neigh=0;neigh<t_neighs.size();neigh++){
+
+                    int l_ind_sys = Coordinates_.Ncell(lx_pos,ly_pos);
+                    m = Coordinates_.getneigh(l_ind_sys, t_neighs[neigh]);
+
+                    if( (!Coordinates_.HIT_X_BC) || Parameters_.PBC_X){
+
+                        if( (!Coordinates_.HIT_Y_BC) || Parameters_.PBC_Y){
+
+
+                            mx_pos = Coordinates_.indx_cellwise(m);
+                            my_pos = Coordinates_.indy_cellwise(m);
+
+                            for (int atom1 = 0; atom1 < n_atoms_; atom1++)
+                            {
+                                for (int atom2 = 0; atom2 < n_atoms_; atom2++)
+                                {
+
+                                    for (int orb1 = 0; orb1 < n_orbs_; orb1++)
+                                    {
+                                        for (int orb2 = 0; orb2 < n_orbs_; orb2++)
+                                        {
+                                            a = Coordinates_.Nbasis(lx_pos, ly_pos, atom1 + n_atoms_*orb1) + nsites_ * n_orbs_* n_atoms_*spin1;
+                                            b = Coordinates_.Nbasis(mx_pos, my_pos, atom2 + n_atoms_*orb2) + nsites_ * n_orbs_* n_atoms_*spin2;
+                                            assert(a != b);
+
+                                            int a_col = (atom1 + n_atoms_*orb1) +l*(n_atoms_*n_orbs_) + NSites_in_MUC*n_orbs_*n_atoms_*spin1;
+
+
+                                            if (a != b && (abs(t_hoppings[neigh][atom2 + n_atoms_*orb2 + n_atoms_*n_orbs_*spin2][atom1 + n_atoms_*orb1 + n_atoms_*n_orbs_*spin1])>EPS_doub))
+                                            {
+
+                                                HTB_(b, a_col) += 1.0*t_hoppings[neigh][atom2+n_atoms_*orb2+n_atoms_*n_orbs_*spin2][atom1+n_atoms_*orb1+n_atoms_*n_orbs_*spin1];
+                                                //HTB_(a, b) = conj(HTB_(b, a));
+
+
+                                            }
+
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                }
+
+            }
+        }
+
+
+
+
+        //conj
+        //For t1,t2,t3 hoppings
+        for (int spin1 = 0; spin1 < 2; spin1++)
+        {
+            for (int spin2 = 0; spin2 < 2; spin2++)
+            {
+                for(int neigh=0;neigh<t_neighs_conj.size();neigh++){
+
+                    int l_ind_sys = Coordinates_.Ncell(lx_pos,ly_pos);
+                    m = Coordinates_.getneigh(l_ind_sys, t_neighs_conj[neigh]);
+
+                    if( (!Coordinates_.HIT_X_BC) || Parameters_.PBC_X){
+
+                        if( (!Coordinates_.HIT_Y_BC) || Parameters_.PBC_Y){
+
+
+                            mx_pos = Coordinates_.indx_cellwise(m);
+                            my_pos = Coordinates_.indy_cellwise(m);
+
+                            for (int atom1 = 0; atom1 < n_atoms_; atom1++)
+                            {
+                                for (int atom2 = 0; atom2 < n_atoms_; atom2++)
+                                {
+
+                                    for (int orb1 = 0; orb1 < n_orbs_; orb1++)
+                                    {
+                                        for (int orb2 = 0; orb2 < n_orbs_; orb2++)
+                                        {
+                                            a = Coordinates_.Nbasis(lx_pos, ly_pos, atom2 + n_atoms_*orb2) + nsites_ * n_orbs_* n_atoms_*spin2;
+                                            b = Coordinates_.Nbasis(mx_pos, my_pos, atom1 + n_atoms_*orb1) + nsites_ * n_orbs_* n_atoms_*spin1;
+                                            assert(a != b);
+
+                                            int a_col = (atom2 + n_atoms_*orb2) +l*(n_atoms_*n_orbs_) + NSites_in_MUC*n_orbs_*n_atoms_*spin2;
+
+
+                                            if (a != b && (abs(t_hoppings[neigh][atom2 + n_atoms_*orb2 + n_atoms_*n_orbs_*spin2][atom1 + n_atoms_*orb1 + n_atoms_*n_orbs_*spin1])>EPS_doub))
+                                            {
+
+                                                HTB_(b, a_col) += 1.0*conj(t_hoppings[neigh][atom2+n_atoms_*orb2+n_atoms_*n_orbs_*spin2][atom1+n_atoms_*orb1+n_atoms_*n_orbs_*spin1]);
+                                                //HTB_(a, b) = conj(HTB_(b, a));
+
+
+                                            }
+
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                }
+
+            }
+        }
+
+    }
+
+
+
+
+} // ----------
+
 
 
 void Connections_G2dLatticeNew::HTBCreate()

@@ -237,7 +237,7 @@ int main(int argc, char *argv[]) {
 
              Coordinates_G2dLatticeNew  Coordinates_G2d_(Parameters_G2d_.lx, Parameters_G2d_.ly, Parameters_G2d_.n_atoms, Parameters_G2d_.n_orbs);
              Connections_G2dLatticeNew  Connections_G2d_(Parameters_G2d_, Coordinates_G2d_);
-             Connections_G2d_.Print_Hopping();                                       //::DONE
+             //Connections_G2d_.Print_Hopping();                                       //::DONE
              // Connections_HC_.InteractionsCreate();
              // Connections_HC_.Print_LongRangeInt();
              //Connections_HC_.Print_Spin_resolved_OnsiteE();
@@ -248,7 +248,8 @@ int main(int argc, char *argv[]) {
 
               mt19937_64 Generator_(Parameters_G2d_.RandomSeed);
               Kspace_calculation_G2dLatticeNew Kspace_calculation_G2d_(Parameters_G2d_, Coordinates_G2d_UC_, Connections_G2d_, Generator_);
-              Kspace_calculation_G2d_.SelfConsistency();
+             Kspace_calculation_G2d_.SelfConsistency();
+
               //Kspace_calculation_G2d_.Get_Spin_resolved_dc_conductivity();
               //Kspace_calculation_G2d_.Get_Spin_resolved_dc_conductivity_way2();
               Kspace_calculation_G2d_.Get_Spin_resolved_dc_conductivity_way3();
