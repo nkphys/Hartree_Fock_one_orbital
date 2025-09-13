@@ -249,6 +249,10 @@ int main(int argc, char *argv[]) {
               mt19937_64 Generator_(Parameters_G2d_.RandomSeed);
               Kspace_calculation_G2dLatticeNew Kspace_calculation_G2d_(Parameters_G2d_, Coordinates_G2d_UC_, Connections_G2d_, Generator_);
               Kspace_calculation_G2d_.SelfConsistency();
+              //Kspace_calculation_G2d_.Get_Spin_resolved_dc_conductivity();
+              //Kspace_calculation_G2d_.Get_Spin_resolved_dc_conductivity_way2();
+              Kspace_calculation_G2d_.Get_Spin_resolved_dc_conductivity_way3();
+
               if(Parameters_G2d_.Calculate_Susc){
                   // Kspace_calculation_G2d_.Get_Bare_Susceptibility_New();
                   // if(Kspace_calculation_G2d_.NSites_in_MUC>0){

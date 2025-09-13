@@ -23,13 +23,11 @@ int N_atoms=3;
 int N_orbs=1;
 
 double t1_parameter=-1.0;
-double t2_parameter=-1.0;
+double t2_parameter=0.30;
 
 //e1=(sqrt(3)/2,1/2)
 //e2=(-sqrt(3)/2,1/2)
 //e3=(0,-1)
-
-
 
 
 //atom + orb*2 + spin*4
@@ -46,6 +44,10 @@ ofstream t1_minus_a2_file(t1_minus_a2_file_str.c_str());
 
 string t1_plus_a1_minus_a2_file_str = "t1_plus_a1_minus_a2_mat.txt" ;
 ofstream t1_plus_a1_minus_a2_file(t1_plus_a1_minus_a2_file_str.c_str());
+
+
+string t1_plus_a1_plus_a2_file_str = "t1_plus_a1_plus_a2_mat.txt" ;
+ofstream t1_plus_a1_plus_a2_file(t1_plus_a1_plus_a2_file_str.c_str());
 
 complex<double> val=0.0;
 
@@ -161,6 +163,28 @@ t1_plus_a1_minus_a2_file<<val<<" ";
 t1_plus_a1_minus_a2_file<<endl;
 }}}
 
+
+
+//t_plus_a1_plus_a2[2][1] c_{2}^{dag}c_{1}
+//site---->neigh
+//neigh
+for(int spin2=0;spin2<2;spin2++){
+for(int orb2=0;orb2<N_orbs;orb2++){
+for(int atom2=0;atom2<N_atoms;atom2++){
+
+//site
+for(int spin1=0;spin1<2;spin1++){
+for(int orb1=0;orb1<N_orbs;orb1++){
+for(int atom1=0;atom1<N_atoms;atom1++){
+
+val=0;
+
+t1_plus_a1_plus_a2_file<<val<<" ";
+
+}}}
+
+t1_plus_a1_plus_a2_file<<endl;
+}}}
 
 
 return 0;

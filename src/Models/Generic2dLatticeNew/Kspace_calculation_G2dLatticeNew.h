@@ -40,6 +40,7 @@ public:
 
     void Initialize();                                     //::DONE
     void Diagonalize(char option);
+    void DiagonalizeGivenMat(char option, Matrix<complex<double>> & HamGiven_, vector<double> & EigsOut_);
     double random1();
     void SelfConsistency();
     void Create_Kspace_Spectrum();
@@ -83,6 +84,13 @@ public:
     void Calculate_InteractionKernel();
     void Get_RPA_Susceptibility_Matrix();
     void Get_RPA_Susceptibility_in_NBZ();
+    void Get_Spin_resolved_dc_conductivity();
+    void Create_HK(int k1_, int k2_, Matrix<complex<double>> & Hk_);
+    void Get_Spin_resolved_dc_conductivity_way2();
+    void Get_Spin_resolved_dc_conductivity_way3();
+    double FermiDis(double E, double mu, double InvKbT);
+    double d_FermiDis_dE(double E, double mu, double InvKbT);
+    void Create_Kspace_Spectrum_spin_resolved();
 
     //::DONE
 
@@ -103,6 +111,8 @@ public:
     Mat_1_doub Eigenvalues_saved;
     Mat_1_doub Kx_values, Ky_values;
     //Mat_1_Complex_doub V_mat;
+
+    Mat_1_doub Eigenvalues_spin_up, Eigenvalues_spin_down;
 
     Mat_2_Complex_doub Susc_OprA, Susc_OprB;
 
@@ -173,6 +183,1361 @@ public:
 
 
 };
+
+
+
+double Kspace_calculation_G2dLatticeNew::FermiDis(double E, double mu, double InvKbT){
+
+    double val;
+    val  = 1.0/(exp((E-mu)*InvKbT) + 1.0);
+    return val;
+}
+
+double Kspace_calculation_G2dLatticeNew::d_FermiDis_dE(double E, double mu, double InvKbT){
+
+
+    double val;
+    val = -InvKbT*exp((E-mu)*InvKbT)*
+            (1.0/(exp((E-mu)*InvKbT) + 1.0))*
+            (1.0/(exp((E-mu)*InvKbT) + 1.0));
+
+    return val;
+}
+
+void Kspace_calculation_G2dLatticeNew::Get_Spin_resolved_dc_conductivity(){
+
+    int S_=NSites_in_MUC;
+    int NBands_ =2*n_orbs_*n_atoms_*S_;
+    Mat_1_doub theta_array;
+    int NThetaSlices=100;
+    double d_theta=(2.0*PI)/(NThetaSlices);
+
+    theta_array.resize(NThetaSlices);
+    for(int n=0;n<NThetaSlices;n++){
+        theta_array[n] = d_theta*n;
+    }
+
+
+    double Gamma_brdn=Parameters_.eta;
+
+    Mat_5_Complex_doub C_mat_vel_p1; //[k1][k2][m][n][s]
+    Mat_5_Complex_doub C_mat_vel_p2; //[k1][k2][m][n][s]
+    Mat_5_Complex_doub C_mat_vel_p3; //[k1][k2][m][n][s]
+
+
+
+    C_mat_vel_p1.resize(lx_cells);
+    C_mat_vel_p2.resize(lx_cells);
+    C_mat_vel_p3.resize(lx_cells);
+    for(int n1=0;n1<lx_cells;n1++){
+        C_mat_vel_p1[n1].resize(ly_cells);
+        C_mat_vel_p2[n1].resize(ly_cells);
+        C_mat_vel_p3[n1].resize(ly_cells);
+        for(int n2=0;n2<ly_cells;n2++){
+            C_mat_vel_p1[n1][n2].resize(NBands_);
+            C_mat_vel_p2[n1][n2].resize(NBands_);
+            C_mat_vel_p3[n1][n2].resize(NBands_);
+            for(int m=0;m<NBands_;m++){
+                C_mat_vel_p1[n1][n2][m].resize(NBands_);
+                C_mat_vel_p2[n1][n2][m].resize(NBands_);
+                C_mat_vel_p3[n1][n2][m].resize(NBands_);
+                for(int n=0;n<NBands_;n++){
+                    C_mat_vel_p1[n1][n2][m][n].resize(2);
+                    C_mat_vel_p2[n1][n2][m][n].resize(2);
+                    C_mat_vel_p3[n1][n2][m][n].resize(2);
+                    for(int s=0;s<2;s++){
+                        C_mat_vel_p1[n1][n2][m][n][s]=0.0;
+                        C_mat_vel_p2[n1][n2][m][n][s]=0.0;
+                        C_mat_vel_p3[n1][n2][m][n][s]=0.0;
+                    }
+                }
+            }
+        }
+    }
+
+    Mat_2_Complex_doub Cond_dc;//[s][theta]
+    Cond_dc.resize(2);
+    for(int spin=0;spin<2;spin++){
+        Cond_dc[spin].resize(NThetaSlices);
+    }
+
+
+    Matrix<complex<double>> Hk_plus_dkx, Hk_plus_dky, Hk_;
+    complex<double> part1_, part2_, part3_;
+    int k_index, state_n_k, state_m_k;
+
+
+    for(int s=0;s<2;s++){
+        for(int m=0;m<NBands_;m++){
+            for(int n=0;n<NBands_;n++){
+
+                for(int k1_=0;k1_<lx_cells;k1_++){
+                    for(int k2_=0;k2_<ly_cells;k2_++){
+
+                        cout<<s<<"  "<<m<<"  "<<n<<"  "<<k1_<<"  "<<k2_<<endl;
+                        k_index = Coordinates_.Ncell(k1_,k2_);
+                        state_n_k = NBands_*k_index + n;
+                        state_m_k = NBands_*k_index + m;
+
+                        Create_HK(k1_, k2_, Hk_);
+                        Create_HK( (k1_+1)%lx_cells, k2_, Hk_plus_dkx);
+                        Create_HK( k1_, (k2_+1)%ly_cells, Hk_plus_dky);
+
+
+                        C_mat_vel_p1[k1_][k2_][m][n][s]=0.0;
+                        C_mat_vel_p2[k1_][k2_][m][n][s]=0.0;
+                        C_mat_vel_p3[k1_][k2_][m][n][s]=0.0;
+                        for(int ci_=0;ci_<n_orbs_*n_atoms_*S_;ci_++){ //without spin
+                            for(int cj_=0;cj_<n_orbs_*n_atoms_*S_;cj_++){
+                                int ci= ci_ + s*(n_orbs_*n_atoms_*S_);
+                                int cj= cj_ + s*(n_orbs_*n_atoms_*S_);
+
+                                C_mat_vel_p1[k1_][k2_][m][n][s] += conj(Eigvectors_[state_m_k][ci])*Hk_plus_dkx(ci,cj)*Eigvectors_[state_n_k][cj];
+                                C_mat_vel_p2[k1_][k2_][m][n][s] += conj(Eigvectors_[state_m_k][ci])*Hk_plus_dky(ci,cj)*Eigvectors_[state_n_k][cj];
+                                C_mat_vel_p3[k1_][k2_][m][n][s] += conj(Eigvectors_[state_m_k][ci])*Hk_(ci,cj)*Eigvectors_[state_n_k][cj];
+
+                            }
+                        }
+
+                    }
+                }
+
+            }
+        }
+    }
+
+
+    //sigma[s][theta_slice]
+    complex<double> C_elm;
+    for(int spin=0;spin<2;spin++){
+        for(int theta_slice=0;theta_slice<NThetaSlices;theta_slice++){
+            Cond_dc[spin][theta_slice]=0.0;
+
+            for(int m=0;m<NBands_;m++){
+                for(int n=0;n<NBands_;n++){
+
+                    for(int k1_=0;k1_<lx_cells;k1_++){
+                        for(int k2_=0;k2_<ly_cells;k2_++){
+                            k_index = Coordinates_.Ncell(k1_,k2_);
+                            state_n_k = NBands_*k_index + n;
+                            state_m_k = NBands_*k_index + m;
+
+                            C_elm = C_mat_vel_p1[k1_][k2_][m][n][spin]*cos(theta_array[theta_slice])
+                                    + C_mat_vel_p2[k1_][k2_][m][n][spin]*sin(theta_array[theta_slice])
+                                    - C_mat_vel_p3[k1_][k2_][m][n][spin]*(cos(theta_array[theta_slice]) + sin(theta_array[theta_slice]) );
+
+
+                            Cond_dc[spin][theta_slice] += (PI/(1.0*lx_*ly_))*
+                                                         conj(C_elm)*C_elm*
+                                    Lorentzian(mu_-Eigenvalues_saved[state_n_k], 2.0*Gamma_brdn)*
+                                    Lorentzian(mu_-Eigenvalues_saved[state_m_k], 2.0*Gamma_brdn);
+                        }}
+                }}
+        }
+    }
+
+
+
+
+    string file_out="dc_cond_spin_resolved.txt";
+    ofstream file_out_strm(file_out.c_str());
+    file_out_strm<<"#theta  sigma_up_up.real()  sigam_dn_dn.real()    imag    imag | imag should be zero"<<endl;
+    for(int theta_slice=0;theta_slice<NThetaSlices;theta_slice++){
+        file_out_strm<<theta_array[theta_slice]<<"   "<<Cond_dc[0][theta_slice].real()<<"   "<<Cond_dc[1][theta_slice].real()<<"    "<<Cond_dc[0][theta_slice].imag()<<"   "<<Cond_dc[1][theta_slice].imag()<<endl;
+    }
+
+
+
+
+
+}
+
+
+
+
+
+void Kspace_calculation_G2dLatticeNew::Get_Spin_resolved_dc_conductivity_way2(){
+
+    int S_=NSites_in_MUC;
+    int NBands_ =2*n_orbs_*n_atoms_*S_;
+    Mat_1_doub theta_array;
+    int NThetaSlices=100;
+    double d_theta=(2.0*PI)/(NThetaSlices);
+
+    theta_array.resize(NThetaSlices);
+    for(int n=0;n<NThetaSlices;n++){
+        theta_array[n] = d_theta*n;
+    }
+
+
+    double Gamma_brdn=Parameters_.eta;
+
+    Mat_1_doub cond_xx, cond_yy, cond_xy, cond_yx;
+    cond_xx.resize(2);cond_yy.resize(2);cond_xy.resize(2);cond_yx.resize(2);
+    double spin_contr;
+
+    for(int spin=0;spin<2;spin++){
+    cond_xx[spin]=0.0;cond_yy[spin]=0.0;
+    cond_xy[spin]=0.0;cond_yx[spin]=0.0;
+
+    for(int n=0;n<NBands_;n++){
+        for(int k1_=0;k1_<lx_cells;k1_++){
+            for(int k2_=0;k2_<ly_cells;k2_++){
+
+                //(k1_+1)%lx_cells, k2_
+                //k_index = Coordinates_.Ncell(k1_,k2_);
+                //state_n_k = NBands_*k_index + n;
+               //Eigenvalues_saved[state_n_k]
+
+                int k1_p_x = (k1_+1)%lx_cells;
+                int k2_p_y = (k2_+1)%ly_cells;
+
+                int k1_m_x = (k1_-1+lx_cells)%lx_cells;
+                int k2_m_y = (k2_-1+ly_cells)%ly_cells;
+
+                int k_index = Coordinates_.Ncell(k1_,k2_);
+                int state_n_k = NBands_*k_index + n;
+
+                spin_contr=0.0;
+                for(int alpha=0;alpha<n_orbs_*n_atoms_*S_;alpha++){
+                    int ci= alpha + spin*(n_orbs_*n_atoms_*S_);
+                    spin_contr += abs(Eigvectors_[state_n_k][ci])*abs(Eigvectors_[state_n_k][ci]);
+                }
+
+                int k_index_p_x = Coordinates_.Ncell(k1_p_x,k2_);
+                int k_index_p_y = Coordinates_.Ncell(k1_,k2_p_y);
+
+                int k_index_m_x = Coordinates_.Ncell(k1_m_x,k2_);
+                int k_index_m_y = Coordinates_.Ncell(k1_,k2_m_y);
+
+
+                int state_n_k_p_x = NBands_*k_index_p_x + n;
+                int state_n_k_p_y = NBands_*k_index_p_y + n;
+
+                int state_n_k_m_x = NBands_*k_index_m_x + n;
+                int state_n_k_m_y = NBands_*k_index_m_y + n;
+
+                cond_xx[spin] += spin_contr*0.25*
+                        (Eigenvalues_saved[state_n_k_p_x]-Eigenvalues_saved[state_n_k_m_x])*
+                        (Eigenvalues_saved[state_n_k_p_x]-Eigenvalues_saved[state_n_k_m_x])*
+                        d_FermiDis_dE(Eigenvalues_saved[state_n_k], mu_, Parameters_.beta);
+                       // Lorentzian(mu_-Eigenvalues_saved[state_n_k], 2.0*Gamma_brdn);
+
+                cond_yy[spin] += spin_contr*0.25*
+                        (Eigenvalues_saved[state_n_k_p_y]-Eigenvalues_saved[state_n_k_m_y])*
+                        (Eigenvalues_saved[state_n_k_p_y]-Eigenvalues_saved[state_n_k_m_y])*
+                         d_FermiDis_dE(Eigenvalues_saved[state_n_k], mu_, Parameters_.beta);
+
+                cond_xy[spin] += spin_contr*0.25*
+                        (Eigenvalues_saved[state_n_k_p_x]-Eigenvalues_saved[state_n_k_m_x])*
+                        (Eigenvalues_saved[state_n_k_p_y]-Eigenvalues_saved[state_n_k_m_y])*
+                         d_FermiDis_dE(Eigenvalues_saved[state_n_k], mu_, Parameters_.beta);
+
+
+    }
+    }
+    }
+    }
+
+    cout<<"xx : "<<cond_xx[0]<<"  "<<cond_xx[1]<<endl;
+    cout<<"yy : "<<cond_yy[0]<<"  "<<cond_yy[1]<<endl;
+    cout<<"xy : "<<cond_xy[0]<<"  "<<cond_xy[1]<<endl;
+
+    string file_out="dc_cond_spin_resolved_way2.txt";
+    ofstream file_out_strm(file_out.c_str());
+    file_out_strm<<"#theta  sigma_up_up.real()  sigam_dn_dn.real()"<<endl;
+    for(int theta_slice=0;theta_slice<NThetaSlices;theta_slice++){
+        file_out_strm<<theta_array[theta_slice];
+        for(int spin=0;spin<2;spin++){
+        file_out_strm<<"   "<<
+            (cond_xx[spin]*cos(theta_array[theta_slice])*cos(theta_array[theta_slice]))
+         +  (cond_yy[spin]*sin(theta_array[theta_slice])*sin(theta_array[theta_slice]))
+         +  1.0*(cond_xy[spin]*2.0*sin(theta_array[theta_slice])*cos(theta_array[theta_slice]));
+        }
+        file_out_strm<<endl;
+    }
+
+
+
+
+
+}
+
+
+
+
+void Kspace_calculation_G2dLatticeNew::Get_Spin_resolved_dc_conductivity_way3(){
+
+
+
+    cout<<"dc cond [way 3]"<<endl;
+
+    Create_Kspace_Spectrum_spin_resolved();
+
+
+    int S_=NSites_in_MUC;
+    int NBands_ = n_orbs_*n_atoms_*S_; //spin is separate here
+    Mat_1_doub theta_array;
+    int NThetaSlices=100;
+    double d_theta=(2.0*PI)/(NThetaSlices);
+
+    theta_array.resize(NThetaSlices);
+    for(int n=0;n<NThetaSlices;n++){
+        theta_array[n] = d_theta*n;
+    }
+
+
+    double Gamma_brdn=Parameters_.eta;
+
+    Mat_1_doub cond_xx, cond_yy, cond_xy, cond_yx;
+    cond_xx.resize(2);cond_yy.resize(2);cond_xy.resize(2);cond_yx.resize(2);
+    double spin_contr;
+
+    for(int spin=0;spin<2;spin++){
+    cond_xx[spin]=0.0;cond_yy[spin]=0.0;
+    cond_xy[spin]=0.0;cond_yx[spin]=0.0;
+
+    for(int n=0;n<NBands_;n++){
+        for(int k1_=0;k1_<lx_cells;k1_++){
+            for(int k2_=0;k2_<ly_cells;k2_++){
+
+                //(k1_+1)%lx_cells, k2_
+                //k_index = Coordinates_.Ncell(k1_,k2_);
+                //state_n_k = NBands_*k_index + n;
+               //Eigenvalues_saved[state_n_k]
+
+                int k1_p_x = (k1_+1)%lx_cells;
+                int k2_p_y = (k2_+1)%ly_cells;
+
+                int k1_m_x = (k1_-1+lx_cells)%lx_cells;
+                int k2_m_y = (k2_-1+ly_cells)%ly_cells;
+
+                int k_index = Coordinates_.Ncell(k1_,k2_);
+                int state_n_k = NBands_*k_index + n;
+
+
+
+                int k_index_p_x = Coordinates_.Ncell(k1_p_x,k2_);
+                int k_index_p_y = Coordinates_.Ncell(k1_,k2_p_y);
+
+                int k_index_m_x = Coordinates_.Ncell(k1_m_x,k2_);
+                int k_index_m_y = Coordinates_.Ncell(k1_,k2_m_y);
+
+
+                int state_n_k_p_x = NBands_*k_index_p_x + n;
+                int state_n_k_p_y = NBands_*k_index_p_y + n;
+
+                int state_n_k_m_x = NBands_*k_index_m_x + n;
+                int state_n_k_m_y = NBands_*k_index_m_y + n;
+
+                if(spin==0){
+                cond_xx[spin] += 0.25*
+                        (Eigenvalues_spin_up[state_n_k_p_x]-Eigenvalues_spin_up[state_n_k_m_x])*
+                        (Eigenvalues_spin_up[state_n_k_p_x]-Eigenvalues_spin_up[state_n_k_m_x])*
+                        d_FermiDis_dE(Eigenvalues_spin_up[state_n_k], mu_, Parameters_.beta);
+                       // Lorentzian(mu_-Eigenvalues_saved[state_n_k], 2.0*Gamma_brdn);
+
+                cond_yy[spin] += 0.25*
+                        (Eigenvalues_spin_up[state_n_k_p_y]-Eigenvalues_spin_up[state_n_k_m_y])*
+                        (Eigenvalues_spin_up[state_n_k_p_y]-Eigenvalues_spin_up[state_n_k_m_y])*
+                         d_FermiDis_dE(Eigenvalues_spin_up[state_n_k], mu_, Parameters_.beta);
+
+                cond_xy[spin] += 0.25*
+                        (Eigenvalues_spin_up[state_n_k_p_x]-Eigenvalues_spin_up[state_n_k_m_x])*
+                        (Eigenvalues_spin_up[state_n_k_p_y]-Eigenvalues_spin_up[state_n_k_m_y])*
+                         d_FermiDis_dE(Eigenvalues_spin_up[state_n_k], mu_, Parameters_.beta);
+                }
+                if(spin==1){
+                    cond_xx[spin] += 0.25*
+                            (Eigenvalues_spin_down[state_n_k_p_x]-Eigenvalues_spin_down[state_n_k_m_x])*
+                            (Eigenvalues_spin_down[state_n_k_p_x]-Eigenvalues_spin_down[state_n_k_m_x])*
+                            d_FermiDis_dE(Eigenvalues_spin_down[state_n_k], mu_, Parameters_.beta);
+                           // Lorentzian(mu_-Eigenvalues_saved[state_n_k], 2.0*Gamma_brdn);
+
+                    cond_yy[spin] += 0.25*
+                            (Eigenvalues_spin_down[state_n_k_p_y]-Eigenvalues_spin_down[state_n_k_m_y])*
+                            (Eigenvalues_spin_down[state_n_k_p_y]-Eigenvalues_spin_down[state_n_k_m_y])*
+                             d_FermiDis_dE(Eigenvalues_spin_down[state_n_k], mu_, Parameters_.beta);
+
+                    cond_xy[spin] += 0.25*
+                            (Eigenvalues_spin_down[state_n_k_p_x]-Eigenvalues_spin_down[state_n_k_m_x])*
+                            (Eigenvalues_spin_down[state_n_k_p_y]-Eigenvalues_spin_down[state_n_k_m_y])*
+                             d_FermiDis_dE(Eigenvalues_spin_down[state_n_k], mu_, Parameters_.beta);
+                }
+
+
+    }
+    }
+    }
+    }
+
+    cout<<"xx : "<<cond_xx[0]<<"  "<<cond_xx[1]<<endl;
+    cout<<"yy : "<<cond_yy[0]<<"  "<<cond_yy[1]<<endl;
+    cout<<"xy : "<<cond_xy[0]<<"  "<<cond_xy[1]<<endl;
+
+    string file_out="dc_cond_spin_resolved_way3.txt";
+    ofstream file_out_strm(file_out.c_str());
+    file_out_strm<<"#theta  sigma_up_up.real()  sigam_dn_dn.real()"<<endl;
+    for(int theta_slice=0;theta_slice<NThetaSlices;theta_slice++){
+        file_out_strm<<theta_array[theta_slice];
+        for(int spin=0;spin<2;spin++){
+        file_out_strm<<"   "<<
+            (cond_xx[spin]*cos(theta_array[theta_slice])*cos(theta_array[theta_slice]))
+         +  (cond_yy[spin]*sin(theta_array[theta_slice])*sin(theta_array[theta_slice]))
+         +  1.0*(cond_xy[spin]*2.0*sin(theta_array[theta_slice])*cos(theta_array[theta_slice]));
+        }
+        file_out_strm<<endl;
+    }
+
+
+
+
+
+}
+
+
+
+
+
+
+
+void Kspace_calculation_G2dLatticeNew::Create_Kspace_Spectrum_spin_resolved(){
+
+
+    assert(Parameters_.NoSpinFlipOP);
+    assert(Parameters_.Just_Hartree);
+    bool NA_spinflip=Parameters_.NoSpinFlipOP;
+
+    // bool PinningField=true;
+    // double PinningFieldValue=Parameters_.PinningFieldValue;
+
+
+    int S_= NSites_in_MUC;
+    //Calculating density using OP's will be going inside Hamiltonian
+    OPs_total_den=0.0;
+    int index_OP;
+    int row_OP, col_OP;
+
+
+    Matrix<complex<double>> Hamup_, Hamdn_;
+    Hamup_.resize(n_orbs_*n_atoms_*S_,n_orbs_*n_atoms_*S_);
+    Hamdn_.resize(n_orbs_*n_atoms_*S_,n_orbs_*n_atoms_*S_);
+
+
+    int row_, col_;
+    int UP_, DOWN_;
+    UP_=0;DOWN_=1;
+    int spin_bar, gamma_bar;
+    int k_index;
+    double k1x_val, k2x_val, k1y_val, k2y_val;
+    double fac_;
+    complex<double> OP_value;
+
+    //cout <<"Here 1"<<endl;
+
+
+
+    // Create_M_mat();
+    // Create_P_mat();
+
+    for(int k1=0;k1<lx_cells;k1++){
+        k1x_val = (2.0*PI*k1)/(1.0*lx_cells);
+        k1y_val = ((2.0*PI*k1)/(1.0*lx_cells))*(-1.0/sqrt(3));
+
+        for(int k2=0;k2<ly_cells;k2++){
+            k2x_val = 0.0;
+            k2y_val = ((2.0*PI*k2)/(1.0*ly_cells))*(2.0/sqrt(3));
+
+            k_index = Coordinates_.Ncell(k1,k2);
+            Kx_values[k_index]=k1x_val + k2x_val;
+            Ky_values[k_index]=k1y_val + k2y_val;
+
+            //cout<<"k1, k2 :" <<k1<<" "<<k2<<endl;
+
+            Hamup_.fill(0.0);
+            Hamdn_.fill(0.0);
+
+            //Hoppings
+            for(int alpha_p=0;alpha_p<S_;alpha_p++){
+                for(int gamma_p=0;gamma_p<n_orbs_*n_atoms_;gamma_p++){
+                    //for(int sigma_p=0;sigma_p<2;sigma_p++){
+                        col_ = alpha_p + gamma_p*(S_);
+
+                        for(int alpha=0;alpha<S_;alpha++){
+                            for(int gamma=0;gamma<n_orbs_*n_atoms_;gamma++){
+                               // for(int sigma=0;sigma<2;sigma++){
+                               // int sigma=sigma_p;
+                                    row_ = alpha + gamma*(S_);
+
+                                    //Ham_(row_, col_) += h_KE(alpha, gamma, sigma, alpha_p, gamma_p, sigma_p, k1, k2);
+                                    Hamup_(row_,col_) += h_KE(alpha, gamma, UP_, alpha_p, gamma_p, UP_, k1, k2);
+                                    Hamdn_(row_,col_) += h_KE(alpha, gamma, DOWN_, alpha_p, gamma_p, DOWN_, k1, k2);
+                                //}
+                            }
+                        }
+                    //}
+                }
+            }
+
+
+
+
+
+            /*
+            //Anisotropy
+            for(int alpha=0;alpha<S_;alpha++){
+                for(int spin1=0;spin1<2;spin1++){
+                    for(int spin2=0;spin2<2;spin2++){
+
+                        row_ = alpha + spin1*(S_);
+                        col_=row_;
+
+                        row_OP = 0*(2*S_) + alpha + spin2*(S_);
+                        col_OP = 0*(2*S_) + alpha + spin2*(S_);
+                        index_OP = SI_to_ind[col_OP + row_OP*(2*ncells_*S_)];
+
+                        fac_ = 1.0 - (2.0*abs(spin1-spin2)); //i.e 0 --> 1, 1 --> -1
+
+                        Ham_(row_,col_) += (-1.0/2.0)*Parameters_.AnisotropyZ*fac_*OPs_.value[index_OP];
+                    }
+                }
+            }
+            */
+
+
+            //Onsite Energies
+            //OnSiteE_up
+            for(int alpha=0;alpha<S_;alpha++){
+                for(int gamma=0;gamma<n_atoms_*n_orbs_;gamma++){
+                    //for(int spin1=0;spin1<2;spin1++){
+                        row_ = alpha + gamma*(S_);
+                        col_=row_;
+                        Hamup_(row_,col_) += Parameters_.OnSiteE[gamma][UP_];
+                        Hamdn_(row_,col_) += Parameters_.OnSiteE[gamma][DOWN_];
+                    //}
+                }
+            }
+
+
+            //magnetic field along z
+            for(int alpha=0;alpha<S_;alpha++){
+                for(int gamma=0;gamma<n_atoms_*n_orbs_;gamma++){
+                   // for(int spin1=0;spin1<2;spin1++){
+                        row_ = alpha + gamma*(S_);
+                        col_=row_;
+                        Hamup_(row_,col_) += Parameters_.PinningFieldZ[gamma]*(0.5 - 1.0*UP_);
+                        Hamdn_(row_,col_) += Parameters_.PinningFieldZ[gamma]*(0.5 - 1.0*DOWN_);
+                    //}
+                }}
+
+
+
+
+            complex<double> OP_val;
+            //Interaction local intra-orbital U0:
+            for(int j=0;j<S_;j++){
+                for(int b_beta=0;b_beta<n_atoms_;b_beta++){
+                    for(int gamma=0;gamma<n_orbs_;gamma++){
+                        int atom_plus_orb=b_beta +  n_atoms_*gamma;
+                        //for(int spin_=0;spin_<2;spin_++){
+                            col_ = j + atom_plus_orb*(S_);
+
+                           // for(int spin_p=0;spin_p<2;spin_p++){
+
+                                row_ = j + atom_plus_orb*(S_);
+
+                                //if(spin_==spin_p){
+                                    row_OP = j + atom_plus_orb*(S_)
+                                            + (1-UP_)*(n_atoms_*n_orbs_*S_);
+                                    col_OP = row_OP;
+                                    index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                                    Hamup_(row_,col_) += Parameters_.U0[b_beta]*OPs_.value[index_OP];
+
+                                    row_OP = j + atom_plus_orb*(S_)
+                                            + (1-DOWN_)*(n_atoms_*n_orbs_*S_);
+                                    col_OP = row_OP;
+                                    index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                                    Hamdn_(row_,col_) += Parameters_.U0[b_beta]*OPs_.value[index_OP];
+
+                                //}
+
+                            //}
+                       // }
+                    }
+                }
+            }
+
+
+            //     if(k1==0 && k2==0){
+            //      cout<<"---------- Printing matrix kx=0=ky -------------"<<endl;
+            //      Ham_.print();
+            //      cout<<"-----------------"<<endl;
+            //  }
+
+            //            cout<<"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"<<endl;
+            //            Ham_.print();
+            //            cout<<"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"<<endl;
+
+
+
+
+            char Dflag='V';
+            Mat_1_doub Eigval_up, Eigval_dn;
+            DiagonalizeGivenMat(Dflag, Hamup_, Eigval_up);
+            DiagonalizeGivenMat(Dflag, Hamdn_, Eigval_dn);
+
+            for(int row=0;row<n_orbs_*n_atoms_*S_;row++){
+                Eigenvalues_spin_up[n_orbs_*n_atoms_*S_*k_index + row]=Eigval_up[row];
+                Eigenvalues_spin_down[n_orbs_*n_atoms_*S_*k_index + row]=Eigval_dn[row];
+            }
+
+
+        }
+    }
+
+
+
+
+//----------------------------------------------------------
+    //Bands
+    char temp_char[50];
+    sprintf(temp_char, "%.10f", Parameters_.Temperature);
+
+    string File_Out_Bands;
+    File_Out_Bands = "BandsSpinResolved_" + string(temp_char)+ ".txt";
+    ofstream file_out_bands(File_Out_Bands.c_str());
+
+
+    int kx_i, ky_i;
+
+    Mat_1_intpair k_path;
+    k_path.clear();
+    pair_int temp_pair;
+
+
+    // ---k_path---------
+
+    //--------\Gamma to M-----------------
+    ky_i = 0;
+    for (kx_i = 0; kx_i <= (lx_cells/ 2); kx_i++)
+    {
+        temp_pair.first = kx_i;
+        temp_pair.second = kx_i;
+        k_path.push_back(temp_pair);
+    }
+    //----------------------------------
+
+
+    //--------M to X-----------------
+    kx_i = (lx_cells / 2);
+    for (ky_i = (ly_cells / 2)-1; ky_i >=0; ky_i--)
+    {
+        temp_pair.first = kx_i;
+        temp_pair.second = ky_i;
+        k_path.push_back(temp_pair);
+    }
+    //----------------------------------
+
+
+    //--------X to Gamma-----------------
+    ky_i = 0;
+    for (kx_i = (lx_cells / 2)-1; kx_i >=0; kx_i--)
+    {
+        temp_pair.first = kx_i;
+        temp_pair.second = ky_i;
+        k_path.push_back(temp_pair);
+    }
+    //----------------------------------
+
+
+    //--------Gamma to Y-----------------
+    kx_i = 0;
+    ky_i = 0;
+    for (ky_i = 1; ky_i <=(ly_cells/2); ky_i++)
+    {
+        temp_pair.first = kx_i;
+        temp_pair.second = ky_i;
+        k_path.push_back(temp_pair);
+    }
+    //----------------------------------
+
+    //--------Y to M-----------------
+    kx_i = 0;
+    ky_i = ly_cells/2;
+    for (kx_i = 1; kx_i <=(lx_cells/2); kx_i++)
+    {
+        temp_pair.first = kx_i;
+        temp_pair.second = ky_i;
+        k_path.push_back(temp_pair);
+    }
+    //----------------------------------
+
+
+    //--------M to \Gamma[with one extra point,
+    //                  because in gnuplot use "set pm3d corners2color c1"
+    //                  ]-----------------
+    kx_i = (lx_cells / 2) - 1;
+    ky_i = (ly_cells / 2) - 1;
+    for (kx_i = (lx_cells / 2) - 1; kx_i >= 0; kx_i--)
+    {
+        ky_i=kx_i;
+        if(ky_i < ly_cells){
+            temp_pair.first = kx_i;
+            temp_pair.second = kx_i;
+            k_path.push_back(temp_pair);
+        }
+    }
+
+    temp_pair.first = 0;
+    temp_pair.second = 0;
+    k_path.push_back(temp_pair);
+
+    file_out_bands<<"#kindex  E_up(k,1)  E_up(k,2) ... DOWN  ....."<<endl;
+    for (int k_point = 0; k_point < k_path.size(); k_point++)
+    {
+        k_index=Coordinates_.Ncell(k_path[k_point].first, k_path[k_point].second);
+
+        //Eigvectors_[state][c1]
+        //k_index = Coordinates_.Ncell(k1,k2);
+        //state = 2*n_atoms_*n_orbs_*S_*k_index + n;
+        //c1 = alpha_row + gamma_row*(S_) +  sigma_row*(n_atoms_*n_orbs_*S_);
+        file_out_bands<<k_point<<"   ";
+        for(int band=0;band<n_orbs_*n_atoms_*S_;band++){
+            int state = n_atoms_*n_orbs_*S_*k_index + band;
+            file_out_bands<<Eigenvalues_spin_up[state]<<"   ";
+        }
+        for(int band=0;band<n_orbs_*n_atoms_*S_;band++){
+            int state = n_atoms_*n_orbs_*S_*k_index + band;
+            file_out_bands<<Eigenvalues_spin_down[state]<<"   ";
+        }
+        file_out_bands<<endl;
+    }
+
+
+
+
+
+
+
+}
+
+
+
+
+
+
+void Kspace_calculation_G2dLatticeNew::Create_HK(int k1_, int k2_, Matrix<complex<double>> & Hk_){
+
+
+    int S_= NSites_in_MUC;
+    int NBands_ =2*n_orbs_*n_atoms_*S_;
+
+    Hk_.clear();
+    Hk_.resize(NBands_,NBands_);
+
+    //Calculating density using OP's will be going inside Hamiltonian
+    int index_OP;
+    int row_OP, col_OP;
+
+
+    int row_, col_;
+    int UP_, DOWN_;
+    UP_=0;DOWN_=1;
+    int spin_bar, gamma_bar;
+    int k_index;
+    double k1x_val, k2x_val, k1y_val, k2y_val;
+    double fac_;
+    complex<double> OP_value;
+
+    //cout <<"Here 1"<<endl;
+
+
+
+    // Create_M_mat();
+    // Create_P_mat();
+
+    int k1=k1_;
+    int k2=k2_;
+    k1x_val = (2.0*PI*k1)/(1.0*lx_cells);
+    k1y_val = ((2.0*PI*k1)/(1.0*lx_cells))*(-1.0/sqrt(3));
+
+    k2x_val = 0.0;
+    k2y_val = ((2.0*PI*k2)/(1.0*ly_cells))*(2.0/sqrt(3));
+
+    k_index = Coordinates_.Ncell(k1,k2);
+    Kx_values[k_index]=k1x_val + k2x_val;
+    Ky_values[k_index]=k1y_val + k2y_val;
+
+    Hk_.fill(0.0);
+
+    //cout<<"k1, k2 :" <<k1<<" "<<k2<<endl;
+
+    //Hoppings
+    for(int alpha_p=0;alpha_p<S_;alpha_p++){
+        for(int gamma_p=0;gamma_p<n_orbs_*n_atoms_;gamma_p++){
+            for(int sigma_p=0;sigma_p<2;sigma_p++){
+                col_ = alpha_p + gamma_p*(S_)
+                        + sigma_p*(n_orbs_*n_atoms_*S_);
+
+                for(int alpha=0;alpha<S_;alpha++){
+                    for(int gamma=0;gamma<n_orbs_*n_atoms_;gamma++){
+                        for(int sigma=0;sigma<2;sigma++){
+                            row_ = alpha + gamma*(S_)
+                                    + sigma*(n_orbs_*n_atoms_*S_);
+
+                            Hk_(row_, col_) += h_KE(alpha, gamma, sigma, alpha_p, gamma_p, sigma_p, k1, k2);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+
+
+
+    /*
+            //Anisotropy
+            for(int alpha=0;alpha<S_;alpha++){
+                for(int spin1=0;spin1<2;spin1++){
+                    for(int spin2=0;spin2<2;spin2++){
+
+                        row_ = alpha + spin1*(S_);
+                        col_=row_;
+
+                        row_OP = 0*(2*S_) + alpha + spin2*(S_);
+                        col_OP = 0*(2*S_) + alpha + spin2*(S_);
+                        index_OP = SI_to_ind[col_OP + row_OP*(2*ncells_*S_)];
+
+                        fac_ = 1.0 - (2.0*abs(spin1-spin2)); //i.e 0 --> 1, 1 --> -1
+
+                        Hk_(row_,col_) += (-1.0/2.0)*Parameters_.AnisotropyZ*fac_*OPs_.value[index_OP];
+                    }
+                }
+            }
+            */
+
+
+    //Onsite Energies
+    //OnSiteE_up
+    for(int alpha=0;alpha<S_;alpha++){
+        for(int gamma=0;gamma<n_atoms_*n_orbs_;gamma++){
+            for(int spin1=0;spin1<2;spin1++){
+                row_ = alpha + gamma*(S_)
+                        + spin1*(n_atoms_*n_orbs_*S_);
+                col_=row_;
+                Hk_(row_,col_) += Parameters_.OnSiteE[gamma][spin1];
+            }
+        }
+    }
+
+
+    //magnetic field along z
+    for(int alpha=0;alpha<S_;alpha++){
+        for(int gamma=0;gamma<n_atoms_*n_orbs_;gamma++){
+            for(int spin1=0;spin1<2;spin1++){
+                row_ = alpha + gamma*(S_)
+                        + spin1*(n_atoms_*n_orbs_*S_);
+                col_=row_;
+                Hk_(row_,col_) += Parameters_.PinningFieldZ[gamma]*(0.5 - 1.0*spin1);
+            }
+        }}
+
+    //magnetic field along x
+    for(int alpha=0;alpha<S_;alpha++){
+        for(int gamma=0;gamma<n_atoms_*n_orbs_;gamma++){
+            for(int spin1=0;spin1<2;spin1++){
+                row_ = alpha + gamma*(S_)
+                        + spin1*(n_atoms_*n_orbs_*S_);
+                col_= alpha + gamma*(S_)
+                        + (1-spin1)*(n_atoms_*n_orbs_*S_);
+                Hk_(row_,col_) += Parameters_.PinningFieldX[gamma]*0.5;
+            }
+        }}
+
+
+    bool NA_spinflip=Parameters_.NoSpinFlipOP;
+    complex<double> OP_val;
+    //Interaction local intra-orbital U0:
+    for(int j=0;j<S_;j++){
+        for(int b_beta=0;b_beta<n_atoms_;b_beta++){
+            for(int gamma=0;gamma<n_orbs_;gamma++){
+                int atom_plus_orb=b_beta +  n_atoms_*gamma;
+                for(int spin_=0;spin_<2;spin_++){
+                    col_ = j + atom_plus_orb*(S_) +
+                            spin_*(n_atoms_*n_orbs_*S_);
+
+                    for(int spin_p=0;spin_p<2;spin_p++){
+
+                        row_ = j + atom_plus_orb*(S_) +
+                                spin_p*(n_atoms_*n_orbs_*S_);
+
+                        if(spin_==spin_p){
+                            row_OP = j + atom_plus_orb*(S_)
+                                    + (1-spin_)*(n_atoms_*n_orbs_*S_);
+                            col_OP = row_OP;
+                            index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+
+                            Hk_(row_,col_) += Parameters_.U0[b_beta]*OPs_.value[index_OP];
+                        }
+                        else{
+                            if(!Parameters_.Just_Hartree){
+                                if(!NA_spinflip){
+                                    row_OP = j + atom_plus_orb*(S_)
+                                            + (spin_)*(n_atoms_*n_orbs_*S_);
+                                    col_OP = j + atom_plus_orb*(S_)
+                                            + (spin_p)*(n_atoms_*n_orbs_*S_);
+
+                                    if(col_OP>row_OP){
+                                        index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                                        OP_val = OPs_.value[index_OP];
+                                    }
+                                    else{
+                                        index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                                        OP_val = conj(OPs_.value[index_OP]);
+                                    }
+
+                                    Hk_(row_,col_) -=Parameters_.U0[b_beta]*OP_val;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+    //Inter-orbital nn
+    //Hartree
+    for(int j=0;j<S_;j++){
+        for(int atom_no=0;atom_no<n_atoms_;atom_no++){
+            for(int alpha=0;alpha<n_orbs_;alpha++){
+                for(int spin_=0;spin_<2;spin_++){
+                    for(int beta=(alpha+1);beta<n_orbs_;beta++){
+                        for(int spin_p=0;spin_p<2;spin_p++){
+                            col_ = j + (atom_no + n_atoms_*alpha)*(S_) +
+                                    spin_*(n_atoms_*n_orbs_*S_);
+                            row_=col_;
+                            row_OP = j + (atom_no + n_atoms_*beta)*(S_)
+                                    + (spin_p)*(n_atoms_*n_orbs_*S_);
+                            col_OP = row_OP;
+                            index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                            Hk_(row_,col_) += (Parameters_.UInterOrb[atom_no][alpha][beta])*OPs_.value[index_OP];
+
+                            col_ = j + (atom_no + n_atoms_*beta)*(S_) +
+                                    spin_*(n_atoms_*n_orbs_*S_);
+                            row_=col_;
+                            row_OP = j + (atom_no + n_atoms_*alpha)*(S_)
+                                    + (spin_p)*(n_atoms_*n_orbs_*S_);
+                            col_OP = row_OP;
+                            index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                            Hk_(row_,col_) += (Parameters_.UInterOrb[atom_no][alpha][beta])*OPs_.value[index_OP];
+
+                        }
+                    }
+                }
+            }}}
+
+
+
+    //Inter-orbital nn
+    //Fock
+    for(int j=0;j<S_;j++){
+        for(int atom_no=0;atom_no<n_atoms_;atom_no++){
+            for(int alpha=0;alpha<n_orbs_;alpha++){
+                for(int beta=(alpha+1);beta<n_orbs_;beta++){
+
+                    for(int spin_=0;spin_<2;spin_++){
+
+                        //1 and 7 [2 and 8 are h.c. of 1 and 7 ]
+                        col_ = j + (atom_no + n_atoms_*alpha)*(S_) +
+                                spin_*(n_atoms_*n_orbs_*S_);
+                        row_ = j + (atom_no + n_atoms_*beta)*(S_) +
+                                spin_*(n_atoms_*n_orbs_*S_);
+
+                        col_OP = row_;
+                        row_OP = col_;
+
+                        if(col_OP>row_OP){
+                            index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                            OP_val = OPs_.value[index_OP];
+                        }
+                        else{
+                            index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                            OP_val = conj(OPs_.value[index_OP]);
+                        }
+                        //1 and 7
+                        Hk_(row_,col_) -= (Parameters_.UInterOrb[atom_no][alpha][beta])*OP_val;
+                        //2 and 8
+                        Hk_(col_,row_) -= conj((Parameters_.UInterOrb[atom_no][alpha][beta])*OP_val);
+
+
+                        //3 and 5 [4 and 6 are h.c. of 3 and 5 ]
+                        col_ = j + (atom_no + n_atoms_*alpha)*(S_) +
+                                spin_*(n_atoms_*n_orbs_*S_);
+                        row_ = j + (atom_no + n_atoms_*beta)*(S_) +
+                                (1-spin_)*(n_atoms_*n_orbs_*S_);
+
+                        col_OP = row_;
+                        row_OP = col_;
+
+
+                        if(!NA_spinflip){
+                            if(col_OP>row_OP){
+                                index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                                OP_val = OPs_.value[index_OP];
+                            }
+                            else{
+                                index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                                OP_val = conj(OPs_.value[index_OP]);
+                            }
+                            //3 and 5
+                            Hk_(row_,col_) -= (Parameters_.UInterOrb[atom_no][alpha][beta])*OP_val;
+                            //4 and 6
+                            Hk_(col_,row_) -= conj((Parameters_.UInterOrb[atom_no][alpha][beta])*OP_val);
+                        }
+                    }
+
+                }}}}
+
+
+    //Hunds Coupling
+    //Hartree
+    for(int j=0;j<S_;j++){
+        for(int atom_no=0;atom_no<n_atoms_;atom_no++){
+            for(int alpha=0;alpha<n_orbs_;alpha++){
+                for(int beta=(alpha+1);beta<n_orbs_;beta++){
+
+                    for(int spin_=0;spin_<2;spin_++){
+
+                        //1 and 3
+                        col_ = j + (atom_no + n_atoms_*beta)*(S_) +
+                                spin_*(n_atoms_*n_orbs_*S_);
+                        row_ = j + (atom_no + n_atoms_*beta)*(S_) +
+                                (1-spin_)*(n_atoms_*n_orbs_*S_);
+
+                        col_OP = j + (atom_no + n_atoms_*alpha)*(S_) +
+                                (1-spin_)*(n_atoms_*n_orbs_*S_);
+                        row_OP = j + (atom_no + n_atoms_*alpha)*(S_) +
+                                (spin_)*(n_atoms_*n_orbs_*S_);
+
+                        //NA_spinflip = Parameters_.NoSpinFlipOP && (spin_p!=spin_);
+                        if(!NA_spinflip){
+                            if(col_OP>row_OP){
+                                index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                                OP_val = OPs_.value[index_OP];
+                            }
+                            else{
+                                index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                                OP_val = conj(OPs_.value[index_OP]);
+                            }
+                            //1 and 3
+                            Hk_(row_,col_) -= (0.5*Parameters_.JHund[atom_no])*2.0*OP_val;
+                        }
+
+
+                        //2 and 4
+                        col_ = j + (atom_no + n_atoms_*alpha)*(S_) +
+                                spin_*(n_atoms_*n_orbs_*S_);
+                        row_ = j + (atom_no + n_atoms_*alpha)*(S_) +
+                                (1-spin_)*(n_atoms_*n_orbs_*S_);
+
+                        col_OP = j + (atom_no + n_atoms_*beta)*(S_) +
+                                (1-spin_)*(n_atoms_*n_orbs_*S_);
+                        row_OP = j + (atom_no + n_atoms_*beta)*(S_) +
+                                (spin_)*(n_atoms_*n_orbs_*S_);
+
+                        //NA_spinflip = Parameters_.NoSpinFlipOP && (spin_p!=spin_);
+                        if(!NA_spinflip){
+                            if(col_OP>row_OP){
+                                index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                                OP_val = OPs_.value[index_OP];
+                            }
+                            else{
+                                index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                                OP_val = conj(OPs_.value[index_OP]);
+                            }
+                            //2 and 4
+                            Hk_(row_,col_) -= (0.5*Parameters_.JHund[atom_no])*2.0*OP_val;
+                        }
+
+                        //5 and 11
+                        col_ = j + (atom_no + n_atoms_*beta)*(S_) +
+                                spin_*(n_atoms_*n_orbs_*S_);
+                        row_ = j + (atom_no + n_atoms_*beta)*(S_) +
+                                (spin_)*(n_atoms_*n_orbs_*S_);
+
+                        col_OP = j + (atom_no + n_atoms_*alpha)*(S_) +
+                                (spin_)*(n_atoms_*n_orbs_*S_);
+                        row_OP = j + (atom_no + n_atoms_*alpha)*(S_) +
+                                (spin_)*(n_atoms_*n_orbs_*S_);
+
+                        if(col_OP>row_OP){
+                            index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                            OP_val = OPs_.value[index_OP];
+                        }
+                        else{
+                            index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                            OP_val = conj(OPs_.value[index_OP]);
+                        }
+                        //5 and 11
+                        Hk_(row_,col_) -= (0.5*Parameters_.JHund[atom_no])*OP_val;
+
+
+                        //6 and 12
+                        col_ = j + (atom_no + n_atoms_*alpha)*(S_) +
+                                spin_*(n_atoms_*n_orbs_*S_);
+                        row_ = j + (atom_no + n_atoms_*alpha)*(S_) +
+                                (spin_)*(n_atoms_*n_orbs_*S_);
+
+                        col_OP = j + (atom_no + n_atoms_*beta)*(S_) +
+                                (spin_)*(n_atoms_*n_orbs_*S_);
+                        row_OP = j + (atom_no + n_atoms_*beta)*(S_) +
+                                (spin_)*(n_atoms_*n_orbs_*S_);
+
+                        if(col_OP>row_OP){
+                            index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                            OP_val = OPs_.value[index_OP];
+                        }
+                        else{
+                            index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                            OP_val = conj(OPs_.value[index_OP]);
+                        }
+                        //6 and 12
+                        Hk_(row_,col_) -= (0.5*Parameters_.JHund[atom_no])*OP_val;
+
+
+
+                        //7 and 9
+                        col_ = j + (atom_no + n_atoms_*beta)*(S_) +
+                                spin_*(n_atoms_*n_orbs_*S_);
+                        row_ = j + (atom_no + n_atoms_*beta)*(S_) +
+                                (spin_)*(n_atoms_*n_orbs_*S_);
+
+                        col_OP = j + (atom_no + n_atoms_*alpha)*(S_) +
+                                (1-spin_)*(n_atoms_*n_orbs_*S_);
+                        row_OP = j + (atom_no + n_atoms_*alpha)*(S_) +
+                                (1-spin_)*(n_atoms_*n_orbs_*S_);
+
+                        if(col_OP>row_OP){
+                            index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                            OP_val = OPs_.value[index_OP];
+                        }
+                        else{
+                            index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                            OP_val = conj(OPs_.value[index_OP]);
+                        }
+                        //7 and 9
+                        Hk_(row_,col_) += (0.5*Parameters_.JHund[atom_no])*OP_val;
+
+
+                        //8 and 10
+                        col_ = j + (atom_no + n_atoms_*alpha)*(S_) +
+                                spin_*(n_atoms_*n_orbs_*S_);
+                        row_ = j + (atom_no + n_atoms_*alpha)*(S_) +
+                                (spin_)*(n_atoms_*n_orbs_*S_);
+
+                        col_OP = j + (atom_no + n_atoms_*beta)*(S_) +
+                                (1-spin_)*(n_atoms_*n_orbs_*S_);
+                        row_OP = j + (atom_no + n_atoms_*beta)*(S_) +
+                                (1-spin_)*(n_atoms_*n_orbs_*S_);
+
+                        if(col_OP>row_OP){
+                            index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                            OP_val = OPs_.value[index_OP];
+                        }
+                        else{
+                            index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                            OP_val = conj(OPs_.value[index_OP]);
+                        }
+                        //8 and 10
+                        Hk_(row_,col_) += (0.5*Parameters_.JHund[atom_no])*OP_val;
+
+                    }
+
+                }}}}
+
+
+
+
+
+    //Hunds Coupling
+    //Fock
+    for(int j=0;j<S_;j++){
+        for(int atom_no=0;atom_no<n_atoms_;atom_no++){
+            for(int alpha=0;alpha<n_orbs_;alpha++){
+                for(int beta=(alpha+1);beta<n_orbs_;beta++){
+
+                    for(int spin_=0;spin_<2;spin_++){
+
+                        //1 and 3 [hc : 2 and 4]
+                        col_ = j + (atom_no + n_atoms_*alpha)*(S_) +
+                                spin_*(n_atoms_*n_orbs_*S_);
+                        row_ = j + (atom_no + n_atoms_*beta)*(S_) +
+                                (spin_)*(n_atoms_*n_orbs_*S_);
+
+                        col_OP = j + (atom_no + n_atoms_*beta)*(S_) +
+                                (1-spin_)*(n_atoms_*n_orbs_*S_);
+                        row_OP = j + (atom_no + n_atoms_*alpha)*(S_) +
+                                (1-spin_)*(n_atoms_*n_orbs_*S_);
+
+                        if(col_OP>row_OP){
+                            index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                            OP_val = OPs_.value[index_OP];
+                        }
+                        else{
+                            index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                            OP_val = conj(OPs_.value[index_OP]);
+                        }
+                        //1 and 3
+                        Hk_(row_,col_) += (0.5*Parameters_.JHund[atom_no])*2.0*OP_val;
+                        //2 and 4
+                        Hk_(col_,row_) += conj((0.5*Parameters_.JHund[atom_no])*2.0*OP_val);
+
+
+
+                        //5 and 11 [hc : 6 and 12]
+                        col_ = j + (atom_no + n_atoms_*alpha)*(S_) +
+                                spin_*(n_atoms_*n_orbs_*S_);
+                        row_ = j + (atom_no + n_atoms_*beta)*(S_) +
+                                (spin_)*(n_atoms_*n_orbs_*S_);
+
+                        col_OP = j + (atom_no + n_atoms_*beta)*(S_) +
+                                (spin_)*(n_atoms_*n_orbs_*S_);
+                        row_OP = j + (atom_no + n_atoms_*alpha)*(S_) +
+                                (spin_)*(n_atoms_*n_orbs_*S_);
+
+                        if(col_OP>row_OP){
+                            index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                            OP_val = OPs_.value[index_OP];
+                        }
+                        else{
+                            index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                            OP_val = conj(OPs_.value[index_OP]);
+                        }
+                        //5 and 11
+                        Hk_(row_,col_) += (0.5*Parameters_.JHund[atom_no])*OP_val;
+                        //6 and 12
+                        Hk_(col_,row_) += conj((0.5*Parameters_.JHund[atom_no])*OP_val);
+
+
+                        //7 and 9 [hc : 8 and 10]
+                        col_ = j + (atom_no + n_atoms_*alpha)*(S_) +
+                                spin_*(n_atoms_*n_orbs_*S_);
+                        row_ = j + (atom_no + n_atoms_*beta)*(S_) +
+                                (1-spin_)*(n_atoms_*n_orbs_*S_);
+
+                        col_OP = j + (atom_no + n_atoms_*beta)*(S_) +
+                                (1-spin_)*(n_atoms_*n_orbs_*S_);
+                        row_OP = j + (atom_no + n_atoms_*alpha)*(S_) +
+                                (spin_)*(n_atoms_*n_orbs_*S_);
+
+                        //NA_spinflip = Parameters_.NoSpinFlipOP && (spin_p!=spin_);
+                        if(!NA_spinflip){
+                            if(col_OP>row_OP){
+                                index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                                OP_val = OPs_.value[index_OP];
+                            }
+                            else{
+                                index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                                OP_val = conj(OPs_.value[index_OP]);
+                            }
+                            //7 and 9
+                            Hk_(row_,col_) -= (0.5*Parameters_.JHund[atom_no])*OP_val;
+                            //8 and 10
+                            Hk_(col_,row_) -= conj((0.5*Parameters_.JHund[atom_no])*OP_val);
+                        }
+
+                    }
+
+                }}}}
+
+
+
+
+    //Pair Hopping
+    //Hartree+Fock
+    for(int j=0;j<S_;j++){
+        for(int atom_no=0;atom_no<n_atoms_;atom_no++){
+            for(int alpha=0;alpha<n_orbs_;alpha++){
+                for(int beta=(alpha+1);beta<n_orbs_;beta++){
+
+                    for(int spin_=0;spin_<2;spin_++){
+
+                        //1 and 2 [hc : 3 and 4]
+                        col_ = j + (atom_no + n_atoms_*beta)*(S_) +
+                                spin_*(n_atoms_*n_orbs_*S_);
+                        row_ = j + (atom_no + n_atoms_*alpha)*(S_) +
+                                (1-spin_)*(n_atoms_*n_orbs_*S_);
+
+                        col_OP = j + (atom_no + n_atoms_*beta)*(S_) +
+                                (1-spin_)*(n_atoms_*n_orbs_*S_);
+                        row_OP = j + (atom_no + n_atoms_*alpha)*(S_) +
+                                (spin_)*(n_atoms_*n_orbs_*S_);
+
+                        //NA_spinflip = Parameters_.NoSpinFlipOP && (spin_p!=spin_);
+                        if(!NA_spinflip){
+                            if(col_OP>row_OP){
+                                index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                                OP_val = OPs_.value[index_OP];
+                            }
+                            else{
+                                index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                                OP_val = conj(OPs_.value[index_OP]);
+                            }
+                            //1 and 2
+                            Hk_(row_,col_) -= (1.0*Parameters_.JHund[atom_no])*OP_val;
+                            //3 and 4
+                            Hk_(col_,row_) -= conj((1.0*Parameters_.JHund[atom_no])*OP_val);
+                        }
+
+                        //5 and 6 [hc : 7 and 8]
+                        col_ = j + (atom_no + n_atoms_*beta)*(S_) +
+                                spin_*(n_atoms_*n_orbs_*S_);
+                        row_ = j + (atom_no + n_atoms_*alpha)*(S_) +
+                                (spin_)*(n_atoms_*n_orbs_*S_);
+
+                        col_OP = j + (atom_no + n_atoms_*beta)*(S_) +
+                                (1-spin_)*(n_atoms_*n_orbs_*S_);
+                        row_OP = j + (atom_no + n_atoms_*alpha)*(S_) +
+                                (1-spin_)*(n_atoms_*n_orbs_*S_);
+
+                        if(col_OP>row_OP){
+                            index_OP = SI_to_ind[col_OP + row_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                            OP_val = OPs_.value[index_OP];
+                        }
+                        else{
+                            index_OP = SI_to_ind[row_OP + col_OP*(2*n_atoms_*n_orbs_*ncells_*S_)];
+                            OP_val = conj(OPs_.value[index_OP]);
+                        }
+                        //5 and 6
+                        Hk_(row_,col_) += (1.0*Parameters_.JHund[atom_no])*OP_val;
+                        //7 and 8
+                        Hk_(col_,row_) += conj((1.0*Parameters_.JHund[atom_no])*OP_val);
+
+                    }
+                }}}}
+
+
+
+
+    //     if(k1==0 && k2==0){
+    //      cout<<"---------- Printing matrix kx=0=ky -------------"<<endl;
+    //      Ham_.print();
+    //      cout<<"-----------------"<<endl;
+    //  }
+
+    //            cout<<"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"<<endl;
+    //            Ham_.print();
+    //            cout<<"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"<<endl;
+
+
+
+}
+
+
 
 
 void Kspace_calculation_G2dLatticeNew::Inverse(Matrix<complex<double>> & A){
@@ -2338,6 +3703,10 @@ void Kspace_calculation_G2dLatticeNew::Initialize()
         Eigvectors_[i].resize(2*n_orbs_*n_atoms_*NSites_in_MUC); //Eigenvector number
     }
 
+
+    Eigenvalues_spin_down.resize(n_orbs_*n_atoms_*lx_*ly_);
+    Eigenvalues_spin_up.resize(n_orbs_*n_atoms_*lx_*ly_);
+
     Kx_values.resize(ncells_);
     Ky_values.resize(ncells_);
 
@@ -2745,8 +4114,8 @@ void Kspace_calculation_G2dLatticeNew::Initialize()
             cell_col = (col_temp - alpha_plus_gamma_sigma)/(2*n_atoms_*n_orbs_*S_);
 
             file_in_Local_OP>>alpha_row_read>>atom_no_row_read>>orb_no_row_read>>sigma_row_read
-                            >>alpha_col_read>>atom_no_col_read>>orb_no_col_read>>sigma_col_read
-                            >>temp_complex>>temp_doub;
+                    >>alpha_col_read>>atom_no_col_read>>orb_no_col_read>>sigma_col_read
+                    >>temp_complex>>temp_doub;
             assert(alpha_row_read==alpha_row) ; assert(atom_no_row_read==atom_no_row) ;assert(orb_no_row_read==orb_no_row) ;assert(sigma_row_read==sigma_row);
             assert(alpha_col_read==alpha_col) ;assert(atom_no_col_read==atom_no_col) ;assert(orb_no_col_read==orb_no_col) ;assert(sigma_col_read==sigma_col);
             OPs_.value[OP_no] =temp_complex;
@@ -3117,7 +4486,7 @@ void Kspace_calculation_G2dLatticeNew::Create_Kspace_Spectrum(){
                         col_=row_;
                         Ham_(row_,col_) += Parameters_.PinningFieldZ[gamma]*(0.5 - 1.0*spin1);
                     }
-            }}
+                }}
 
             //magnetic field along x
             for(int alpha=0;alpha<S_;alpha++){
@@ -3129,7 +4498,7 @@ void Kspace_calculation_G2dLatticeNew::Create_Kspace_Spectrum(){
                                 + (1-spin1)*(n_atoms_*n_orbs_*S_);
                         Ham_(row_,col_) += Parameters_.PinningFieldX[gamma]*0.5;
                     }
-            }}
+                }}
 
 
             bool NA_spinflip=Parameters_.NoSpinFlipOP;
@@ -4283,9 +5652,9 @@ void Kspace_calculation_G2dLatticeNew::Calculate_RPA_Susc(Matrix<complex<double>
                                                              KroneckerDelta(spin_row1, 1-spin_col1)*KroneckerDelta(spin_row1, 1-spin_row2)*KroneckerDelta(spin_row1, spin_col2)
                                                              )
                                                             /*(KroneckerDelta(spin_row1, 1-spin_row2)*KroneckerDelta(spin_row1, spin_col1)*KroneckerDelta(spin_row1, 1-spin_col2)
-                                                                                                                                                                             -
-                                                                                                                                                                             KroneckerDelta(spin_row1, spin_row2)*KroneckerDelta(spin_row1, 1-spin_col1)*KroneckerDelta(spin_row1, 1-spin_col2)
-                                                                                                                                                                             )*/
+                                                                                                                                                                                             -
+                                                                                                                                                                                             KroneckerDelta(spin_row1, spin_row2)*KroneckerDelta(spin_row1, 1-spin_col1)*KroneckerDelta(spin_row1, 1-spin_col2)
+                                                                                                                                                                                             )*/
                                                             ;
 
                                                 }}}}}}
@@ -6652,6 +8021,48 @@ void Kspace_calculation_G2dLatticeNew::Diagonalize(char option){
 
 }
 
+
+
+
+void Kspace_calculation_G2dLatticeNew::DiagonalizeGivenMat(char option, Matrix<complex<double>> & HamGiven_, vector<double> & EigsOut_){
+
+
+    //extern "C" void   zheev_(char *,char *,int *,std::complex<double> *, int *, double *,
+    //                       std::complex<double> *,int *, double *, int *);
+
+
+    char jobz=option;
+    char uplo='L'; //WHY ONLY 'L' WORKS?
+    int n=HamGiven_.n_row();
+    int lda=HamGiven_.n_col();
+    vector<complex<double>> work(3);
+    vector<double> rwork(3*n -2);
+    int info;
+    int lwork= -1;
+
+    EigsOut_.resize(HamGiven_.n_row());
+    fill(EigsOut_.begin(),EigsOut_.end(),0);
+    // query:
+    zheev_(&jobz,&uplo,&n,&(HamGiven_(0,0)),&lda,&(EigsOut_[0]),&(work[0]),&lwork,&(rwork[0]),&info);
+    //lwork = int(real(work[0]))+1;
+    lwork = int((work[0].real()));
+    work.resize(lwork);
+    // real work:
+    zheev_(&jobz,&uplo,&n,&(HamGiven_(0,0)),&lda,&(EigsOut_[0]),&(work[0]),&lwork,&(rwork[0]),&info);
+    if (info!=0) {
+        std::cerr<<"info="<<info<<"\n";
+        perror("diag: zheev: failed with info!=0.\n");
+    }
+
+    // Ham_.print();
+
+    //  for(int i=0;i<eigs_.size();i++){
+    //    cout<<eigs_[i]<<endl;
+    //}
+
+
+
+}
 
 void Kspace_calculation_G2dLatticeNew::Update_OrderParameters_AndersonMixing(int iter){
 

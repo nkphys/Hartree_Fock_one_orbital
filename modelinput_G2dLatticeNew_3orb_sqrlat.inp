@@ -4,8 +4,8 @@
 PBC_X=1
 PBC_Y=1
 
-Xsite=12
-Ysite=12
+Xsite=4
+Ysite=4
 N_Orbs=3
 N_Atoms=1
 
@@ -53,7 +53,7 @@ PinningFieldValueZ=0.0 0.0 0
 #Magnetic Field along Sx
 PinningFieldValueX=0.005 0.005 0.005
 
-CalculateSusceptibility=false
+CalculateSusceptibility=true
 SusceptibilityLocalOprFilesPairWise=8 SzLocal_atom0_total.txt SzLocal_atom0_total.txt SpLocal_atom0_total.txt SmLocal_atom0_total.txt SmLocal_atom0_total.txt SpLocal_atom0_total.txt Tauz_atom0_total.txt Tauz_atom0_total.txt Taum_atom0_total.txt Taup_atom0_total.txt Taup_atom0_total.txt Taum_atom0_total.txt SpLocal_atom0_total.txt Taum_atom0_total.txt SmLocal_atom0_total.txt Taup_atom0_total.txt
 omega_min=-0.00
 omega_max=0.2
@@ -64,12 +64,12 @@ N_Threads=8
 
 
 Self_consistency_kspace=1
-Total_particles=288
+Total_particles=32
 Fixing_mu=0
 Mu_value=100
 
 No_of_SelfConsistency_iters=100000
-Convergence_Error=0.0000001
+Convergence_Error=0.00001
 RandomSeed=1
 alpha_OP=0.55
 
@@ -84,7 +84,7 @@ Just_Hartree=0
 NoSpinFlipOP=0
 Fock_type=Onsite
 #Onsite, Onsite_Intra, Onsite_Intra_Inter
-Read_initial_OPvalues=1
+Read_initial_OPvalues=0
 Read_initial_OPvalues_UnitCellsType=-234 -34
 Read_initial_OPvalues_file=OP_ansatz.txt
 #OUTPUT_OP_PiPi_alongZ.txt
