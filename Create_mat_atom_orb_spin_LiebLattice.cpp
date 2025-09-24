@@ -23,7 +23,8 @@ int N_atoms=3;
 int N_orbs=1;
 
 double t1_parameter=-1.0;
-double t2_parameter=-1.0;
+double t2_parameter=-1.5;
+double t3_parameter=-1.2;
 
 //e1=(sqrt(3)/2,1/2)
 //e2=(-sqrt(3)/2,1/2)
@@ -43,9 +44,11 @@ ofstream t1_plus_a1_file(t1_plus_a1_file_str.c_str());
 string t1_minus_a2_file_str = "t1_minus_a2_mat.txt" ;
 ofstream t1_minus_a2_file(t1_minus_a2_file_str.c_str());
 
-
 string t1_plus_a1_minus_a2_file_str = "t1_plus_a1_minus_a2_mat.txt" ;
 ofstream t1_plus_a1_minus_a2_file(t1_plus_a1_minus_a2_file_str.c_str());
+
+
+
 
 complex<double> val=0.0;
 
@@ -99,6 +102,10 @@ val=t1_parameter;
 if((atom1==1) && (atom2==2) && (spin1==spin2) ){
 val=t2_parameter;
 }
+if((atom1==2) && (atom2==2) && (spin1==spin2) ){
+val=t3_parameter;
+}
+
 
 t1_plus_a1_file<<val<<" ";
 
@@ -128,6 +135,12 @@ val=t1_parameter;
 if((atom1==1) && (atom2==2) && (spin1==spin2) ){
 val=t2_parameter;
 }
+
+if((atom1==1) && (atom2==1) && (spin1==spin2) ){
+val=t3_parameter;
+}
+
+
 
 t1_minus_a2_file<<val<<" ";
 

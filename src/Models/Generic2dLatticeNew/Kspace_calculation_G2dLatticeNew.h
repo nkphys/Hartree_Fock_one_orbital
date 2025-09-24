@@ -197,10 +197,15 @@ double Kspace_calculation_G2dLatticeNew::d_FermiDis_dE(double E, double mu, doub
 
 
     double val;
+
+    if( ((E-mu)*InvKbT)>30.0 ){
+        val=0.0;
+    }
+    else{
     val = -InvKbT*exp((E-mu)*InvKbT)*
             (1.0/(exp((E-mu)*InvKbT) + 1.0))*
             (1.0/(exp((E-mu)*InvKbT) + 1.0));
-
+    }
     return val;
 }
 
@@ -509,59 +514,77 @@ void Kspace_calculation_G2dLatticeNew::Get_Spin_resolved_dc_conductivity_way3(){
                 int k1_p_x = (k1_+1)%lx_cells;
                 int k2_p_y = (k2_+1)%ly_cells;
 
+                int k1_p_2x = (k1_+2)%lx_cells;
+                int k2_p_2y = (k2_+2)%ly_cells;
+
                 int k1_m_x = (k1_-1+lx_cells)%lx_cells;
                 int k2_m_y = (k2_-1+ly_cells)%ly_cells;
+
+                int k1_m_2x = (k1_-2+lx_cells)%lx_cells;
+                int k2_m_2y = (k2_-2+ly_cells)%ly_cells;
 
                 int k_index = Coordinates_.Ncell(k1_,k2_);
                 int state_n_k = NBands_*k_index + n;
 
 
-
                 int k_index_p_x = Coordinates_.Ncell(k1_p_x,k2_);
                 int k_index_p_y = Coordinates_.Ncell(k1_,k2_p_y);
+
+                int k_index_p_2x = Coordinates_.Ncell(k1_p_2x,k2_);
+                int k_index_p_2y = Coordinates_.Ncell(k1_,k2_p_2y);
 
                 int k_index_m_x = Coordinates_.Ncell(k1_m_x,k2_);
                 int k_index_m_y = Coordinates_.Ncell(k1_,k2_m_y);
 
+                int k_index_m_2x = Coordinates_.Ncell(k1_m_2x,k2_);
+                int k_index_m_2y = Coordinates_.Ncell(k1_,k2_m_2y);
 
                 int state_n_k_p_x = NBands_*k_index_p_x + n;
                 int state_n_k_p_y = NBands_*k_index_p_y + n;
 
+                int state_n_k_p_2x = NBands_*k_index_p_2x + n;
+                int state_n_k_p_2y = NBands_*k_index_p_2y + n;
+
                 int state_n_k_m_x = NBands_*k_index_m_x + n;
                 int state_n_k_m_y = NBands_*k_index_m_y + n;
 
+                int state_n_k_m_2x = NBands_*k_index_m_2x + n;
+                int state_n_k_m_2y = NBands_*k_index_m_2y + n;
+
+
+                //Using Five-point Midpoint Formula
                 if(spin==0){
-                cond_xx[spin] += 0.25*
-                        (Eigenvalues_spin_up[state_n_k_p_x]-Eigenvalues_spin_up[state_n_k_m_x])*
-                        (Eigenvalues_spin_up[state_n_k_p_x]-Eigenvalues_spin_up[state_n_k_m_x])*
+                cond_xx[spin] += (1.0/144.0)*
+                        (Eigenvalues_spin_up[state_n_k_m_2x] - 8.0*Eigenvalues_spin_up[state_n_k_m_x] + 8.0*Eigenvalues_spin_up[state_n_k_p_x]-Eigenvalues_spin_up[state_n_k_p_2x])*
+                        (Eigenvalues_spin_up[state_n_k_m_2x] - 8.0*Eigenvalues_spin_up[state_n_k_m_x] + 8.0*Eigenvalues_spin_up[state_n_k_p_x]-Eigenvalues_spin_up[state_n_k_p_2x])*
                         d_FermiDis_dE(Eigenvalues_spin_up[state_n_k], mu_, Parameters_.beta);
                        // Lorentzian(mu_-Eigenvalues_saved[state_n_k], 2.0*Gamma_brdn);
 
-                cond_yy[spin] += 0.25*
-                        (Eigenvalues_spin_up[state_n_k_p_y]-Eigenvalues_spin_up[state_n_k_m_y])*
-                        (Eigenvalues_spin_up[state_n_k_p_y]-Eigenvalues_spin_up[state_n_k_m_y])*
+                cond_yy[spin] +=  (1.0/144.0)*
+                        (Eigenvalues_spin_up[state_n_k_m_2y] - 8.0*Eigenvalues_spin_up[state_n_k_m_y] + 8.0*Eigenvalues_spin_up[state_n_k_p_y]-Eigenvalues_spin_up[state_n_k_p_2y])*
+                        (Eigenvalues_spin_up[state_n_k_m_2y] - 8.0*Eigenvalues_spin_up[state_n_k_m_y] + 8.0*Eigenvalues_spin_up[state_n_k_p_y]-Eigenvalues_spin_up[state_n_k_p_2y])*
                          d_FermiDis_dE(Eigenvalues_spin_up[state_n_k], mu_, Parameters_.beta);
 
-                cond_xy[spin] += 0.25*
-                        (Eigenvalues_spin_up[state_n_k_p_x]-Eigenvalues_spin_up[state_n_k_m_x])*
-                        (Eigenvalues_spin_up[state_n_k_p_y]-Eigenvalues_spin_up[state_n_k_m_y])*
+                cond_xy[spin] +=  (1.0/144.0)*
+                        (Eigenvalues_spin_up[state_n_k_m_2x] - 8.0*Eigenvalues_spin_up[state_n_k_m_x] + 8.0*Eigenvalues_spin_up[state_n_k_p_x]-Eigenvalues_spin_up[state_n_k_p_2x])*
+                        (Eigenvalues_spin_up[state_n_k_m_2y] - 8.0*Eigenvalues_spin_up[state_n_k_m_y] + 8.0*Eigenvalues_spin_up[state_n_k_p_y]-Eigenvalues_spin_up[state_n_k_p_2y])*
                          d_FermiDis_dE(Eigenvalues_spin_up[state_n_k], mu_, Parameters_.beta);
                 }
                 if(spin==1){
-                    cond_xx[spin] += 0.25*
-                            (Eigenvalues_spin_down[state_n_k_p_x]-Eigenvalues_spin_down[state_n_k_m_x])*
-                            (Eigenvalues_spin_down[state_n_k_p_x]-Eigenvalues_spin_down[state_n_k_m_x])*
+                    cond_xx[spin] += (1.0/144.0)*
+                            (Eigenvalues_spin_down[state_n_k_m_2x] - 8.0*Eigenvalues_spin_down[state_n_k_m_x] + 8.0*Eigenvalues_spin_down[state_n_k_p_x]-Eigenvalues_spin_down[state_n_k_p_2x])*
+                            (Eigenvalues_spin_down[state_n_k_m_2x] - 8.0*Eigenvalues_spin_down[state_n_k_m_x] + 8.0*Eigenvalues_spin_down[state_n_k_p_x]-Eigenvalues_spin_down[state_n_k_p_2x])*
                             d_FermiDis_dE(Eigenvalues_spin_down[state_n_k], mu_, Parameters_.beta);
                            // Lorentzian(mu_-Eigenvalues_saved[state_n_k], 2.0*Gamma_brdn);
 
-                    cond_yy[spin] += 0.25*
-                            (Eigenvalues_spin_down[state_n_k_p_y]-Eigenvalues_spin_down[state_n_k_m_y])*
-                            (Eigenvalues_spin_down[state_n_k_p_y]-Eigenvalues_spin_down[state_n_k_m_y])*
+                    cond_yy[spin] +=  (1.0/144.0)*
+                            (Eigenvalues_spin_down[state_n_k_m_2y] - 8.0*Eigenvalues_spin_down[state_n_k_m_y] + 8.0*Eigenvalues_spin_down[state_n_k_p_y]-Eigenvalues_spin_down[state_n_k_p_2y])*
+                            (Eigenvalues_spin_down[state_n_k_m_2y] - 8.0*Eigenvalues_spin_down[state_n_k_m_y] + 8.0*Eigenvalues_spin_down[state_n_k_p_y]-Eigenvalues_spin_down[state_n_k_p_2y])*
                              d_FermiDis_dE(Eigenvalues_spin_down[state_n_k], mu_, Parameters_.beta);
 
-                    cond_xy[spin] += 0.25*
-                            (Eigenvalues_spin_down[state_n_k_p_x]-Eigenvalues_spin_down[state_n_k_m_x])*
-                            (Eigenvalues_spin_down[state_n_k_p_y]-Eigenvalues_spin_down[state_n_k_m_y])*
+                    cond_xy[spin] +=  (1.0/144.0)*
+                            (Eigenvalues_spin_down[state_n_k_m_2x] - 8.0*Eigenvalues_spin_down[state_n_k_m_x] + 8.0*Eigenvalues_spin_down[state_n_k_p_x]-Eigenvalues_spin_down[state_n_k_p_2x])*
+                            (Eigenvalues_spin_down[state_n_k_m_2y] - 8.0*Eigenvalues_spin_down[state_n_k_m_y] + 8.0*Eigenvalues_spin_down[state_n_k_p_y]-Eigenvalues_spin_down[state_n_k_p_2y])*
                              d_FermiDis_dE(Eigenvalues_spin_down[state_n_k], mu_, Parameters_.beta);
                 }
 
@@ -7916,7 +7939,7 @@ void Kspace_calculation_G2dLatticeNew::SelfConsistency(){
             Get_Tau_Pseudospins();
         }
         Calculate_Nw();
-        Calculate_Akw();
+        //Calculate_Akw();
 
         string Eigenvalues_fl_out = "Eigenvalues.txt";
         ofstream Eigenvalues_file_out(Eigenvalues_fl_out.c_str());
